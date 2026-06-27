@@ -20,7 +20,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - tenant ยังเป็น `Shop` (+ `Branch`)
 - **Customer identity + ประวัติการสั่ง — ✅ build แล้ว:** ลูกค้า optional ใส่ชื่อ+เบอร์ตอนสั่ง → `Customer` ต่อร้าน (phone, displayName, publicCode) ผูกกับ order; ลูกค้าสแกน **bind-code QR** บนจอ kiosk (ครั้งเดียว → httpOnly cookie `eo_member_<slug>`, ไม่ต้อง login) เปิดดู **ประวัติการสั่ง** ที่ `/s/[slug]` + `/me` ได้. ตาราง `customers`/`customer_devices`/`bind_codes`; use-cases ใน `application/use-cases/member/`. พอร์ตจาก customer model ของ Easy Stamp (แต้ม→ออเดอร์)
 
-**ยังไม่ build (planned, ทำต่อ):** public **homepage map + `/shops` directory** (พอร์ตจาก Easy Stamp — เป็น discovery/marketing ไม่ใช่สั่งของจากนอกร้าน; ตอน clone โดน drop ทิ้งโดยพลาด แต่ deps/repo/i18n/e2e ยังค้างชี้อยู่; tabs Map/Shops ใน `CustomerTabBar` ถูกถอดออกไว้ก่อน จะกลับมาพร้อมฟีเจอร์นี้).
+**Public homepage map + `/shops` directory — ✅ build แล้ว** (พอร์ตกลับจาก Easy Stamp ที่ตกหล่นตอน clone): หน้าแรก `/` แสดงแผนที่ maplibre (client-only, lazy) ปักหมุดสาขาที่เปิดอยู่ผ่าน `branchRepository.listMapLocations()` — popup ลิงก์ไป `/s/[slug]`; `/shops` เป็น directory รายชื่อร้านที่เปิดอยู่ (เวอร์ชั่นเรียบ — Easy Order ไม่มี reviews/categories/profile-image จึงไม่มี rating/filter chips แบบ Easy Stamp). คืน tab **Map/Shops** ใน `CustomerTabBar`. เป็น discovery/marketing ไม่ใช่สั่งของจากนอกร้าน. components ใน `src/presentation/components/map/`.
 
 **Out of scope จริง (ห้ามเพิ่มโดยไม่ถาม):** customer **account/รหัสผ่าน** เต็มรูปแบบ (ระบุตัวตนใช้แค่เบอร์ + bind QR) · payment gateway/auto-verify · multi-locale (คง `th` เดี่ยว) · **การสั่งของจากนอกร้าน** (ออเดอร์ต้องมาจาก kiosk ที่ activate เท่านั้น).
 
