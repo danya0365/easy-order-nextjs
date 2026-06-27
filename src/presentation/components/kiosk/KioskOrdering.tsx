@@ -13,6 +13,7 @@ import {
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { menuImageSrc } from "@/src/presentation/lib/menu-image";
 import { Button } from "@/src/presentation/components/ui/Button";
+import { Input } from "@/src/presentation/components/ui/Input";
 import { Textarea } from "@/src/presentation/components/ui/Textarea";
 import { Modal } from "@/src/presentation/components/ui/Modal";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
@@ -33,6 +34,8 @@ export function KioskOrdering({
   const [cart, setCart] = useState<Cart>({});
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [note, setNote] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [method, setMethod] = useState<OrderPaymentMethod>(
     hasPromptpay ? "promptpay_qr" : "cash",
   );
@@ -69,6 +72,8 @@ export function KioskOrdering({
         })),
         paymentMethod: method,
         note: note.trim() || null,
+        customerName: customerName.trim() || null,
+        customerPhone: customerPhone.trim() || null,
       });
       if (res.ok) {
         setResult(res);
@@ -82,6 +87,8 @@ export function KioskOrdering({
   function reset() {
     setCart({});
     setNote("");
+    setCustomerName("");
+    setCustomerPhone("");
     setMethod(hasPromptpay ? "promptpay_qr" : "cash");
     setResult(null);
   }
@@ -223,6 +230,33 @@ export function KioskOrdering({
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
+          </div>
+
+          {/* Optional walk-in identity → builds an order history the customer
+              can view on their own phone. Leave blank to order anonymously. */}
+          <div>
+            <p className="mb-1 text-sm font-medium text-foreground">
+              {t("customerTitle")}
+            </p>
+            <p className="mb-2 text-xs text-muted">{t("customerHint")}</p>
+            <div className="flex flex-col gap-2">
+              <Input
+                id="kioskCustomerName"
+                maxLength={80}
+                placeholder={t("customerNamePlaceholder")}
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+              />
+              <Input
+                id="kioskCustomerPhone"
+                type="tel"
+                inputMode="numeric"
+                maxLength={20}
+                placeholder={t("customerPhonePlaceholder")}
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+              />
+            </div>
           </div>
 
           <div>

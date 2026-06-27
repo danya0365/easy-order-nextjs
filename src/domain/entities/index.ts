@@ -153,6 +153,11 @@ export interface Order {
   subtotalSatang: number;
   totalSatang: number;
   note: string | null;
+  /** Optional customer who placed the order (null for anonymous walk-ins). */
+  customerId: string | null;
+  /** Name/phone snapshotted at order time (shown in the queue even if erased). */
+  customerName: string | null;
+  customerPhone: string | null;
   paidAt: string | null;
   readyAt: string | null;
   completedAt: string | null;
@@ -163,6 +168,21 @@ export interface Order {
 /** An order with its line items (read model). */
 export interface OrderWithItems extends Order {
   items: OrderItem[];
+}
+
+/**
+ * A customer of a shop, identified by phone (normalized digits). Optional —
+ * a walk-in order stays anonymous unless the customer gives a phone.
+ */
+export interface Customer {
+  id: string;
+  shopId: string;
+  phone: string;
+  displayName: string | null;
+  /** Opaque code embedded in the customer's QR (staff scan instead of typing). */
+  publicCode: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // --- Billing ---

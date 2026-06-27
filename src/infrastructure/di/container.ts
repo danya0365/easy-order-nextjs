@@ -7,6 +7,7 @@ import { DrizzleBranchRepository } from "@/src/infrastructure/repositories/drizz
 import { DrizzleMenuCategoryRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMenuCategoryRepository";
 import { DrizzleMenuItemRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMenuItemRepository";
 import { DrizzleOrderRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleOrderRepository";
+import { DrizzleCustomerRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleCustomerRepository";
 import { DrizzleKioskSessionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleKioskSessionRepository";
 
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
@@ -14,6 +15,7 @@ import type { IBranchRepository } from "@/src/application/repositories/IBranchRe
 import type { IMenuCategoryRepository } from "@/src/application/repositories/IMenuCategoryRepository";
 import type { IMenuItemRepository } from "@/src/application/repositories/IMenuItemRepository";
 import type { IOrderRepository } from "@/src/application/repositories/IOrderRepository";
+import type { ICustomerRepository } from "@/src/application/repositories/ICustomerRepository";
 import type { IKioskSessionRepository } from "@/src/application/repositories/IKioskSessionRepository";
 
 /**
@@ -32,6 +34,8 @@ class Container extends GenericContainer {
   readonly menuItemRepository: IMenuItemRepository =
     new DrizzleMenuItemRepository();
   readonly orderRepository: IOrderRepository = new DrizzleOrderRepository();
+  readonly customerRepository: ICustomerRepository =
+    new DrizzleCustomerRepository();
   readonly kioskSessionRepository: IKioskSessionRepository =
     new DrizzleKioskSessionRepository();
 }

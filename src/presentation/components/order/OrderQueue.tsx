@@ -194,6 +194,15 @@ function OrderCard({ order }: { order: OrderWithItems }) {
         </p>
       )}
 
+      {(order.customerName || order.customerPhone) && (
+        <p className="mt-2 rounded-lg bg-muted-surface px-3 py-2 text-sm text-foreground">
+          {t("customerLabel")}:{" "}
+          {[order.customerName, order.customerPhone]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      )}
+
       <p className="mt-3 text-right text-lg font-semibold text-foreground">
         {t("total", { amount: satangToBaht(order.totalSatang) })}
       </p>

@@ -36,6 +36,9 @@ export interface PlaceOrderActionInput {
   cart: { menuItemId: string; quantity: number }[];
   paymentMethod: OrderPaymentMethod;
   note?: string | null;
+  /** Optional walk-in identity entered at checkout. */
+  customerName?: string | null;
+  customerPhone?: string | null;
 }
 
 /**
@@ -74,10 +77,13 @@ export async function placeOrderAction(
     const order = await new PlaceOrderUseCase(
       container.orderRepository,
       container.menuItemRepository,
+      container.customerRepository,
     ).execute({
       shopId,
       paymentMethod: input.paymentMethod,
       note: input.note ?? null,
+      customerName: input.customerName ?? null,
+      customerPhone: input.customerPhone ?? null,
       cart: input.cart,
     });
 

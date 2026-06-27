@@ -1,6 +1,7 @@
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 import { id, createdAt, updatedAt } from "./_shared";
 import { shops } from "./shops";
+import { customers } from "./customers";
 
 export const ORDER_STATUSES = [
   "pending",
@@ -30,6 +31,14 @@ export const orders = sqliteTable(
     subtotalSatang: integer().notNull(),
     totalSatang: integer().notNull(),
     note: text(),
+    /**
+     * Optional customer who placed the order (walk-ins stay null). Set-null on
+     * customer delete so the order survives. name/phone are snapshotted so the
+     * queue/history shows what was given even if the customer row changes/erases.
+     */
+    customerId: text().references(() => customers.id, { onDelete: "set null" }),
+    customerName: text(),
+    customerPhone: text(),
     paidAt: text(),
     readyAt: text(),
     completedAt: text(),

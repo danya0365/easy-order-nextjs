@@ -17,6 +17,7 @@ before(async () => {
 const cats = () => container.menuCategoryRepository;
 const items = () => container.menuItemRepository;
 const orders = () => container.orderRepository;
+const customers = () => container.customerRepository;
 
 async function seedMenu(shopId: string) {
   const cat = await new CreateMenuCategoryUseCase(cats()).execute(
@@ -42,7 +43,7 @@ test("place order computes totals from the menu (ignores client prices)", async 
   const { shop } = await seedShop("ord-totals");
   const { espresso, latte } = await seedMenu(shop.id);
 
-  const order = await new PlaceOrderUseCase(orders(), items()).execute({
+  const order = await new PlaceOrderUseCase(orders(), items(), customers()).execute({
     shopId: shop.id,
     paymentMethod: "cash",
     cart: [
@@ -62,7 +63,7 @@ test("order number increments per shop", async () => {
   const { shop } = await seedShop("ord-seq");
   const { espresso } = await seedMenu(shop.id);
   const mk = () =>
-    new PlaceOrderUseCase(orders(), items()).execute({
+    new PlaceOrderUseCase(orders(), items(), customers()).execute({
       shopId: shop.id,
       paymentMethod: "cash",
       cart: [{ menuItemId: espresso.id, quantity: 1 }],
@@ -80,7 +81,7 @@ test("cannot order an unavailable item, an empty cart, or another shop's item", 
   const otherMenu = await seedMenu(other.shop.id);
 
   await assert.rejects(
-    new PlaceOrderUseCase(orders(), items()).execute({
+    new PlaceOrderUseCase(orders(), items(), customers()).execute({
       shopId: shop.id,
       paymentMethod: "cash",
       cart: [],
@@ -90,7 +91,7 @@ test("cannot order an unavailable item, an empty cart, or another shop's item", 
 
   // Cross-tenant: shop cannot order an item that belongs to another shop.
   await assert.rejects(
-    new PlaceOrderUseCase(orders(), items()).execute({
+    new PlaceOrderUseCase(orders(), items(), customers()).execute({
       shopId: shop.id,
       paymentMethod: "cash",
       cart: [{ menuItemId: otherMenu.espresso.id, quantity: 1 }],
@@ -100,7 +101,7 @@ test("cannot order an unavailable item, an empty cart, or another shop's item", 
 
   await items().update(espresso.id, { isAvailable: false });
   await assert.rejects(
-    new PlaceOrderUseCase(orders(), items()).execute({
+    new PlaceOrderUseCase(orders(), items(), customers()).execute({
       shopId: shop.id,
       paymentMethod: "cash",
       cart: [{ menuItemId: espresso.id, quantity: 1 }],
@@ -112,7 +113,7 @@ test("cannot order an unavailable item, an empty cart, or another shop's item", 
 test("status advances forward only; payment confirm flips to paid", async () => {
   const { shop } = await seedShop("ord-status");
   const { espresso } = await seedMenu(shop.id);
-  const order = await new PlaceOrderUseCase(orders(), items()).execute({
+  const order = await new PlaceOrderUseCase(orders(), items(), customers()).execute({
     shopId: shop.id,
     paymentMethod: "promptpay_qr",
     cart: [{ menuItemId: espresso.id, quantity: 1 }],
@@ -172,11 +173,84 @@ test("kiosk menu hides inactive categories and empty/unavailable items", async (
   assert.equal(menu[0].items.length, 1);
 });
 
+test("order with a phone ties to a per-shop customer; same phone reuses it", async () => {
+  const { shop } = await seedShop("ord-cust");
+  const { espresso } = await seedMenu(shop.id);
+  const place = (customerName: string | null, customerPhone: string | null) =>
+    new PlaceOrderUseCase(orders(), items(), customers()).execute({
+      shopId: shop.id,
+      paymentMethod: "cash",
+      customerName,
+      customerPhone,
+      cart: [{ menuItemId: espresso.id, quantity: 1 }],
+    });
+
+  const first = await place("สมชาย", "081-234-5678");
+  assert.ok(first.customerId, "order linked to a customer");
+  assert.equal(first.customerName, "สมชาย");
+  assert.equal(first.customerPhone, "0812345678", "phone normalized to digits");
+
+  // Same phone (different formatting) reuses the same customer row.
+  const second = await place(null, "0812345678");
+  assert.equal(second.customerId, first.customerId, "same customer reused");
+
+  // The customer's self-service history returns both orders, newest first.
+  const history = await orders().pageByCustomer(shop.id, first.customerId!);
+  assert.equal(history.items.length, 2);
+  assert.equal(history.items[0].id, second.id);
+
+  const customer = await customers().findByPhone(shop.id, "0812345678");
+  assert.equal(customer?.displayName, "สมชาย", "name backfilled from first order");
+});
+
+test("walk-in order without a phone stays anonymous; bad phone is rejected", async () => {
+  const { shop } = await seedShop("ord-anon");
+  const { espresso } = await seedMenu(shop.id);
+
+  const anon = await new PlaceOrderUseCase(orders(), items(), customers()).execute({
+    shopId: shop.id,
+    paymentMethod: "cash",
+    cart: [{ menuItemId: espresso.id, quantity: 1 }],
+  });
+  assert.equal(anon.customerId, null);
+  assert.equal(anon.customerPhone, null);
+
+  await assert.rejects(
+    new PlaceOrderUseCase(orders(), items(), customers()).execute({
+      shopId: shop.id,
+      paymentMethod: "cash",
+      customerPhone: "123", // too short for a Thai number
+      cart: [{ menuItemId: espresso.id, quantity: 1 }],
+    }),
+    /เบอร์โทรไม่ถูกต้อง/,
+  );
+});
+
+test("customers are tenant-isolated by (shop, phone)", async () => {
+  const a = await seedShop("ord-cust-iso-a");
+  const b = await seedShop("ord-cust-iso-b");
+  const menuA = await seedMenu(a.shop.id);
+  const menuB = await seedMenu(b.shop.id);
+  const oa = await new PlaceOrderUseCase(orders(), items(), customers()).execute({
+    shopId: a.shop.id,
+    paymentMethod: "cash",
+    customerPhone: "0900000000",
+    cart: [{ menuItemId: menuA.espresso.id, quantity: 1 }],
+  });
+  const ob = await new PlaceOrderUseCase(orders(), items(), customers()).execute({
+    shopId: b.shop.id,
+    paymentMethod: "cash",
+    customerPhone: "0900000000", // same phone, different shop
+    cart: [{ menuItemId: menuB.espresso.id, quantity: 1 }],
+  });
+  assert.notEqual(oa.customerId, ob.customerId, "same phone = distinct customer per shop");
+});
+
 test("orders are tenant-isolated", async () => {
   const a = await seedShop("ord-iso-a");
   const b = await seedShop("ord-iso-b");
   const menuA = await seedMenu(a.shop.id);
-  const order = await new PlaceOrderUseCase(orders(), items()).execute({
+  const order = await new PlaceOrderUseCase(orders(), items(), customers()).execute({
     shopId: a.shop.id,
     paymentMethod: "cash",
     cart: [{ menuItemId: menuA.espresso.id, quantity: 1 }],

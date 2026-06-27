@@ -16,6 +16,10 @@ export interface CreateOrderInput {
   shopId: string;
   paymentMethod: OrderPaymentMethod;
   note?: string | null;
+  /** Optional customer (walk-ins stay null). name/phone are snapshotted. */
+  customerId?: string | null;
+  customerName?: string | null;
+  customerPhone?: string | null;
   items: CreateOrderItemInput[];
 }
 
@@ -31,6 +35,12 @@ export interface IOrderRepository {
   /** Finished orders (completed/cancelled), newest first, cursor-paginated. */
   pageHistoryByShop(
     shopId: string,
+    opts?: PageOpts,
+  ): Promise<Page<OrderWithItems>>;
+  /** A customer's own orders (any status), newest first — for self-service history. */
+  pageByCustomer(
+    shopId: string,
+    customerId: string,
     opts?: PageOpts,
   ): Promise<Page<OrderWithItems>>;
   /** Move an order to a new status (stamps readyAt/completedAt as appropriate). */

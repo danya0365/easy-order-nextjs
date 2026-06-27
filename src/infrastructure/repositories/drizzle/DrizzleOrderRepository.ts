@@ -45,6 +45,9 @@ function toOrder(r: OrderRow, items: OrderItem[]): OrderWithItems {
     subtotalSatang: r.subtotalSatang,
     totalSatang: r.totalSatang,
     note: r.note,
+    customerId: r.customerId,
+    customerName: r.customerName,
+    customerPhone: r.customerPhone,
     paidAt: r.paidAt,
     readyAt: r.readyAt,
     completedAt: r.completedAt,
@@ -112,6 +115,9 @@ export class DrizzleOrderRepository implements IOrderRepository {
         subtotalSatang,
         totalSatang,
         note: input.note ?? null,
+        customerId: input.customerId ?? null,
+        customerName: input.customerName ?? null,
+        customerPhone: input.customerPhone ?? null,
       })
       .returning();
 
@@ -164,6 +170,30 @@ export class DrizzleOrderRepository implements IOrderRepository {
       where: and(
         eq(schema.orders.shopId, shopId),
         inArray(schema.orders.status, FINISHED_STATUSES),
+        cursorWhere(schema.orders.createdAt, schema.orders.id, cur),
+      ),
+      orderBy: [desc(schema.orders.createdAt), desc(schema.orders.id)],
+      limit: limit + 1,
+    });
+    const items = await loadItems(rows.map((r) => r.id));
+    const page = toPage(rows, limit);
+    return {
+      items: page.items.map((r) => toOrder(r, items.get(r.id) ?? [])),
+      nextCursor: page.nextCursor,
+    };
+  }
+
+  async pageByCustomer(
+    shopId: string,
+    customerId: string,
+    opts: PageOpts = {},
+  ): Promise<Page<OrderWithItems>> {
+    const limit = opts.limit ?? 20;
+    const cur = decodeCursor(opts.cursor);
+    const rows = await db.query.orders.findMany({
+      where: and(
+        eq(schema.orders.shopId, shopId),
+        eq(schema.orders.customerId, customerId),
         cursorWhere(schema.orders.createdAt, schema.orders.id, cur),
       ),
       orderBy: [desc(schema.orders.createdAt), desc(schema.orders.id)],
