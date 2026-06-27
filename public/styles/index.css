@@ -1,0 +1,61 @@
+/* ============================================
+   Easy Stamp — CSS entry point
+   (nextjs-theme-css + nextjs-multi-theme skills)
+   ============================================ */
+
+@import "tailwindcss";
+
+/* Tailwind theme mapping (var() only — no hardcoded colors here) */
+@import "./theme.css";
+
+/* Template palettes. `cafe` is the default (also bound to :root). */
+@import "./themes/cafe.css";
+@import "./themes/minimal.css";
+@import "./themes/retro.css";
+
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+  }
+  /* Headings use the per-theme heading face (themes/*.css). cafe/minimal map it
+     to Noto Sans Thai (same as body); retro maps it to Noto Serif Thai. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading-family);
+  }
+}
+
+/* ============================================
+   MapLibre popup — themed, rounded card chrome
+   (overrides maplibre-gl.css defaults; applies to every map popup)
+   ============================================ */
+.maplibregl-popup-content {
+  padding: 0;
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.14);
+  overflow: hidden;
+}
+/* Anchor is always "bottom" → the tip points down (uses border-top-color). */
+.maplibregl-popup-tip {
+  border-top-color: var(--card) !important;
+}
+.maplibregl-popup-close-button {
+  width: 26px;
+  height: 26px;
+  top: 4px;
+  right: 4px;
+  border-radius: 9999px;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  transition: background-color 0.15s;
+}
+.maplibregl-popup-close-button:hover {
+  background: var(--brand-50);
+  color: var(--foreground);
+}

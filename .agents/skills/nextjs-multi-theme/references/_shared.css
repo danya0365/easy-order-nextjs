@@ -1,0 +1,62 @@
+/* ============================================
+   Shared CSS Utilities
+   ใช้ร่วมกันทุก Template
+   ============================================ */
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================
+   Entry Point (index.css pattern)
+   ============================================ */
+
+/* 
+public/styles/index.css:
+
+@import "tailwindcss";
+
+@import "./themes/_shared.css";
+@import "./themes/core.css";
+@import "./themes/minimal.css";
+@import "./themes/retro-megazine.css";
+
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+}
+*/
+
+/* ============================================
+   Data Theme Attribute Setup
+   ============================================ */
+
+/* Default template (core) */
+:root {
+  --background: var(--core-background);
+  --foreground: var(--core-text);
+}
+
+/* Template-specific backgrounds are handled by each theme file */
+
+/* ============================================
+   Utility Classes (if needed)
+   ============================================ */
+
+@layer utilities {
+  /* Focus visible for all templates */
+  .focus-ring-core {
+    outline: none;
+    box-shadow: var(--core-focus-ring);
+  }
+  
+  .focus-ring-minimal {
+    outline: none;
+    box-shadow: var(--minimal-focus-ring);
+  }
+  
+  .focus-ring-retro {
+    outline: none;
+    box-shadow: var(--retro-megazine-focus-ring);
+  }
+}

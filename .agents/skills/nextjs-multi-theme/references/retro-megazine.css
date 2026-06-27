@@ -1,0 +1,172 @@
+/* ============================================
+   Retro Magazine Template CSS
+   อบอุ่น มีสไตล์ editorial สี earth tone
+   ============================================ */
+
+/* 1. Light Mode (Default) */
+:root {
+  /* Brand Colors - warm earth tones */
+  --retro-megazine-primary: #c2410c;
+  --retro-megazine-secondary: #b45309;
+  --retro-megazine-accent: #9a3412;
+  --retro-megazine-success: #15803d;
+  --retro-megazine-warning: #a16207;
+  --retro-megazine-error: #991b1b;
+
+  /* Surface Colors - warm paper feel */
+  --retro-megazine-background: #fafaf9;
+  --retro-megazine-surface: #f5f5f4;
+  --retro-megazine-surface-elevated: #ffffff;
+  --retro-megazine-paper: #fafaf9;
+
+  /* Text Colors */
+  --retro-megazine-text: #1c1917;
+  --retro-megazine-text-muted: #78716c;
+  --retro-megazine-text-inverted: #fafaf9;
+
+  /* Border - warm tones */
+  --retro-megazine-border: #e7e5e4;
+  --retro-megazine-border-strong: #d6d3d1;
+  --retro-megazine-border-warm: #d6d3d1;
+
+  /* Typography - serif for headings */
+  --retro-megazine-font-heading: "Playfair Display", Georgia, "Times New Roman", serif;
+  --retro-megazine-font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --retro-megazine-font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --retro-megazine-font-accent: "Playfair Display", Georgia, serif;
+  
+  /* Sizes */
+  --retro-megazine-font-size-xs: 0.75rem;
+  --retro-megazine-font-size-sm: 0.875rem;
+  --retro-megazine-font-size-base: 1rem;
+  --retro-megazine-font-size-lg: 1.125rem;
+  --retro-megazine-font-size-xl: 1.25rem;
+  --retro-megazine-font-size-2xl: 1.5rem;
+  --retro-megazine-font-size-3xl: 1.875rem;
+  --retro-megazine-font-size-4xl: 2.25rem;
+  --retro-megazine-font-size-5xl: 3rem;
+  
+  --retro-megazine-line-height-tight: 1.2;
+  --retro-megazine-line-height-normal: 1.5;
+  --retro-megazine-line-height-relaxed: 1.7;
+
+  /* Spacing - balanced editorial */
+  --retro-megazine-spacing-xs: 0.5rem;
+  --retro-megazine-spacing-sm: 0.75rem;
+  --retro-megazine-spacing-md: 1rem;
+  --retro-megazine-spacing-lg: 1.5rem;
+  --retro-megazine-spacing-xl: 2.5rem;
+  --retro-megazine-spacing-2xl: 4rem;
+
+  /* Radius - dramatic */
+  --retro-megazine-radius-sm: 0.25rem;
+  --retro-megazine-radius-md: 0.5rem;
+  --retro-megazine-radius-lg: 0.75rem;
+  --retro-megazine-radius-xl: 1rem;
+  --retro-megazine-radius-full: 9999px;
+
+  /* Shadows - warm */
+  --retro-megazine-shadow-sm: 0 1px 3px 0 rgba(28, 25, 23, 0.1);
+  --retro-megazine-shadow-md: 0 4px 6px -1px rgba(28, 25, 23, 0.15);
+  --retro-megazine-shadow-lg: 0 10px 15px -3px rgba(28, 25, 23, 0.2);
+  --retro-megazine-shadow-warm: 0 4px 14px 0 rgba(194, 65, 12, 0.15);
+
+  /* Focus Ring */
+  --retro-megazine-focus-ring: 0 0 0 3px rgba(194, 65, 12, 0.3);
+}
+
+/* 2. Dark Mode */
+[data-theme="retro-megazine"].dark,
+.dark[data-theme="retro-megazine"] {
+  /* Brand Colors - warmer glow */
+  --retro-megazine-primary: #fb923c;
+  --retro-megazine-secondary: #fbbf24;
+  --retro-megazine-accent: #fdba74;
+  --retro-megazine-success: #4ade80;
+  --retro-megazine-warning: #facc15;
+  --retro-megazine-error: #f87171;
+
+  /* Surface Colors - dark warm */
+  --retro-megazine-background: #1c1917;
+  --retro-megazine-surface: #292524;
+  --retro-megazine-surface-elevated: #44403c;
+  --retro-megazine-paper: #292524;
+
+  /* Text Colors */
+  --retro-megazine-text: #fafaf9;
+  --retro-megazine-text-muted: #a8a29e;
+  --retro-megazine-text-inverted: #1c1917;
+
+  /* Border */
+  --retro-megazine-border: #44403c;
+  --retro-megazine-border-strong: #57534e;
+  --retro-megazine-border-warm: #57534e;
+
+  /* Shadows - warm in dark */
+  --retro-megazine-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  --retro-megazine-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --retro-megazine-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --retro-megazine-shadow-warm: 0 4px 14px 0 rgba(251, 146, 60, 0.2);
+}
+
+/* 3. Tailwind Theme Mapping */
+@theme inline {
+  /* Colors */
+  --color-retro-megazine-primary: var(--retro-megazine-primary);
+  --color-retro-megazine-secondary: var(--retro-megazine-secondary);
+  --color-retro-megazine-accent: var(--retro-megazine-accent);
+  --color-retro-megazine-success: var(--retro-megazine-success);
+  --color-retro-megazine-warning: var(--retro-megazine-warning);
+  --color-retro-megazine-error: var(--retro-megazine-error);
+  
+  --color-retro-megazine-background: var(--retro-megazine-background);
+  --color-retro-megazine-surface: var(--retro-megazine-surface);
+  --color-retro-megazine-surface-elevated: var(--retro-megazine-surface-elevated);
+  --color-retro-megazine-paper: var(--retro-megazine-paper);
+  
+  --color-retro-megazine-text: var(--retro-megazine-text);
+  --color-retro-megazine-text-muted: var(--retro-megazine-text-muted);
+  --color-retro-megazine-text-inverted: var(--retro-megazine-text-inverted);
+  
+  --color-retro-megazine-border: var(--retro-megazine-border);
+  --color-retro-megazine-border-strong: var(--retro-megazine-border-strong);
+  --color-retro-megazine-border-warm: var(--retro-megazine-border-warm);
+
+  /* Typography */
+  --font-retro-megazine-heading: var(--retro-megazine-font-heading);
+  --font-retro-megazine-body: var(--retro-megazine-font-body);
+  --font-retro-megazine-mono: var(--retro-megazine-font-mono);
+  --font-retro-megazine-accent: var(--retro-megazine-font-accent);
+
+  /* Font Sizes */
+  --text-retro-megazine-xs: var(--retro-megazine-font-size-xs);
+  --text-retro-megazine-sm: var(--retro-megazine-font-size-sm);
+  --text-retro-megazine-base: var(--retro-megazine-font-size-base);
+  --text-retro-megazine-lg: var(--retro-megazine-font-size-lg);
+  --text-retro-megazine-xl: var(--retro-megazine-font-size-xl);
+  --text-retro-megazine-2xl: var(--retro-megazine-font-size-2xl);
+  --text-retro-megazine-3xl: var(--retro-megazine-font-size-3xl);
+  --text-retro-megazine-4xl: var(--retro-megazine-font-size-4xl);
+  --text-retro-megazine-5xl: var(--retro-megazine-font-size-5xl);
+
+  /* Spacing */
+  --spacing-retro-megazine-xs: var(--retro-megazine-spacing-xs);
+  --spacing-retro-megazine-sm: var(--retro-megazine-spacing-sm);
+  --spacing-retro-megazine-md: var(--retro-megazine-spacing-md);
+  --spacing-retro-megazine-lg: var(--retro-megazine-spacing-lg);
+  --spacing-retro-megazine-xl: var(--retro-megazine-spacing-xl);
+  --spacing-retro-megazine-2xl: var(--retro-megazine-spacing-2xl);
+
+  /* Radius */
+  --radius-retro-megazine-sm: var(--retro-megazine-radius-sm);
+  --radius-retro-megazine-md: var(--retro-megazine-radius-md);
+  --radius-retro-megazine-lg: var(--retro-megazine-radius-lg);
+  --radius-retro-megazine-xl: var(--retro-megazine-radius-xl);
+  --radius-retro-megazine-full: var(--retro-megazine-radius-full);
+
+  /* Shadows */
+  --shadow-retro-megazine-sm: var(--retro-megazine-shadow-sm);
+  --shadow-retro-megazine-md: var(--retro-megazine-shadow-md);
+  --shadow-retro-megazine-lg: var(--retro-megazine-shadow-lg);
+  --shadow-retro-megazine-warm: var(--retro-megazine-shadow-warm);
+}

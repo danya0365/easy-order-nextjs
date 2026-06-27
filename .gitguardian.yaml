@@ -1,0 +1,26 @@
+# GitGuardian / ggshield config.
+#
+# Every match below is a VERIFIED false positive — no real credential has ever
+# been committed (real secrets live only in untracked, gitignored .env* files;
+# a full git-history scan found no JWT/Turso/Resend/AWS/PEM secret formats).
+# These are dummy test fixtures, a local dev-seed default, and high-entropy
+# alphabet CONSTANTS (not secrets).
+version: 2
+
+secret:
+  ignored-paths:
+    # Test fixtures use throwaway values + the public RFC 6238 TOTP vector.
+    - "**/*.test.ts"
+    # Local seed data — dev-only default credentials, never used in prod.
+    - "scripts/seed/**"
+    - "scripts/seed.ts"
+
+  ignored-matches:
+    - name: "Dev seed default password (scripts/seed/_db.ts) — local only"
+      match: "password123"
+    - name: "Base32 alphabet constant (CryptoTotpService.ts) — RFC 4648, not a secret"
+      match: "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
+    - name: "LINE link-code alphabet (GenerateLineLinkCodeUseCase.ts) — not a secret"
+      match: "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    - name: "Password-generator charset (gen-password.ts) — not a secret"
+      match: "abcdefghijkmnpqrstuvwxyz23456789"

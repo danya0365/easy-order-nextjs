@@ -1,0 +1,77 @@
+/* ============================================
+   Template: cafe (DEFAULT)
+   สดใสน่ารัก โทนคาเฟ่/ขนม — ส้ม + ชมพู
+   ============================================ */
+
+:root,
+[data-theme="cafe"] {
+  /* Brand — orange */
+  --brand-50: #fff7ed;
+  --brand-100: #ffedd5;
+  --brand-200: #fed7aa;
+  --brand-300: #fdba74;
+  --brand-400: #fb923c;
+  --brand-500: #f97316;
+  --brand-600: #ea580c;
+  --brand-700: #c2410c;
+  --brand-800: #9a3412;
+  --brand-900: #7c2d12;
+
+  /* Accent — pink/rose */
+  --accent-100: #ffe4e6;
+  --accent-400: #fb7185;
+  --accent-500: #f43f5e;
+  --accent-600: #e11d48;
+
+  /* Surface / semantic */
+  --background: #fff7ed;
+  --foreground: #1c1917;
+  --card: #ffffff;
+  --card-foreground: #1c1917;
+  --muted: #78716c;
+  --muted-surface: #f5f5f4;
+  --border: #f0e2d4;
+  --ring: #fdba74;
+  --on-brand: #ffffff;
+
+  /* Status */
+  --success: #16a34a;
+  --success-surface: #dcfce7;
+  --warning: #d97706;
+  --warning-surface: #fef3c7;
+  --error: #dc2626;
+  --error-surface: #fee2e2;
+
+  /* Fonts */
+  --font-body: var(--font-noto-thai), system-ui, sans-serif;
+  --font-heading-family: var(--font-noto-thai), system-ui, sans-serif;
+}
+
+[data-theme="cafe"].dark,
+.dark[data-theme="cafe"] {
+  /* Full ramp: 50–300 = warm dark surfaces/borders (e.g. EmptyState bg/border),
+     700–900 = light peach text. Keeps on-brand=white (inherited) so the orange
+     primary button is unchanged. */
+  --brand-50: #3a322c;
+  --brand-100: #44382f;
+  --brand-200: #5a4a3a;
+  --brand-300: #6e5a44;
+  --brand-500: #fb923c;
+  --brand-600: #f97316;
+  --brand-700: #fdba74;
+  --brand-800: #fed7aa;
+  --brand-900: #ffedd5;
+
+  --background: #1c1917;
+  --foreground: #fafaf9;
+  --card: #292524;
+  --card-foreground: #fafaf9;
+  --muted: #a8a29e;
+  --muted-surface: #292524;
+  --border: #44403c;
+  --ring: #fb923c;
+
+  --success-surface: #14532d;
+  --warning-surface: #451a03;
+  --error-surface: #450a0a;
+}

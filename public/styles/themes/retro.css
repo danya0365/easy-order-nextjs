@@ -1,0 +1,74 @@
+/* ============================================
+   Template: retro
+   อบอุ่น editorial — earth tone + serif heading
+   ============================================ */
+
+[data-theme="retro"] {
+  /* Brand — earthy orange */
+  --brand-50: #fdf8f0;
+  --brand-100: #f7ecd9;
+  --brand-200: #ecd2ac;
+  --brand-300: #ddb37a;
+  --brand-400: #cc8a44;
+  --brand-500: #c2410c;
+  --brand-600: #9a3412;
+  --brand-700: #7c2d12;
+  --brand-800: #652e1a;
+  --brand-900: #4c2415;
+
+  /* Accent — amber */
+  --accent-100: #fef3c7;
+  --accent-400: #d97706;
+  --accent-500: #b45309;
+  --accent-600: #92400e;
+
+  --background: #fafaf9;
+  --foreground: #1c1917;
+  --card: #f5f5f4;
+  --card-foreground: #1c1917;
+  --muted: #78716c;
+  --muted-surface: #e7e5e4;
+  --border: #e7e5e4;
+  --ring: #ddb37a;
+  --on-brand: #ffffff;
+
+  --success: #15803d;
+  --success-surface: #dcfce7;
+  --warning: #a16207;
+  --warning-surface: #fef9c3;
+  --error: #991b1b;
+  --error-surface: #fee2e2;
+
+  --font-body: var(--font-noto-thai), system-ui, sans-serif;
+  --font-heading-family: var(--font-noto-serif-thai), Georgia, "Times New Roman", serif;
+}
+
+[data-theme="retro"].dark,
+.dark[data-theme="retro"] {
+  /* Full ramp: 50–300 = warm dark surfaces/borders, 700–900 = light cream text;
+     primary-button text comes from --on-brand (dark on the light-orange brand). */
+  --brand-50: #3a322c;
+  --brand-100: #44382f;
+  --brand-200: #5a4a3a;
+  --brand-300: #6e5a44;
+  --brand-400: #f0b97d;
+  --brand-500: #fb923c;
+  --brand-600: #ea580c;
+  --brand-700: #f0b97d;
+  --brand-800: #e7c9a8;
+  --brand-900: #f5e6d3;
+  --on-brand: #1c1917;
+
+  --background: #1c1917;
+  --foreground: #fafaf9;
+  --card: #292524;
+  --card-foreground: #fafaf9;
+  --muted: #a8a29e;
+  --muted-surface: #292524;
+  --border: #44403c;
+  --ring: #cc8a44;
+
+  --success-surface: #14532d;
+  --warning-surface: #422006;
+  --error-surface: #450a0a;
+}

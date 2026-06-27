@@ -1,0 +1,17 @@
+{
+  "common": {
+    "back": "Try again",
+    "home": "Back to home"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "description": "A temporary problem occurred. Please try again or go back home.",
+    "retry": "Try again",
+    "home": "Back to home"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for may have moved, been deleted, or never existed.",
+    "home": "Back to home"
+  }
+}

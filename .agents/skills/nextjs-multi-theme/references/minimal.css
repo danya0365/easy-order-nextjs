@@ -1,0 +1,154 @@
+/* ============================================
+   Minimal Template CSS
+   เรียบง่าย เน้น whitespace
+   ============================================ */
+
+/* 1. Light Mode (Default) */
+:root {
+  /* Brand Colors */
+  --minimal-primary: #171717;
+  --minimal-secondary: #737373;
+  --minimal-success: #16a34a;
+  --minimal-warning: #d97706;
+  --minimal-error: #dc2626;
+
+  /* Surface Colors */
+  --minimal-background: #fafafa;
+  --minimal-surface: #ffffff;
+  --minimal-surface-elevated: #ffffff;
+
+  /* Text Colors */
+  --minimal-text: #171717;
+  --minimal-text-muted: #525252;
+  --minimal-text-inverted: #ffffff;
+
+  /* Border */
+  --minimal-border: #e5e5e5;
+  --minimal-border-strong: #d4d4d4;
+
+  /* Typography */
+  --minimal-font-heading: "Inter", system-ui, -apple-system, sans-serif;
+  --minimal-font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --minimal-font-mono: "JetBrains Mono", "Fira Code", monospace;
+  
+  /* Sizes - generous spacing */
+  --minimal-font-size-xs: 0.75rem;
+  --minimal-font-size-sm: 0.875rem;
+  --minimal-font-size-base: 1rem;
+  --minimal-font-size-lg: 1.125rem;
+  --minimal-font-size-xl: 1.25rem;
+  --minimal-font-size-2xl: 1.5rem;
+  --minimal-font-size-3xl: 1.875rem;
+  --minimal-font-size-4xl: 2.25rem;
+  
+  --minimal-line-height-tight: 1.4;
+  --minimal-line-height-normal: 1.75;
+  --minimal-line-height-relaxed: 2;
+
+  /* Spacing - extreme whitespace */
+  --minimal-spacing-xs: 0.5rem;
+  --minimal-spacing-sm: 1rem;
+  --minimal-spacing-md: 1.5rem;
+  --minimal-spacing-lg: 2rem;
+  --minimal-spacing-xl: 3rem;
+  --minimal-spacing-2xl: 4rem;
+
+  /* Radius - subtle */
+  --minimal-radius-sm: 0.125rem;
+  --minimal-radius-md: 0.25rem;
+  --minimal-radius-lg: 0.375rem;
+  --minimal-radius-xl: 0.5rem;
+  --minimal-radius-full: 9999px;
+
+  /* Shadows - minimal/none */
+  --minimal-shadow-sm: 0 0 0 1px rgba(0, 0, 0, 0.05);
+  --minimal-shadow-md: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  --minimal-shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+
+  /* Focus Ring */
+  --minimal-focus-ring: 0 0 0 1px rgba(23, 23, 23, 0.3);
+}
+
+/* 2. Dark Mode */
+[data-theme="minimal"].dark,
+.dark[data-theme="minimal"] {
+  /* Brand Colors */
+  --minimal-primary: #fafafa;
+  --minimal-secondary: #a3a3a3;
+  --minimal-success: #4ade80;
+  --minimal-warning: #fbbf24;
+  --minimal-error: #f87171;
+
+  /* Surface Colors */
+  --minimal-background: #0a0a0a;
+  --minimal-surface: #171717;
+  --minimal-surface-elevated: #262626;
+
+  /* Text Colors */
+  --minimal-text: #fafafa;
+  --minimal-text-muted: #a3a3a3;
+  --minimal-text-inverted: #171717;
+
+  /* Border */
+  --minimal-border: #262626;
+  --minimal-border-strong: #404040;
+
+  /* Focus Ring */
+  --minimal-focus-ring: 0 0 0 1px rgba(250, 250, 250, 0.3);
+}
+
+/* 3. Tailwind Theme Mapping */
+@theme inline {
+  /* Colors */
+  --color-minimal-primary: var(--minimal-primary);
+  --color-minimal-secondary: var(--minimal-secondary);
+  --color-minimal-success: var(--minimal-success);
+  --color-minimal-warning: var(--minimal-warning);
+  --color-minimal-error: var(--minimal-error);
+  
+  --color-minimal-background: var(--minimal-background);
+  --color-minimal-surface: var(--minimal-surface);
+  --color-minimal-surface-elevated: var(--minimal-surface-elevated);
+  
+  --color-minimal-text: var(--minimal-text);
+  --color-minimal-text-muted: var(--minimal-text-muted);
+  --color-minimal-text-inverted: var(--minimal-text-inverted);
+  
+  --color-minimal-border: var(--minimal-border);
+  --color-minimal-border-strong: var(--minimal-border-strong);
+
+  /* Typography */
+  --font-minimal-heading: var(--minimal-font-heading);
+  --font-minimal-body: var(--minimal-font-body);
+  --font-minimal-mono: var(--minimal-font-mono);
+
+  /* Font Sizes */
+  --text-minimal-xs: var(--minimal-font-size-xs);
+  --text-minimal-sm: var(--minimal-font-size-sm);
+  --text-minimal-base: var(--minimal-font-size-base);
+  --text-minimal-lg: var(--minimal-font-size-lg);
+  --text-minimal-xl: var(--minimal-font-size-xl);
+  --text-minimal-2xl: var(--minimal-font-size-2xl);
+  --text-minimal-3xl: var(--minimal-font-size-3xl);
+  --text-minimal-4xl: var(--minimal-font-size-4xl);
+
+  /* Spacing */
+  --spacing-minimal-xs: var(--minimal-spacing-xs);
+  --spacing-minimal-sm: var(--minimal-spacing-sm);
+  --spacing-minimal-md: var(--minimal-spacing-md);
+  --spacing-minimal-lg: var(--minimal-spacing-lg);
+  --spacing-minimal-xl: var(--minimal-spacing-xl);
+  --spacing-minimal-2xl: var(--minimal-spacing-2xl);
+
+  /* Radius */
+  --radius-minimal-sm: var(--minimal-radius-sm);
+  --radius-minimal-md: var(--minimal-radius-md);
+  --radius-minimal-lg: var(--minimal-radius-lg);
+  --radius-minimal-xl: var(--minimal-radius-xl);
+  --radius-minimal-full: var(--minimal-radius-full);
+
+  /* Shadows */
+  --shadow-minimal-sm: var(--minimal-shadow-sm);
+  --shadow-minimal-md: var(--minimal-shadow-md);
+  --shadow-minimal-lg: var(--minimal-shadow-lg);
+}

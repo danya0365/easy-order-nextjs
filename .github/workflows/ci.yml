@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Main gate: architecture rules + types + unit/integration tests. Fast.
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # eslint + stylelint + dependency-cruiser (layer rules + server-only).
+      - run: npm run lint:all
+      - run: npx tsc --noEmit
+      # node:test runner — forces TURSO_DATABASE_URL=:memory:, needs no secrets.
+      - run: npm test
+      # NOTE: never run `npm run build` here — its prestep (scripts/vercel-migrate.mjs)
+      # migrates the PROD Turso DB. Building belongs to the Vercel deploy, not CI.
+
+  # Production build — catches build-only breaks (missing-message, server/client
+  # boundary) that the type-checker can't. Runs `npx next build` directly, NOT
+  # `npm run build`, so the prod-DB migrate prestep never fires. A throwaway file
+  # DB env guarantees no prod access even if something touches the DB at build.
+  build:
+    runs-on: ubuntu-latest
+    env:
+      TURSO_DATABASE_URL: "file:./.ci-build.db"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx next build
+
+  # Dependency vulnerability gate. Prod deps only (dev-only transitive advisories
+  # without a fix shouldn't block shipping); fails on high/critical.
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
+
+  # E2E smoke (heavier: downloads a browser). Separate job so the gate stays quick.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # global-setup migrates a throwaway file DB (file:./.e2e.db); no prod access.
+      - run: npm run test:e2e

@@ -1,0 +1,5 @@
+# RFC 9116 — security contact / responsible disclosure.
+# TEMPLATE: replace the Contact address (and Expires before it lapses) per clone.
+Contact: mailto:security@example.com
+Expires: 2027-06-30T00:00:00.000Z
+Preferred-Languages: th, en

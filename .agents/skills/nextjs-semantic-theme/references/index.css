@@ -1,0 +1,29 @@
+/* ============================================
+   Easy Stamp — CSS entry point
+   (nextjs-theme-css + nextjs-multi-theme skills)
+   ============================================ */
+
+@import "tailwindcss";
+
+/* Tailwind theme mapping (var() only — no hardcoded colors here) */
+@import "./theme.css";
+
+/* Template palettes. `cafe` is the default (also bound to :root). */
+@import "./themes/cafe.css";
+@import "./themes/minimal.css";
+@import "./themes/retro.css";
+
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+  }
+  /* Headings use the per-theme heading face (themes/*.css). cafe/minimal map it
+     to Noto Sans Thai (same as body); retro maps it to Noto Serif Thai. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading-family);
+  }
+}

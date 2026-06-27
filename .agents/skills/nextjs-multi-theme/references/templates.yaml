@@ -1,0 +1,179 @@
+# Template Registry
+# เก็บ metadata ของทุก UI Template ในระบบ
+
+templates:
+  core:
+    id: core
+    name: "Core"
+    description: "อ่านง่าย เหมาะกับทุกวัย สายตาดี"
+    namespace: "core"
+    audience: "ทุกวัย - เด็ก ผู้ใหญ่ ผู้สูงอายุ"
+    priority: "readability, accessibility"
+    
+    colors:
+      light:
+        primary: "#2563eb"         # Blue 600 - สีมาตรฐาน คุ้นเคย
+        secondary: "#64748b"       # Slate 500
+        background: "#ffffff"    # Pure white
+        surface: "#f8fafc"       # Slate 50
+        text: "#0f172a"          # Slate 900 - contrast สูง
+        textMuted: "#475569"     # Slate 600
+        border: "#e2e8f0"        # Slate 200
+        success: "#22c55e"       # Green 500
+        warning: "#f59e0b"       # Amber 500
+        error: "#ef4444"         # Red 500
+      dark:
+        primary: "#3b82f6"       # Blue 500 - สว่างขึ้น
+        secondary: "#94a3b8"     # Slate 400
+        background: "#0f172a"    # Slate 900
+        surface: "#1e293b"       # Slate 800
+        text: "#f8fafc"          # Slate 50
+        textMuted: "#94a3b8"     # Slate 400
+        border: "#334155"        # Slate 700
+        success: "#4ade80"       # Green 400
+        warning: "#fbbf24"       # Amber 400
+        error: "#f87171"         # Red 400
+    
+    fonts:
+      heading: "Inter"
+      body: "Inter"
+    
+    sizes:
+      base: "16px"               # ขนาดมาตรฐาน
+      lineHeight: "1.6"          # อ่านสบาย
+      spacing:
+        xs: "0.5rem"
+        sm: "0.75rem"
+        md: "1rem"
+        lg: "1.5rem"
+        xl: "2rem"
+    
+    patterns:
+      buttons: "rounded-md, clear label, focus ring visible"
+      cards: "subtle shadow, comfortable padding, clear borders"
+      inputs: "clear borders, focus ring, generous padding"
+      spacing: "generous, breathable, not cramped"
+      typography: "high contrast, clear hierarchy, readable"
+
+  minimal:
+    id: minimal
+    name: "Minimal"
+    description: "เรียบง่าย เน้นเนื้อหา whitespace มาก"
+    namespace: "minimal"
+    audience: "ผู้ใช้ที่ชอบความเรียบง่าย ไม่ชอบ clutter"
+    priority: "whitespace, simplicity"
+    
+    colors:
+      light:
+        primary: "#171717"       # Neutral 900
+        secondary: "#737373"     # Neutral 500
+        background: "#fafafa"    # Neutral 50
+        surface: "#ffffff"       # White
+        text: "#171717"          # Neutral 900
+        textMuted: "#525252"     # Neutral 600
+        border: "#e5e5e5"        # Neutral 200
+        success: "#16a34a"       # Green 600
+        warning: "#d97706"       # Amber 600
+        error: "#dc2626"         # Red 600
+      dark:
+        primary: "#fafafa"       # Neutral 50
+        secondary: "#a3a3a3"     # Neutral 400
+        background: "#0a0a0a"    # Neutral 950
+        surface: "#171717"       # Neutral 900
+        text: "#fafafa"          # Neutral 50
+        textMuted: "#a3a3a3"     # Neutral 400
+        border: "#262626"        # Neutral 800
+        success: "#4ade80"       # Green 400
+        warning: "#fbbf24"       # Amber 400
+        error: "#f87171"         # Red 400
+    
+    fonts:
+      heading: "Inter"
+      body: "Inter"
+    
+    sizes:
+      base: "16px"
+      lineHeight: "1.75"         # ห่างขึ้นอีก
+      spacing:
+        xs: "0.5rem"
+        sm: "1rem"
+        md: "1.5rem"
+        lg: "2rem"
+        xl: "3rem"
+    
+    patterns:
+      buttons: "ghost/outline, rounded-sm, minimal borders, hover:bg"
+      cards: "thin border, no shadow, lots of padding, clean"
+      inputs: "minimal borders, no background, underline style optional"
+      spacing: "extreme whitespace, generous margins"
+      typography: "light weight headings, generous line-height"
+
+  retro-megazine:
+    id: retro-megazine
+    name: "Retro Magazine"
+    description: "อบอุ่น มีสไตล์ editorial สี earth tone"
+    namespace: "retro-megazine"
+    audience: "ผู้ใช้ที่ชอบความมีเอกลักษณ์ สไตล์ vintage"
+    priority: "character, warmth"
+    
+    colors:
+      light:
+        primary: "#c2410c"       # Orange 700 - earth tone
+        secondary: "#b45309"     # Amber 700
+        background: "#fafaf9"    # Stone 50 - warm white
+        surface: "#f5f5f4"       # Stone 100
+        text: "#1c1917"          # Stone 900
+        textMuted: "#78716c"     # Stone 500
+        border: "#e7e5e4"        # Stone 200
+        success: "#15803d"       # Green 700
+        warning: "#a16207"       # Yellow 700
+        error: "#991b1b"         # Red 800
+      dark:
+        primary: "#fb923c"       # Orange 400 - warm glow
+        secondary: "#fbbf24"     # Amber 400
+        background: "#1c1917"    # Stone 900
+        surface: "#292524"       # Stone 800
+        text: "#fafaf9"          # Stone 50
+        textMuted: "#a8a29e"     # Stone 400
+        border: "#44403c"        # Stone 700
+        success: "#4ade80"       # Green 400
+        warning: "#facc15"       # Yellow 400
+        error: "#f87171"         # Red 400
+    
+    fonts:
+      heading: "Playfair Display"  # Serif สำหรับ heading
+      body: "Inter"
+      accent: "Playfair Display"
+    
+    sizes:
+      base: "16px"
+      lineHeight: "1.5"
+      spacing:
+        xs: "0.5rem"
+        sm: "0.75rem"
+        md: "1rem"
+        lg: "1.5rem"
+        xl: "2.5rem"
+    
+    patterns:
+      buttons: "rounded-full, uppercase tracking-wide, bold, warm colors"
+      cards: "thick border, warm shadow, generous padding, paper feel"
+      inputs: "bottom border only, vintage style, warm focus"
+      spacing: "balanced, editorial feel, asymmetric sometimes"
+      typography: "serif headings, dramatic sizes, character"
+
+# Template selection guide
+selection_guide:
+  criteria:
+    - question: "ผู้ใช้เป้าหมายเป็นคนทุกวัย?"
+      recommend: core
+    
+    - question: "ต้องการเน้นเนื้อหา ไม่ต้องการ distraction?"
+      recommend: minimal
+    
+    - question: "ต้องการความมีเอกลักษณ์ สไตล์เฉพาะตัว?"
+      recommend: retro-megazine
+    
+    - question: "ผู้ใช้สูงอายุหรือมีปัญหาสายตา?"
+      recommend: core
+      note: "contrast สูง อ่านง่าย"

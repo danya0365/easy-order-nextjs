@@ -1,0 +1,156 @@
+/* ============================================
+   Core Template CSS
+   อ่านง่าย เหมาะกับทุกวัย
+   ============================================ */
+
+/* 1. Light Mode (Default) */
+:root {
+  /* Brand Colors */
+  --core-primary: #2563eb;
+  --core-secondary: #64748b;
+  --core-success: #22c55e;
+  --core-warning: #f59e0b;
+  --core-error: #ef4444;
+
+  /* Surface Colors */
+  --core-background: #ffffff;
+  --core-surface: #f8fafc;
+  --core-surface-elevated: #ffffff;
+
+  /* Text Colors */
+  --core-text: #0f172a;
+  --core-text-muted: #475569;
+  --core-text-inverted: #ffffff;
+
+  /* Border */
+  --core-border: #e2e8f0;
+  --core-border-strong: #cbd5e1;
+
+  /* Typography */
+  --core-font-heading: "Inter", system-ui, -apple-system, sans-serif;
+  --core-font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --core-font-mono: "JetBrains Mono", "Fira Code", monospace;
+  
+  /* Sizes */
+  --core-font-size-xs: 0.75rem;
+  --core-font-size-sm: 0.875rem;
+  --core-font-size-base: 1rem;
+  --core-font-size-lg: 1.125rem;
+  --core-font-size-xl: 1.25rem;
+  --core-font-size-2xl: 1.5rem;
+  --core-font-size-3xl: 1.875rem;
+  --core-font-size-4xl: 2.25rem;
+  
+  --core-line-height-tight: 1.25;
+  --core-line-height-normal: 1.6;
+  --core-line-height-relaxed: 1.75;
+
+  /* Spacing */
+  --core-spacing-xs: 0.5rem;
+  --core-spacing-sm: 0.75rem;
+  --core-spacing-md: 1rem;
+  --core-spacing-lg: 1.5rem;
+  --core-spacing-xl: 2rem;
+  --core-spacing-2xl: 3rem;
+
+  /* Radius */
+  --core-radius-sm: 0.25rem;
+  --core-radius-md: 0.375rem;
+  --core-radius-lg: 0.5rem;
+  --core-radius-xl: 0.75rem;
+  --core-radius-full: 9999px;
+
+  /* Shadows */
+  --core-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --core-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --core-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+
+  /* Focus Ring */
+  --core-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+/* 2. Dark Mode */
+[data-theme="core"].dark,
+.dark[data-theme="core"] {
+  /* Brand Colors - brighter in dark */
+  --core-primary: #3b82f6;
+  --core-secondary: #94a3b8;
+  --core-success: #4ade80;
+  --core-warning: #fbbf24;
+  --core-error: #f87171;
+
+  /* Surface Colors */
+  --core-background: #0f172a;
+  --core-surface: #1e293b;
+  --core-surface-elevated: #334155;
+
+  /* Text Colors */
+  --core-text: #f8fafc;
+  --core-text-muted: #94a3b8;
+  --core-text-inverted: #0f172a;
+
+  /* Border */
+  --core-border: #334155;
+  --core-border-strong: #475569;
+
+  /* Shadows - lighter in dark */
+  --core-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --core-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+  --core-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4);
+}
+
+/* 3. Tailwind Theme Mapping */
+@theme inline {
+  /* Colors */
+  --color-core-primary: var(--core-primary);
+  --color-core-secondary: var(--core-secondary);
+  --color-core-success: var(--core-success);
+  --color-core-warning: var(--core-warning);
+  --color-core-error: var(--core-error);
+  
+  --color-core-background: var(--core-background);
+  --color-core-surface: var(--core-surface);
+  --color-core-surface-elevated: var(--core-surface-elevated);
+  
+  --color-core-text: var(--core-text);
+  --color-core-text-muted: var(--core-text-muted);
+  --color-core-text-inverted: var(--core-text-inverted);
+  
+  --color-core-border: var(--core-border);
+  --color-core-border-strong: var(--core-border-strong);
+
+  /* Typography */
+  --font-core-heading: var(--core-font-heading);
+  --font-core-body: var(--core-font-body);
+  --font-core-mono: var(--core-font-mono);
+
+  /* Font Sizes */
+  --text-core-xs: var(--core-font-size-xs);
+  --text-core-sm: var(--core-font-size-sm);
+  --text-core-base: var(--core-font-size-base);
+  --text-core-lg: var(--core-font-size-lg);
+  --text-core-xl: var(--core-font-size-xl);
+  --text-core-2xl: var(--core-font-size-2xl);
+  --text-core-3xl: var(--core-font-size-3xl);
+  --text-core-4xl: var(--core-font-size-4xl);
+
+  /* Spacing */
+  --spacing-core-xs: var(--core-spacing-xs);
+  --spacing-core-sm: var(--core-spacing-sm);
+  --spacing-core-md: var(--core-spacing-md);
+  --spacing-core-lg: var(--core-spacing-lg);
+  --spacing-core-xl: var(--core-spacing-xl);
+  --spacing-core-2xl: var(--core-spacing-2xl);
+
+  /* Radius */
+  --radius-core-sm: var(--core-radius-sm);
+  --radius-core-md: var(--core-radius-md);
+  --radius-core-lg: var(--core-radius-lg);
+  --radius-core-xl: var(--core-radius-xl);
+  --radius-core-full: var(--core-radius-full);
+
+  /* Shadows */
+  --shadow-core-sm: var(--core-shadow-sm);
+  --shadow-core-md: var(--core-shadow-md);
+  --shadow-core-lg: var(--core-shadow-lg);
+}
