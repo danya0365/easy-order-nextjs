@@ -1,0 +1,21 @@
+{
+  "autoMemoryDirectory": "~/easy-order-nextjs/.claude/memory",
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm run *)",
+      "Bash(npm test*)",
+      "Bash(npx tsx*)",
+      "Bash(npx tsc*)",
+      "Bash(npx next*)",
+      "Bash(npx drizzle-kit*)",
+      "Bash(npx playwright*)",
+      "Bash(npx prettier*)",
+      "Bash(git status*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git diff*)",
+      "Bash(git log*)"
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+- [project-easy-order](project-easy-order.md) — Easy Order: in-store iPad self-ordering SaaS cloned from easy-stamp; kiosk PIN/session, menu+order domain, design decisions, how to run. (See also MEMORY_SUMMARY.md at the repo root for the full handoff.)
