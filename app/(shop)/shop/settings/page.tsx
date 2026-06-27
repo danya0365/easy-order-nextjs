@@ -8,6 +8,7 @@ import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
 import { PAUSE_MAX_PER_30D } from "@/src/domain/services/subscription-status";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { SettingsForm } from "@/src/presentation/components/shop/SettingsForm";
+import { KioskControl } from "@/src/presentation/components/kiosk/KioskControl";
 import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopControl";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 
@@ -48,6 +49,12 @@ export default async function ShopSettingsPage() {
           name={shop.name}
           promptpayTarget={shop.promptpayTarget ?? ""}
         />
+        <p className="mt-3 text-xs text-muted">{t("kioskPromptpayHint")}</p>
+      </Card>
+
+      <Card>
+        <CardHeader title={t("kioskTitle")} subtitle={t("kioskSubtitle")} />
+        <KioskControl hasKioskPin={shop.hasKioskPin} />
       </Card>
 
       <Card>

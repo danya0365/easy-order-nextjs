@@ -23,14 +23,11 @@ export async function getClientMessages() {
     billing: messages.billing,
     shop: messages.shop,
     admin: messages.admin,
-    reviews: messages.reviews,
-    stamp: messages.stamp,
-    leads: messages.leads,
     layout: messages.layout,
-    map: messages.map,
     channels: messages.channels,
-    analytics: messages.analytics,
-    promote: messages.promote,
     theme: messages.theme,
+    menu: messages.menu,
+    order: messages.order,
+    kiosk: messages.kiosk,
   };
 }

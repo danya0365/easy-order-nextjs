@@ -3,7 +3,6 @@ import "server-only";
 import { and, asc, count, desc, eq, gte, inArray } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type {
-  Order,
   OrderItem,
   OrderStatus,
   OrderWithItems,
