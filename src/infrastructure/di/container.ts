@@ -7,12 +7,14 @@ import { DrizzleBranchRepository } from "@/src/infrastructure/repositories/drizz
 import { DrizzleMenuCategoryRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMenuCategoryRepository";
 import { DrizzleMenuItemRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMenuItemRepository";
 import { DrizzleOrderRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleOrderRepository";
+import { DrizzleKioskSessionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleKioskSessionRepository";
 
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import type { IBranchRepository } from "@/src/application/repositories/IBranchRepository";
 import type { IMenuCategoryRepository } from "@/src/application/repositories/IMenuCategoryRepository";
 import type { IMenuItemRepository } from "@/src/application/repositories/IMenuItemRepository";
 import type { IOrderRepository } from "@/src/application/repositories/IOrderRepository";
+import type { IKioskSessionRepository } from "@/src/application/repositories/IKioskSessionRepository";
 
 /**
  * Server-side composition root. The 🟢 generic core (account/auth, billing,
@@ -30,6 +32,8 @@ class Container extends GenericContainer {
   readonly menuItemRepository: IMenuItemRepository =
     new DrizzleMenuItemRepository();
   readonly orderRepository: IOrderRepository = new DrizzleOrderRepository();
+  readonly kioskSessionRepository: IKioskSessionRepository =
+    new DrizzleKioskSessionRepository();
 }
 
 const globalForContainer = globalThis as unknown as {

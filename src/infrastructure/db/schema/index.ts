@@ -4,6 +4,7 @@ export * from "./menu-categories";
 export * from "./menu-items";
 export * from "./orders";
 export * from "./order-items";
+export * from "./kiosk-sessions";
 export * from "./users";
 export * from "./sessions";
 export * from "./subscriptions";

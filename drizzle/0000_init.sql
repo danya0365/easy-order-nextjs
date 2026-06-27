@@ -91,6 +91,16 @@ CREATE TABLE `order_items` (
 );
 --> statement-breakpoint
 CREATE INDEX `order_items_order_idx` ON `order_items` (`order_id`);--> statement-breakpoint
+CREATE TABLE `kiosk_sessions` (
+	`id` text PRIMARY KEY NOT NULL,
+	`shop_id` text NOT NULL,
+	`label` text,
+	`expires_at` text NOT NULL,
+	`created_at` text NOT NULL,
+	FOREIGN KEY (`shop_id`) REFERENCES `shops`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `kiosk_sessions_shop_idx` ON `kiosk_sessions` (`shop_id`);--> statement-breakpoint
 CREATE TABLE `users` (
 	`id` text PRIMARY KEY NOT NULL,
 	`email` text NOT NULL,
