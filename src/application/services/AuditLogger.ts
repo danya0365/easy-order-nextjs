@@ -28,7 +28,11 @@ export const AUDIT_ACTIONS = {
   twoFactorResetByAdmin: "two_factor_reset_by_admin",
   recoveryCodesRegenerated: "recovery_codes_regenerated",
   sessionRevoked: "session_revoked",
-  customerErased: "customer_erased",
+  kioskActivated: "kiosk_activated",
+  kioskExited: "kiosk_exited",
+  kioskPinSet: "kiosk_pin_set",
+  orderPaymentConfirmed: "order_payment_confirmed",
+  orderCancelled: "order_cancelled",
 } as const;
 
 /**

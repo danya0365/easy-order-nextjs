@@ -26,6 +26,71 @@ CREATE TABLE `branches` (
 );
 --> statement-breakpoint
 CREATE INDEX `branches_shop_idx` ON `branches` (`shop_id`);--> statement-breakpoint
+CREATE TABLE `menu_categories` (
+	`id` text PRIMARY KEY NOT NULL,
+	`shop_id` text NOT NULL,
+	`name` text NOT NULL,
+	`sort_order` integer DEFAULT 0 NOT NULL,
+	`is_active` integer DEFAULT true NOT NULL,
+	`created_at` text NOT NULL,
+	`updated_at` text NOT NULL,
+	FOREIGN KEY (`shop_id`) REFERENCES `shops`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `menu_categories_shop_idx` ON `menu_categories` (`shop_id`);--> statement-breakpoint
+CREATE TABLE `menu_items` (
+	`id` text PRIMARY KEY NOT NULL,
+	`shop_id` text NOT NULL,
+	`category_id` text NOT NULL,
+	`name` text NOT NULL,
+	`description` text,
+	`price_satang` integer NOT NULL,
+	`image_url` text,
+	`is_available` integer DEFAULT true NOT NULL,
+	`sort_order` integer DEFAULT 0 NOT NULL,
+	`created_at` text NOT NULL,
+	`updated_at` text NOT NULL,
+	FOREIGN KEY (`shop_id`) REFERENCES `shops`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`category_id`) REFERENCES `menu_categories`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `menu_items_shop_idx` ON `menu_items` (`shop_id`);--> statement-breakpoint
+CREATE INDEX `menu_items_category_idx` ON `menu_items` (`category_id`);--> statement-breakpoint
+CREATE TABLE `orders` (
+	`id` text PRIMARY KEY NOT NULL,
+	`shop_id` text NOT NULL,
+	`order_no` integer NOT NULL,
+	`status` text DEFAULT 'pending' NOT NULL,
+	`payment_method` text NOT NULL,
+	`payment_status` text DEFAULT 'unpaid' NOT NULL,
+	`subtotal_satang` integer NOT NULL,
+	`total_satang` integer NOT NULL,
+	`note` text,
+	`paid_at` text,
+	`ready_at` text,
+	`completed_at` text,
+	`created_at` text NOT NULL,
+	`updated_at` text NOT NULL,
+	FOREIGN KEY (`shop_id`) REFERENCES `shops`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `orders_shop_created_idx` ON `orders` (`shop_id`,`created_at`);--> statement-breakpoint
+CREATE INDEX `orders_shop_status_idx` ON `orders` (`shop_id`,`status`);--> statement-breakpoint
+CREATE TABLE `order_items` (
+	`id` text PRIMARY KEY NOT NULL,
+	`order_id` text NOT NULL,
+	`shop_id` text NOT NULL,
+	`menu_item_id` text,
+	`name_snapshot` text NOT NULL,
+	`unit_price_satang` integer NOT NULL,
+	`quantity` integer NOT NULL,
+	`line_total_satang` integer NOT NULL,
+	FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`shop_id`) REFERENCES `shops`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`menu_item_id`) REFERENCES `menu_items`(`id`) ON UPDATE no action ON DELETE set null
+);
+--> statement-breakpoint
+CREATE INDEX `order_items_order_idx` ON `order_items` (`order_id`);--> statement-breakpoint
 CREATE TABLE `users` (
 	`id` text PRIMARY KEY NOT NULL,
 	`email` text NOT NULL,

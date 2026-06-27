@@ -133,7 +133,8 @@ export interface OrderItem {
   id: string;
   orderId: string;
   shopId: string;
-  menuItemId: string;
+  /** Link to the menu item; null if that item was later deleted. */
+  menuItemId: string | null;
   /** Name + price snapshot so later menu edits don't rewrite order history. */
   nameSnapshot: string;
   unitPriceSatang: number;
