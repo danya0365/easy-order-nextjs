@@ -1014,6 +1014,11 @@
     "addItemButton": "เพิ่มเมนู",
     "addingItem": "กำลังเพิ่ม…",
     "needCategoryFirst": "เพิ่มหมวดเมนูก่อน จึงจะเพิ่มเมนูได้",
+    "itemImageLabel": "รูปเมนู (ไม่บังคับ)",
+    "addImage": "เพิ่มรูป",
+    "changeImage": "เปลี่ยนรูป",
+    "removeImage": "ลบรูป",
+    "removingImage": "กำลังลบ…",
     "baht": "฿{amount}"
   },
   "order": {

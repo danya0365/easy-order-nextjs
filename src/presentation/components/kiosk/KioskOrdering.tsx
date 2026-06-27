@@ -11,6 +11,7 @@ import {
   type PlaceOrderResult,
 } from "@/src/presentation/actions/order-actions";
 import { satangToBaht } from "@/src/presentation/lib/money";
+import { menuImageSrc } from "@/src/presentation/lib/menu-image";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { Textarea } from "@/src/presentation/components/ui/Textarea";
 import { Modal } from "@/src/presentation/components/ui/Modal";
@@ -283,9 +284,18 @@ function ItemTile({
   onChange: (qty: number) => void;
 }) {
   const t = useTranslations("kiosk");
+  const imageSrc = menuImageSrc(item);
   return (
     <div className="flex flex-col justify-between gap-3 rounded-2xl border border-border bg-card p-4">
       <div>
+        {imageSrc && (
+          // eslint-disable-next-line @next/next/no-img-element -- served from our own API route, not a remote CDN
+          <img
+            src={imageSrc}
+            alt={item.name}
+            className="mb-3 aspect-square w-full rounded-xl border border-border object-cover bg-muted-surface"
+          />
+        )}
         <p className="font-semibold text-foreground">{item.name}</p>
         {item.description && (
           <p className="mt-0.5 text-sm text-muted">{item.description}</p>

@@ -15,14 +15,17 @@ import {
   updateItemAction,
   toggleItemAvailableAction,
   deleteItemAction,
+  removeItemImageAction,
   type FormState,
 } from "@/src/presentation/actions/menu-actions";
 import { satangToBaht } from "@/src/presentation/lib/money";
+import { menuImageSrc } from "@/src/presentation/lib/menu-image";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { Input } from "@/src/presentation/components/ui/Input";
 import { Textarea } from "@/src/presentation/components/ui/Textarea";
 import { FormField } from "@/src/presentation/components/ui/FormField";
+import { ImageCropField } from "@/src/presentation/components/ui/ImageCropField";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { Modal } from "@/src/presentation/components/ui/Modal";
@@ -273,16 +276,27 @@ function ItemRow({ item }: { item: MenuItem }) {
     });
   }
 
+  const thumbSrc = menuImageSrc(item);
   return (
     <li className="flex items-center justify-between gap-3 py-3">
-      <div className="min-w-0">
-        <p className="truncate font-medium text-foreground">{item.name}</p>
-        {item.description && (
-          <p className="truncate text-sm text-muted">{item.description}</p>
+      <div className="flex min-w-0 items-center gap-3">
+        {thumbSrc && (
+          // eslint-disable-next-line @next/next/no-img-element -- served from our own API route, not a remote CDN
+          <img
+            src={thumbSrc}
+            alt={item.name}
+            className="size-12 shrink-0 rounded-lg border border-border object-cover bg-muted-surface"
+          />
         )}
-        <p className="text-sm text-muted">
-          {t("baht", { amount: satangToBaht(item.priceSatang) })}
-        </p>
+        <div className="min-w-0">
+          <p className="truncate font-medium text-foreground">{item.name}</p>
+          {item.description && (
+            <p className="truncate text-sm text-muted">{item.description}</p>
+          )}
+          <p className="text-sm text-muted">
+            {t("baht", { amount: satangToBaht(item.priceSatang) })}
+          </p>
+        </div>
       </div>
       <span className="flex shrink-0 items-center gap-1">
         <Button
@@ -334,14 +348,26 @@ function EditItemModal({
   item: MenuItem;
 }) {
   const t = useTranslations("menu");
+  const router = useRouter();
+  const toast = useToast();
   const [state, action, pending] = useActionState<FormState, FormData>(
     updateItemAction,
     {},
   );
+  const [removing, startRemove] = useTransition();
+  const imageSrc = menuImageSrc(item);
   useEffect(() => {
     if (state.success) onClose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.success]);
+
+  function removeImage() {
+    startRemove(async () => {
+      const res = await removeItemImageAction(item.id);
+      if (res.error) toast.error(res.error);
+      else router.refresh();
+    });
+  }
 
   return (
     <Modal open={open} onClose={onClose} title={t("editItemTitle")}>
@@ -375,6 +401,32 @@ function EditItemModal({
             rows={2}
             maxLength={200}
             defaultValue={item.description ?? ""}
+          />
+        </FormField>
+        <FormField label={t("itemImageLabel")} htmlFor="editImage">
+          {imageSrc && (
+            <div className="mb-2 flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element -- served from our own API route, not a remote CDN */}
+              <img
+                src={imageSrc}
+                alt={item.name}
+                className="size-16 rounded-lg border border-border object-cover bg-muted-surface"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={removeImage}
+                disabled={removing}
+              >
+                {removing ? t("removingImage") : t("removeImage")}
+              </Button>
+            </div>
+          )}
+          <ImageCropField
+            name="image"
+            aspect={1}
+            label={imageSrc ? t("changeImage") : t("addImage")}
           />
         </FormField>
         {state.error && <p className="text-sm text-error">{state.error}</p>}
@@ -443,6 +495,9 @@ function AddItemForm({ categories }: { categories: MenuCategory[] }) {
             maxLength={200}
             placeholder={t("itemDescPlaceholder")}
           />
+        </FormField>
+        <FormField label={t("itemImageLabel")} htmlFor="newImage">
+          <ImageCropField name="image" aspect={1} label={t("addImage")} />
         </FormField>
         {state.error && <p className="text-sm text-error">{state.error}</p>}
         <Button type="submit" disabled={pending}>

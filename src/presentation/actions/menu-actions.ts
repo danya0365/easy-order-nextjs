@@ -11,6 +11,7 @@ import { DeleteMenuCategoryUseCase } from "@/src/application/use-cases/menu/Dele
 import { CreateMenuItemUseCase } from "@/src/application/use-cases/menu/CreateMenuItemUseCase";
 import { UpdateMenuItemUseCase } from "@/src/application/use-cases/menu/UpdateMenuItemUseCase";
 import { DeleteMenuItemUseCase } from "@/src/application/use-cases/menu/DeleteMenuItemUseCase";
+import { SetMenuItemImageUseCase } from "@/src/application/use-cases/menu/SetMenuItemImageUseCase";
 import { bahtToSatang } from "@/src/presentation/lib/money";
 
 export interface FormState {
@@ -28,6 +29,29 @@ function parsePriceSatang(raw: string): number {
   const baht = Number(raw.trim());
   if (!Number.isFinite(baht) || baht < 0) throw new Error("ราคาไม่ถูกต้อง");
   return bahtToSatang(baht);
+}
+
+/**
+ * Persist an image staged in the form's `image` field onto a menu item, if one
+ * was actually picked. `ImageCropField` leaves the hidden input empty when the
+ * user didn't choose a photo, so we skip silently in that case.
+ */
+async function saveItemImageIfPresent(
+  shopId: string,
+  itemId: string,
+  formData: FormData,
+): Promise<void> {
+  const file = formData.get("image");
+  if (!(file instanceof File) || file.size === 0) return;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  await new SetMenuItemImageUseCase(
+    container.menuItemRepository,
+    container.slipStorage,
+  ).execute(shopId, itemId, {
+    filename: file.name,
+    contentType: file.type,
+    bytes,
+  });
 }
 
 // --- Categories ---
@@ -109,7 +133,7 @@ export async function createItemAction(
 ): Promise<FormState> {
   try {
     const shopId = await ownerShopId();
-    await new CreateMenuItemUseCase(
+    const item = await new CreateMenuItemUseCase(
       container.menuItemRepository,
       container.menuCategoryRepository,
     ).execute({
@@ -119,6 +143,7 @@ export async function createItemAction(
       description: String(formData.get("description") ?? ""),
       priceSatang: parsePriceSatang(String(formData.get("priceBaht") ?? "")),
     });
+    await saveItemImageIfPresent(shopId, item.id, formData);
     revalidatePath("/shop/menu");
     return { success: "เพิ่มเมนูแล้ว" };
   } catch (e) {
@@ -132,15 +157,17 @@ export async function updateItemAction(
 ): Promise<FormState> {
   try {
     const shopId = await ownerShopId();
+    const itemId = String(formData.get("itemId") ?? "");
     await new UpdateMenuItemUseCase(
       container.menuItemRepository,
       container.menuCategoryRepository,
-    ).execute(shopId, String(formData.get("itemId") ?? ""), {
+    ).execute(shopId, itemId, {
       categoryId: String(formData.get("categoryId") ?? ""),
       name: String(formData.get("name") ?? ""),
       description: String(formData.get("description") ?? ""),
       priceSatang: parsePriceSatang(String(formData.get("priceBaht") ?? "")),
     });
+    await saveItemImageIfPresent(shopId, itemId, formData);
     revalidatePath("/shop/menu");
     return { success: "บันทึกเมนูแล้ว" };
   } catch (e) {
@@ -174,6 +201,22 @@ export async function deleteItemAction(
       shopId,
       itemId,
     );
+    revalidatePath("/shop/menu");
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+export async function removeItemImageAction(
+  itemId: string,
+): Promise<{ error?: string }> {
+  try {
+    const shopId = await ownerShopId();
+    await new SetMenuItemImageUseCase(
+      container.menuItemRepository,
+      container.slipStorage,
+    ).remove(shopId, itemId);
     revalidatePath("/shop/menu");
     return {};
   } catch (e) {

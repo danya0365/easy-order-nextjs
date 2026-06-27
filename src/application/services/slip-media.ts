@@ -49,6 +49,11 @@ export function shopImageKey(
   return `shops/${shopId}/${imageId}.${ext}`;
 }
 
+/** Storage key for a menu item image (also the value stored in menu_items.imageUrl). */
+export function menuImageKey(itemId: string, ext: string): string {
+  return `menu/${itemId}.${ext}`;
+}
+
 /** content-type from a stored key/url like "slips/<id>.png". */
 export function contentTypeForKey(url: string): string {
   const ext = url.split(".").pop()?.toLowerCase() ?? "";

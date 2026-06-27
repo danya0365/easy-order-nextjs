@@ -60,6 +60,23 @@ test("deletes only unreferenced blobs older than the grace window", async () => 
   assert.ok(!storage.objects.has("slips/orphan-old.png"), "stale orphan removed");
 });
 
+test("spares referenced menu images but reaps orphaned ones", async () => {
+  const now = new Date();
+  const aged = new Date(now.getTime() - 2 * 86400_000);
+  const storage = new FakeStorage();
+  storage.add("menu/keep.jpg", aged); // referenced via extraReferencedKeys → spared
+  storage.add("menu/gone.jpg", aged); // unreferenced + aged → deleted
+
+  const res = await cleanup(storage).execute({
+    now,
+    extraReferencedKeys: ["menu/keep.jpg"],
+  });
+
+  assert.equal(res.deleted, 1);
+  assert.ok(storage.objects.has("menu/keep.jpg"), "referenced menu image kept");
+  assert.ok(!storage.objects.has("menu/gone.jpg"), "orphaned menu image removed");
+});
+
 test("fails closed: a reference lookup error deletes nothing", async () => {
   const storage = new FakeStorage();
   storage.add("slips/whatever.png", new Date(0)); // ancient orphan
