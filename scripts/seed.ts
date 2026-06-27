@@ -2,7 +2,7 @@
  * Seed orchestrator. Runs one or both data profiles:
  *
  *   production — admin + shop categories + ONE real example shop. Prod-safe.
- *   mock       — fake-but-realistic dev/demo data (shops/customers/stamps). DEV ONLY.
+ *   mock       — fake-but-realistic dev/demo data (shops/customers/menu/orders). DEV ONLY.
  *
  * The target DB comes from TURSO_DATABASE_URL (defaults to file:./local.db).
  * Pass --env=<file> to load a specific env file first (e.g. seed a remote Turso
@@ -127,8 +127,8 @@ async function main() {
 
   console.log(`\nLogins (password: ${DEFAULT_PASSWORD})`);
   if (selected.includes("production")) {
-    console.log("  admin:        admin@easystamp.test");
-    console.log("  example shop: owner@demo.easystamp.test");
+    console.log("  admin:        admin@easyorder.test");
+    console.log("  example shop: owner@demo.easyorder.test");
   }
   if (selected.includes("mock")) {
     console.log("  mock owner:   owner@diner-a.test  (active — menu+kiosk ready, PIN 1234)");

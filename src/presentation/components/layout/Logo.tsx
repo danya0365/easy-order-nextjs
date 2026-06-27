@@ -3,7 +3,7 @@
 import { BRAND } from "@/src/config/brand";
 
 /**
- * Brand logo. `mark` = the square stamp-card mark (compact, for headers/tiles);
+ * Brand logo. `mark` = the square brand mark (compact, for headers/tiles);
  * `wordmark` = the horizontal brand lockup (for the login/hero). The source
  * images have an opaque light background, so callers place them on a
  * light/rounded tile to look intentional in dark mode.

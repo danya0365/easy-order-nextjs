@@ -91,7 +91,7 @@ All seeded users share the password **`password123`**:
 
 | Email | Role |
 | --- | --- |
-| `admin@easystamp.test` | platform admin |
+| `admin@easyorder.test` | platform admin |
 | `owner@diner-a.test` | shop owner (active — demo menu + kiosk PIN `1234`) |
 | `owner@bakery-b.test` | shop owner (overdue / suspended demo) |
 | `staff1@diner-a.test` | branch staff |

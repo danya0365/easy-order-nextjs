@@ -9,7 +9,7 @@ import { retry } from "@/src/infrastructure/services/retry";
 
 export interface EmailConfig {
   apiKey: string;
-  /** Verified sender, e.g. `"Easy Stamp <no-reply@yourdomain.com>"`. */
+  /** Verified sender, e.g. `"Easy Order <no-reply@yourdomain.com>"`. */
   from: string;
 }
 

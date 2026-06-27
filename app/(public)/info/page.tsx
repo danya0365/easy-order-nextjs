@@ -2,32 +2,27 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Store,
-  Camera,
-  Target,
-  Gift,
-  Banknote,
-  Bell,
-  Users,
-  ShoppingBag,
+  UtensilsCrossed,
   Smartphone,
-  Zap,
-  PartyPopper,
-  Wallet,
-  Coffee,
-  Ticket,
+  QrCode,
+  ListOrdered,
+  Users,
+  History,
+  ShoppingCart,
+  CreditCard,
+  Receipt,
   BookOpen,
   type LucideIcon,
 } from "lucide-react";
 
 import { Card } from "@/src/presentation/components/ui/Card";
 import { Badge } from "@/src/presentation/components/ui/Badge";
-import { StampDots } from "@/src/presentation/components/ui/StampDots";
 import { BRAND } from "@/src/config/brand";
 
 export const metadata: Metadata = {
   title: `${BRAND.name} · ${BRAND.tagline}`,
   description:
-    "บัตรสะสมแสตมป์ออนไลน์สำหรับร้านค้าหลายสาขา — ลูกค้าสะสมแต้มไม่ต้องพกบัตร ร้านค้าจัดการง่ายในที่เดียว",
+    "ระบบสั่งอาหารหน้าร้านบนแท็บเล็ต — ลูกค้ากดเลือกเมนูและสั่งเอง จ่ายด้วย PromptPay QR หรือเงินสด ร้านจัดการคิวออเดอร์ง่ายในที่เดียว",
 };
 
 interface Feature {
@@ -47,44 +42,37 @@ const SHOP_FEATURES: Feature[] = [
     tone: "brand",
   },
   {
-    icon: Camera,
-    title: "เพิ่มแต้มเร็ว",
-    blurb: "สแกน QR จากมือถือลูกค้า ไม่ต้องพิมพ์เบอร์ทุกครั้ง กดเพิ่มแต้มได้ทันที",
-    badge: "สแกนแล้วจบ",
+    icon: UtensilsCrossed,
+    title: "จัดการเมนูเอง",
+    blurb: "เพิ่มหมวดและรายการอาหาร พร้อมราคาและรูปภาพ แก้ไขได้ตลอดเวลา",
+    badge: "เมนู",
     tone: "success",
   },
   {
-    icon: Target,
-    title: "ตั้งเกณฑ์ + รางวัลเอง",
-    blurb: "กำหนดจำนวนดวงที่ต้องสะสมและของรางวัลได้เองในแต่ละร้าน",
-    badge: "ยืดหยุ่น",
+    icon: Smartphone,
+    title: "ลูกค้าสั่งเองบนแท็บเล็ต",
+    blurb: "วางแท็บเล็ตโหมด kiosk ที่เคาน์เตอร์ ลูกค้ากดสั่งเองได้ ไม่ต้องรอพนักงาน",
+    badge: "Self-order",
     tone: "brand",
   },
   {
-    icon: Gift,
-    title: "แลกรางวัล + ประวัติ",
-    blurb: "กดปุ่มแลกรางวัลเมื่อลูกค้าสะสมครบ เก็บประวัติการให้/แลกแต้มทุกครั้ง",
-    badge: "มี ledger",
-    tone: "neutral",
-  },
-  {
-    icon: Banknote,
-    title: "ค่าบริการรายเดือน",
-    blurb: "จ่ายผ่าน PromptPay QR แล้วอัปโหลดสลิป แอดมินตรวจสอบและเปิดใช้งานให้",
+    icon: QrCode,
+    title: "จ่าย PromptPay หรือเงินสด",
+    blurb: "โชว์ QR พร้อมเพย์ให้ลูกค้าสแกนจ่าย แล้วกดยืนยันรับเงิน หรือรับเงินสดก็ได้",
     badge: "PromptPay",
     tone: "success",
   },
   {
-    icon: Bell,
-    title: "เตือนค้างชำระอัตโนมัติ",
-    blurb: "แจ้งเตือนในแอปเมื่อใกล้/เลยกำหนด และระงับการใช้งานอัตโนมัติหลัง 7 วัน",
-    badge: "อัตโนมัติ",
-    tone: "warning",
+    icon: ListOrdered,
+    title: "คิวออเดอร์แบบสด",
+    blurb: "เห็นออเดอร์เข้าใหม่ทันที อัปเดตสถานะ รับออเดอร์ → กำลังทำ → พร้อมเสิร์ฟ → เสร็จ",
+    badge: "Live queue",
+    tone: "neutral",
   },
   {
     icon: Users,
     title: "3 บทบาทผู้ใช้",
-    blurb: "แอดมินดูแลระบบ · เจ้าของร้านจัดการร้าน · พนักงานสาขาเพิ่ม/แลกแต้ม",
+    blurb: "แอดมินดูแลระบบ · เจ้าของร้านจัดการร้าน · พนักงานสาขาเปิดออเดอร์",
     badge: "แยกสิทธิ์",
     tone: "brand",
   },
@@ -98,30 +86,29 @@ interface Step {
 
 const CUSTOMER_STEPS: Step[] = [
   {
-    icon: ShoppingBag,
-    title: "ซื้อของที่ร้าน",
-    detail: "พนักงานเพิ่มแต้มให้ตามยอดซื้อ — คุณไม่ต้องพกบัตรหรือสมัครอะไร",
-  },
-  {
     icon: Smartphone,
-    title: "สแกน QR ครั้งแรก",
-    detail:
-      "สแกน QR ที่ร้านด้วยกล้องมือถือ เพื่อผูกบัตรกับเครื่องของคุณ (กันคนอื่นสวมสิทธิ)",
+    title: "แตะแท็บเล็ตที่ร้าน",
+    detail: "เปิดเมนูบนแท็บเล็ตที่เคาน์เตอร์ — ไม่ต้องโหลดแอปหรือสมัครอะไร",
   },
   {
-    icon: Zap,
-    title: "กลับมาอีกครั้ง แค่สแกน",
-    detail: "ครั้งต่อไปแค่สแกน QR ที่ร้าน บัตรเปิดทันที ไม่ต้องติดตั้งหรือจำ URL",
+    icon: ShoppingCart,
+    title: "เลือกเมนูใส่ตะกร้า",
+    detail: "แตะ + เพื่อเพิ่มจำนวน ปรับรายการในตะกร้าได้ตามต้องการ",
   },
   {
-    icon: PartyPopper,
-    title: "สะสมครบ แลกรางวัล",
-    detail: "เมื่อแต้มครบตามเกณฑ์ แจ้งพนักงานเพื่อแลกของรางวัลได้เลย",
+    icon: CreditCard,
+    title: "ชำระเงิน",
+    detail: "เลือกจ่ายด้วย PromptPay QR หรือเงินสด ตามที่ร้านรองรับ",
   },
   {
-    icon: Wallet,
-    title: "ใช้หลายร้าน รวมที่เดียว",
-    detail: 'หน้า "บัตรของฉัน" รวมบัตรทุกร้านบนเครื่องนี้ และเพิ่มลงหน้าจอหลักได้',
+    icon: Receipt,
+    title: "รับหมายเลขคิว",
+    detail: "ได้เลขคิวทันทีหลังสั่ง รอเรียกรับอาหารได้เลย",
+  },
+  {
+    icon: History,
+    title: "เก็บประวัติได้ (ถ้าต้องการ)",
+    detail: "ใส่ชื่อ+เบอร์แล้วสแกน QR บนจอ เพื่อดูประวัติการสั่งบนมือถือตัวเอง",
   },
 ];
 
@@ -130,16 +117,19 @@ export default function InfoPage() {
     <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-10 px-4 py-10">
       {/* Hero */}
       <header className="flex flex-col items-center gap-4 text-center">
-        <Coffee className="size-10 text-brand-500" />
+        <UtensilsCrossed className="size-10 text-brand-500" />
         <h1 className="text-3xl font-bold text-brand-700">{BRAND.name}</h1>
         <p className="max-w-md text-muted">
-          บัตรสะสมแสตมป์ออนไลน์สำหรับร้านค้าหลายสาขา — ลูกค้าสะสมแต้มไม่ต้องพกบัตร
-          ร้านค้าจัดการง่ายในที่เดียว
+          ระบบสั่งอาหารหน้าร้านบนแท็บเล็ต — ลูกค้ากดเลือกเมนูและสั่งเอง
+          จ่ายด้วย PromptPay QR หรือเงินสด ร้านจัดการคิวออเดอร์ง่ายในที่เดียว
         </p>
-        <div className="mt-2 rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
-          <p className="mb-2 text-sm font-medium text-brand-700">ตัวอย่างบัตร</p>
-          <StampDots current={7} threshold={10} size="md" />
-          <p className="mt-2 text-xs text-muted">สะสม 7/10 · อีก 3 ดวงครบรางวัล</p>
+        <div className="mt-2 flex flex-col items-center rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
+          <p className="mb-1 text-sm font-medium text-brand-700">ตัวอย่างบัตรคิว</p>
+          <p className="text-5xl font-extrabold text-brand-600">12</p>
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
+            <ListOrdered className="size-3.5" />
+            กำลังเตรียมอาหาร
+          </p>
         </div>
         <Link
           href="/tutorial"
@@ -182,8 +172,8 @@ export default function InfoPage() {
       <section className="flex flex-col gap-4">
         <div className="text-center">
           <h2 className="inline-flex items-center justify-center gap-2 text-xl font-bold text-foreground">
-            วิธีสะสมแต้ม
-            <Ticket className="size-5 text-brand-500" />
+            วิธีสั่งอาหาร
+            <Receipt className="size-5 text-brand-500" />
           </h2>
           <p className="text-sm text-muted">สำหรับลูกค้า — ง่ายใน 5 ขั้นตอน</p>
         </div>
@@ -222,8 +212,8 @@ export default function InfoPage() {
           href="/me"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
         >
-          <Wallet className="size-4" />
-          ดูบัตรสะสมแต้มของฉัน
+          <History className="size-4" />
+          ดูประวัติการสั่งของฉัน
         </Link>
         <Link href="/privacy" className="text-xs text-muted hover:underline">
           นโยบายความเป็นส่วนตัว

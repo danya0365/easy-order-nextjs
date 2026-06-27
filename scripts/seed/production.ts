@@ -12,10 +12,10 @@ import { schema, daysFromNow, type SeedContext } from "./_db";
 import { getOrCreate, insert } from "./_helpers";
 import { DEFAULT_PRICE_PER_DAY_SATANG } from "../../src/domain/services/topup-pricing";
 
-const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? "admin@easystamp.test";
+const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? "admin@easyorder.test";
 
 const DEMO_SHOP_SLUG = "demo";
-const DEMO_OWNER_EMAIL = "owner@demo.easystamp.test";
+const DEMO_OWNER_EMAIL = "owner@demo.easyorder.test";
 
 export async function seedProduction({ db, passwordHash, log }: SeedContext) {
   // --- Platform admin ---

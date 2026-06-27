@@ -110,7 +110,7 @@ export async function seedMock(ctx: SeedContext) {
   const { db, passwordHash, log } = ctx;
 
   const admin = await db.query.users.findFirst({
-    where: eq(schema.users.email, "admin@easystamp.test"),
+    where: eq(schema.users.email, "admin@easyorder.test"),
   });
   if (!admin) {
     throw new Error(

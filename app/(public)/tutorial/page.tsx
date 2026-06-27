@@ -5,32 +5,29 @@ import {
   Store,
   UserCog,
   ShoppingBag,
+  ShoppingCart,
   Smartphone,
-  Zap,
-  PartyPopper,
-  Wallet,
-  Target,
   QrCode,
-  Building2,
   Banknote,
-  BarChart3,
-  Settings,
+  CreditCard,
+  Receipt,
+  ListOrdered,
+  History,
+  UtensilsCrossed,
+  Building2,
   Search,
-  Stamp,
-  Gift,
   ArrowRight,
   type LucideIcon,
 } from "lucide-react";
 
 import { Card } from "@/src/presentation/components/ui/Card";
-import { StampDots } from "@/src/presentation/components/ui/StampDots";
 import { Logo } from "@/src/presentation/components/layout/Logo";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 import { BRAND } from "@/src/config/brand";
 
 export const metadata: Metadata = {
   title: `วิธีใช้งาน | ${BRAND.name}`,
-  description: `คู่มือใช้งาน ${BRAND.name} แยกตามผู้ใช้ — ลูกค้าสะสมแต้ม, เจ้าของร้านตั้งค่าร้าน, และพนักงานกดแสตมป์/แลกรางวัล`,
+  description: `คู่มือใช้งาน ${BRAND.name} แยกตามผู้ใช้ — ลูกค้าสั่งอาหารเองที่ร้าน, เจ้าของร้านตั้งค่าร้านและดูคิวออเดอร์, และพนักงานเปิดออเดอร์แทนลูกค้า`,
 };
 
 interface Step {
@@ -55,62 +52,66 @@ const JOURNEYS: Journey[] = [
     label: "ลูกค้า",
     title: "สำหรับลูกค้า",
     icon: Users,
-    intro: "สะสมแต้มง่ายๆ ไม่ต้องพกบัตร ไม่ต้องติดตั้งแอป",
+    intro: "สั่งอาหารเองที่ร้านบนแท็บเล็ต — ไม่ต้องโหลดแอป ไม่ต้องสมัคร",
     steps: [
       {
-        icon: ShoppingBag,
-        title: "ซื้อของที่ร้าน",
-        detail: "พนักงานเพิ่มแต้มให้ตามยอดซื้อหรือเงื่อนไขของร้าน",
-      },
-      {
         icon: Smartphone,
-        title: "สแกน QR ครั้งแรก เพื่อผูกบัตร",
-        detail:
-          "สแกนป้าย QR ที่ร้านด้วยกล้องมือถือ เพื่อผูกบัตรกับเครื่องของคุณ (กันคนอื่นสวมสิทธิ)",
+        title: "แตะแท็บเล็ตที่เคาน์เตอร์",
+        detail: "เปิดเมนูร้านบนแท็บเล็ตที่ร้านวางไว้ แตะเพื่อดูรายการอาหาร",
       },
       {
-        icon: Zap,
-        title: "กลับมาอีกครั้ง แค่สแกน",
-        detail:
-          "ครั้งต่อไปเปิดบัตรง่ายๆ แค่สแกน QR ที่ร้าน บัตรเปิดทันที ไม่ต้องติดตั้งหรือจำ URL",
+        icon: ShoppingCart,
+        title: "เลือกเมนูใส่ตะกร้า",
+        detail: "แตะ + เพื่อเพิ่มจำนวน ปรับรายการในตะกร้าได้ตามต้องการ",
       },
       {
-        icon: PartyPopper,
-        title: "สะสมครบ แลกรางวัล",
-        detail:
-          'เมื่อแต้มครบเกณฑ์ บัตรขึ้นป้าย "ครบ แลกได้" แจ้งพนักงานเพื่อรับของรางวัลได้เลย',
+        icon: CreditCard,
+        title: "ชำระเงิน",
+        detail: "เลือกจ่ายด้วย PromptPay QR หรือเงินสด ตามที่ร้านรองรับ",
       },
       {
-        icon: Wallet,
-        title: "รวมบัตรทุกร้านที่เดียว",
-        detail: 'เปิดหน้า "บัตรของฉัน" ดูทุกร้านที่คุณสะสมอยู่บนเครื่องนี้',
+        icon: Receipt,
+        title: "รับหมายเลขคิว",
+        detail: "ได้เลขคิวทันทีหลังสั่ง รอเรียกรับอาหารได้เลย",
+      },
+      {
+        icon: History,
+        title: "อยากเก็บประวัติ? ใส่เบอร์มือถือ",
+        detail:
+          "ใส่ชื่อ+เบอร์ตอนสั่ง แล้วสแกน QR บนจอด้วยมือถือตัวเอง เพื่อเปิดดูประวัติการสั่งย้อนหลังได้",
       },
     ],
-    cta: { href: "/me", label: "ดูบัตรของฉัน" },
+    cta: { href: "/me", label: "ดูประวัติการสั่งของฉัน" },
   },
   {
     id: "owner",
     label: "เจ้าของร้าน",
     title: "สำหรับเจ้าของร้าน",
     icon: Store,
-    intro: "ตั้งค่าร้านให้พร้อมรับลูกค้าใน 6 ขั้นตอน แล้วดูแลร้านได้จากที่เดียว",
+    intro: "ตั้งค่าร้านให้พร้อมรับออเดอร์ แล้วดูแลคิวได้จากที่เดียว",
     steps: [
       {
-        icon: Target,
-        title: "ตั้งประเภทแสตมป์ & ของรางวัล",
+        icon: UtensilsCrossed,
+        title: "สร้างเมนู",
         detail:
-          'ที่ ตั้งค่า › "แสตมป์ & ร้านค้า" กำหนดจำนวนดวงที่ครบและของรางวัล (รองรับหลายประเภท)',
+          'ที่หน้า "เมนู" เพิ่มหมวดและรายการอาหาร พร้อมราคาและรูปภาพ',
       },
       {
         icon: QrCode,
-        title: "พิมพ์ป้าย QR ติดหน้าร้าน",
+        title: "ตั้ง PIN แล้วเปิดโหมด kiosk",
         detail:
-          'เปิด "ป้าย QR ร้าน" แล้วพิมพ์ติดที่เคาน์เตอร์ ให้ลูกค้าสแกนสมัครและเช็กแต้มเอง',
+          "ตั้งรหัส PIN ของเครื่อง แล้วเปิดโหมด kiosk บนแท็บเล็ตที่จะวางหน้าร้าน — ออกจากโหมดต้องใช้ PIN (กันออเดอร์ปลอม)",
+      },
+      {
+        icon: Banknote,
+        title: "ตั้งพร้อมเพย์รับเงิน",
+        detail:
+          "ใส่เบอร์/พร้อมเพย์ของร้าน ระบบจะสร้าง QR ให้ลูกค้าสแกนจ่ายอัตโนมัติ",
       },
       {
         icon: UserCog,
         title: "เพิ่มพนักงาน",
-        detail: "สร้างบัญชีพนักงานสาขา ให้ช่วยกดแสตมป์/แลกรางวัลที่เคาน์เตอร์",
+        detail: "สร้างบัญชีพนักงานสาขา ให้ช่วยเปิดออเดอร์แทนลูกค้าที่เคาน์เตอร์ได้",
       },
       {
         icon: Building2,
@@ -124,15 +125,10 @@ const JOURNEYS: Journey[] = [
           "ชำระผ่านพร้อมเพย์แล้วแนบสลิป รอผู้ดูแลอนุมัติ (ระบบคิดแบบเติมวัน วันที่เหลือไม่หมดอายุ)",
       },
       {
-        icon: BarChart3,
-        title: "ดูสถิติร้าน",
-        detail: "ยอดแสตมป์ ลูกค้าใหม่ และอัตราการแลกรางวัล เลือกช่วง 7/30/90 วัน",
-      },
-      {
-        icon: Settings,
-        title: "เกร็ดเพิ่มเติม",
+        icon: ListOrdered,
+        title: "ดูคิวออเดอร์",
         detail:
-          "ปิดร้านชั่วคราวได้โดยวันใช้งานไม่ถูกหัก และเชื่อม LINE เพื่อรับการแจ้งเตือน + เข้าสู่ระบบด้วย OTP",
+          'ที่หน้า "ออเดอร์" ติดตามออเดอร์เข้าใหม่และอัปเดตสถานะ (รับออเดอร์ → กำลังทำ → พร้อมเสิร์ฟ → เสร็จ)',
       },
     ],
     cta: { href: "/login", label: "เข้าสู่ระบบเจ้าของร้าน" },
@@ -142,34 +138,34 @@ const JOURNEYS: Journey[] = [
     label: "พนักงาน",
     title: "สำหรับพนักงาน",
     icon: UserCog,
-    intro: "กดแสตมป์และแลกรางวัลให้ลูกค้าที่เคาน์เตอร์ ทำได้ในไม่กี่วินาที",
+    intro: "เปิดออเดอร์แทนลูกค้าที่เคาน์เตอร์ ทำได้ในไม่กี่วินาที",
     steps: [
       {
         icon: Search,
-        title: "ค้นหาลูกค้า",
-        detail: 'กรอกเบอร์โทรแล้วกด "ค้นหา" หรือกดสแกน QR ของลูกค้าด้วยกล้อง',
-      },
-      {
-        icon: Stamp,
-        title: "เพิ่มแสตมป์",
+        title: "ค้นหา / เพิ่มลูกค้า",
         detail:
-          'เลือกประเภท (ถ้ามีหลายแบบ) ใส่จำนวน แล้วกด "เพิ่มแสตมป์"',
+          "พิมพ์เบอร์หรือชื่อเพื่อเลือกลูกค้าเก่า หรือเพิ่มลูกค้าใหม่ — หรือข้ามไปเลยถ้าเป็นลูกค้าขาจร",
       },
       {
-        icon: Smartphone,
-        title: "ลูกค้าใหม่ไม่ต้องสมัครก่อน",
-        detail: 'ถ้ายังไม่มีบัตร แค่กด "เพิ่มแสตมป์" ระบบจะสร้างบัตรให้อัตโนมัติ',
+        icon: ShoppingBag,
+        title: "เลือกเมนูใส่ตะกร้า",
+        detail: "แตะรายการอาหารและปรับจำนวนในตะกร้าให้ตรงกับที่ลูกค้าสั่ง",
+      },
+      {
+        icon: CreditCard,
+        title: "รับชำระเงิน",
+        detail: "เลือกพร้อมเพย์ QR หรือเงินสด แล้วยืนยันเมื่อรับเงินเรียบร้อย",
+      },
+      {
+        icon: Receipt,
+        title: "ส่งเลขคิวให้ลูกค้า",
+        detail: "ระบบออกเลขคิวให้อัตโนมัติ แจ้งลูกค้ารอรับอาหารได้เลย",
       },
       {
         icon: QrCode,
-        title: "ออก QR ผูกบัตร",
+        title: "ออก QR ประวัติ (ถ้าลูกค้าต้องการ)",
         detail:
-          'กด "ออก QR ผูกบัตร" ให้ลูกค้าสแกนด้วยมือถือภายใน 5 นาที เพื่อดูแต้มเอง',
-      },
-      {
-        icon: Gift,
-        title: "แลกรางวัล",
-        detail: 'เมื่อบัตรขึ้น "ครบ แลกได้" กดปุ่ม "แลกรางวัล" ตามประเภทที่ครบ',
+          'ถ้าลูกค้าใส่เบอร์ไว้ ให้สแกน QR บนจอเพื่อผูกอุปกรณ์ ลูกค้าจะดูประวัติการสั่งบนมือถือเองได้',
       },
     ],
   },
@@ -205,11 +201,14 @@ export default function TutorialPage() {
         </nav>
       </header>
 
-      {/* Sample card visual */}
-      <div className="mx-auto rounded-2xl bg-card p-4 text-center shadow-sm ring-1 ring-border">
-        <p className="mb-2 text-sm font-medium text-brand-700">ตัวอย่างบัตรสะสมแต้ม</p>
-        <StampDots current={7} threshold={10} size="md" />
-        <p className="mt-2 text-xs text-muted">สะสม 7/10 · อีก 3 ดวงครบรางวัล</p>
+      {/* Sample queue ticket visual */}
+      <div className="mx-auto flex flex-col items-center rounded-2xl bg-card p-5 text-center shadow-sm ring-1 ring-border">
+        <p className="mb-1 text-sm font-medium text-brand-700">ตัวอย่างบัตรคิว</p>
+        <p className="text-6xl font-extrabold text-brand-600">12</p>
+        <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
+          <ListOrdered className="size-3.5" />
+          กำลังเตรียมอาหาร
+        </p>
       </div>
 
       {/* Journeys */}

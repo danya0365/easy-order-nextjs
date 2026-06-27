@@ -4,7 +4,7 @@ import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
 import type { NotificationService } from "@/src/application/services/NotificationService";
 
 export interface VelocityCheck {
-  /** Unique throttle key, e.g. `stamp_add:${shopId}:${userId}`. */
+  /** Unique throttle key, e.g. `place_order:${shopId}:${userId}`. */
   key: string;
   limit: number;
   windowMs: number;
@@ -19,8 +19,8 @@ export interface VelocityCheck {
 }
 
 /**
- * Generic abuse/velocity guard for sensitive domain actions (e.g. issuing
- * loyalty stamps). When an action exceeds its allowed rate it is blocked AND —
+ * Generic abuse/velocity guard for sensitive domain actions (e.g. placing
+ * orders). When an action exceeds its allowed rate it is blocked AND —
  * exactly once per window — an audit event is written and platform admins are
  * alerted. Domains plug in their own action + thresholds; nothing here is
  * loyalty-specific.

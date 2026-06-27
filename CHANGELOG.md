@@ -14,5 +14,15 @@
   `/shops` เป็นรายการร้านที่เปิดอยู่ — เวอร์ชั่นเรียบ (ไม่มีรีวิว/หมวด/รูปโปรไฟล์แบบ Easy Stamp);
   คืน tab Map/Shops ใน `CustomerTabBar`
 
+### Changed
+- **ล้าง domain "แสตมป์/แต้ม" ที่หลงเหลือจากการ clone ออกทั้งหมด** — เขียนหน้า marketing/legal
+  (`/tutorial`, `/info`, `/privacy`) ใหม่ให้เป็น domain การสั่งอาหาร, reword ข้อความ live ที่ยัง
+  พูดถึงแสตมป์ (billing/pause/security/paused notice), เปลี่ยนชื่อไฟล์ recovery codes และโดเมน
+  อีเมล seed `easystamp.test` → `easyorder.test`, และเขียน social alt-text ใหม่
+
+### Removed
+- โค้ด/i18n ที่ตายแล้วจากยุคแสตมป์: i18n namespaces `stamp`/`reviews`/`analytics`/`promote`/`leads`
+  + 61 dead keys, component `StampDots` และ `SettingsTabs` ที่ไม่ถูกใช้งาน
+
 ## [0.1.0] - 2026-06-27
 - จุดเริ่มต้น (bootstrap จาก easy-stamp v1.19.0)
