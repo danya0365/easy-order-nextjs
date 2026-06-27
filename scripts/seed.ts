@@ -128,12 +128,12 @@ async function main() {
   console.log(`\nLogins (password: ${DEFAULT_PASSWORD})`);
   if (selected.includes("production")) {
     console.log("  admin:        admin@easystamp.test");
-    console.log("  example shop: owner@demo.easystamp.test  (/s/demo)");
+    console.log("  example shop: owner@demo.easystamp.test");
   }
   if (selected.includes("mock")) {
-    console.log("  mock owner:   owner@coffee-a.test  (active)");
+    console.log("  mock owner:   owner@diner-a.test  (active — menu+kiosk ready, PIN 1234)");
     console.log("  mock owner:   owner@bakery-b.test  (overdue/suspended)");
-    console.log("  mock staff:   staff1@coffee-a.test");
+    console.log("  mock staff:   staff1@diner-a.test");
   }
   console.log("\n✓ Seed complete");
   client.close();

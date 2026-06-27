@@ -12,10 +12,35 @@
  * The ordering domain (menu / orders) is seeded separately once it is built.
  */
 import { eq } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 
 import { schema, daysFromNow, type SeedContext } from "./_db";
 import { getOrCreate, insert, quotePayment, approveTopup } from "./_helpers";
 import { DEFAULT_PRICE_PER_DAY_SATANG } from "../../src/domain/services/topup-pricing";
+
+/** Demo kiosk PIN for the active seed shop (so /kiosk is usable out of the box). */
+const DEMO_KIOSK_PIN = "1234";
+const DEMO_PROMPTPAY = "0812345678";
+
+/** A small demo menu: [category, [ [item, priceBaht], ... ] ]. */
+const DEMO_MENU: [string, [string, number][]][] = [
+  [
+    "เครื่องดื่ม",
+    [
+      ["อเมริกาโน่", 50],
+      ["ลาเต้", 65],
+      ["ชาเย็น", 45],
+      ["โกโก้", 55],
+    ],
+  ],
+  [
+    "ของหวาน",
+    [
+      ["เค้กช็อกโกแลต", 75],
+      ["ครัวซองต์", 60],
+    ],
+  ],
+];
 
 const DAY = 864e5;
 const RATE = DEFAULT_PRICE_PER_DAY_SATANG;
@@ -164,7 +189,45 @@ export async function seedMock(ctx: SeedContext) {
 
     await seedPayments({ ctx, opts, shopId, subId, ownerId, adminId });
 
+    // Give the active shop a ready-to-demo menu + kiosk PIN + PromptPay so the
+    // /kiosk flow works immediately after seeding.
+    if (opts.billing === "active") {
+      await seedMenu(ctx, shopId);
+      log(`mock: "${opts.slug}" kiosk PIN=${DEMO_KIOSK_PIN}, PromptPay=${DEMO_PROMPTPAY}`);
+    }
+
     log(`mock: created "${opts.slug}" (${opts.billing})`);
+  }
+}
+
+/** Seed a demo menu, a kiosk PIN, and a PromptPay target for one shop. */
+async function seedMenu(ctx: SeedContext, shopId: string) {
+  const { db } = ctx;
+  await db
+    .update(schema.shops)
+    .set({
+      promptpayTarget: DEMO_PROMPTPAY,
+      kioskPinHash: await bcrypt.hash(DEMO_KIOSK_PIN, 10),
+    })
+    .where(eq(schema.shops.id, shopId));
+
+  let catOrder = 0;
+  for (const [catName, items] of DEMO_MENU) {
+    const categoryId = await insert(db, schema.menuCategories, {
+      shopId,
+      name: catName,
+      sortOrder: catOrder++,
+    });
+    let itemOrder = 0;
+    for (const [name, priceBaht] of items) {
+      await insert(db, schema.menuItems, {
+        shopId,
+        categoryId,
+        name,
+        priceSatang: priceBaht * 100,
+        sortOrder: itemOrder++,
+      });
+    }
   }
 }
 
