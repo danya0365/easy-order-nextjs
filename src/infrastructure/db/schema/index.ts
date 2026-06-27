@@ -1,5 +1,6 @@
 export * from "./shop-categories";
 export * from "./shops";
+export * from "./shop-images";
 export * from "./branches";
 export * from "./menu-categories";
 export * from "./menu-items";

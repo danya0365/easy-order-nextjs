@@ -2,7 +2,7 @@ import type { IPaymentRepository } from "@/src/application/repositories/IPayment
 import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
 
 /** Key prefixes the app writes under — every managed object lives below one. */
-const NAMESPACES = ["slips/", "menu/"] as const;
+const NAMESPACES = ["slips/", "menu/", "shops/"] as const;
 
 /**
  * Grace period: never delete an object younger than this. An upload writes the

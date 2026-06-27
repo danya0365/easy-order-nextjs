@@ -28,14 +28,18 @@ async function runOrphanedFiles(): Promise<{
   scanned: number;
   deleted: number;
 }> {
-  // Menu item images live under the "menu/" prefix the cleanup scans, so their
-  // keys must be supplied as referenced — otherwise every menu photo would be
-  // treated as orphaned and deleted after the grace window.
-  const menuImageKeys = await container.menuItemRepository.allImageKeys();
+  // Menu item images ("menu/") and shop images ("shops/") live under prefixes
+  // the cleanup scans, so their keys must be supplied as referenced — otherwise
+  // every such photo would be treated as orphaned and deleted after the grace
+  // window.
+  const [menuImageKeys, shopImageKeys] = await Promise.all([
+    container.menuItemRepository.allImageKeys(),
+    container.shopImageRepository.allStorageKeys(),
+  ]);
   return new CleanOrphanedFilesUseCase(
     container.paymentRepository,
     container.slipStorage,
-  ).execute({ extraReferencedKeys: menuImageKeys });
+  ).execute({ extraReferencedKeys: [...menuImageKeys, ...shopImageKeys] });
 }
 
 /** Housekeeping: purge expired sessions so the table doesn't grow unbounded. */

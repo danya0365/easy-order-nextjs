@@ -46,6 +46,18 @@ export interface ShopCategory {
   createdAt: string;
 }
 
+export type ShopImageKind = "profile" | "gallery" | "cover";
+
+/** Owner-uploaded shop imagery (profile/cover/gallery). */
+export interface ShopImage {
+  id: string;
+  shopId: string;
+  kind: ShopImageKind;
+  storageKey: string;
+  sortOrder: number;
+  createdAt: string;
+}
+
 export interface Shop {
   id: string;
   name: string;

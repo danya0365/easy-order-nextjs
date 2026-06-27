@@ -34,6 +34,11 @@ export default async function ShopsDirectoryPage({
     )
     .sort((a, b) => a.name.localeCompare(b.name, "th"));
 
+  // Batched profile images for the visible shops (no N+1).
+  const profiles = await container.shopImageRepository.profilesByShop(
+    items.map((s) => s.id),
+  );
+
   const filters = [
     { slug: null as string | null, label: t("filterAll") },
     ...categories.map((c) => ({ slug: c.slug, label: c.name })),
@@ -82,16 +87,20 @@ export default async function ShopsDirectoryPage({
           <ul className="flex flex-col divide-y divide-border">
             {items.map((shop) => {
               const cat = shop.categoryId ? nameById.get(shop.categoryId) : null;
+              const profileId = profiles[shop.id];
+              const imgSrc = profileId
+                ? `/api/shop-images/${profileId}`
+                : shop.logoUrl;
               return (
                 <li key={shop.slug}>
                   <Link
                     href={`/s/${shop.slug}`}
                     className="flex items-center gap-3 py-3 transition hover:opacity-80"
                   >
-                    {shop.logoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- external logo URL
+                    {imgSrc ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- internal/external image
                       <img
-                        src={shop.logoUrl}
+                        src={imgSrc}
                         alt={shop.name}
                         className="size-12 shrink-0 rounded-lg object-cover"
                       />

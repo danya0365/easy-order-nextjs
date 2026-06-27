@@ -6,6 +6,10 @@
 ## [Unreleased]
 
 ### Added
+- **พอร์ต generic ที่ตกหล่น (Phase 2/7): รูปภาพร้าน (shop images)** — รูปโปรไฟล์/ปก/แกลเลอรี่
+  อัปโหลดผ่านหน้าตั้งค่าร้าน (ครอป+ย่อขนาดด้วย `ImageCropField`, เก็บใน R2/local ผ่าน `slipStorage`),
+  เสิร์ฟผ่าน `/api/shop-images/[id]`, แสดงในการ์ด `/shops`, popup แผนที่ และ hero/แกลเลอรี่หน้า
+  `/s/[slug]`; orphaned-file cron รู้จัก prefix `shops/` แล้ว
 - **พอร์ตฟีเจอร์ generic ที่ตกหล่นตอน clone กลับมา (Phase 1/7): หมวดร้าน (shop categories)** —
   ตาราง `shop_categories` + `shops.categoryId`, seed 7 หมวด (กาแฟ/เบเกอรี่/อาหาร/เครื่องดื่ม/ของหวาน/
   สตรีทฟู้ด/อื่นๆ), เลือกหมวดในหน้าตั้งค่าร้าน, **คืน filter chips ตามหมวดในหน้า `/shops`** และโชว์

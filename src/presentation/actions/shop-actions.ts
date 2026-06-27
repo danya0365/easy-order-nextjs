@@ -14,6 +14,9 @@ import {
   PAUSE_COOLDOWN_MS,
 } from "@/src/domain/services/subscription-status";
 import { UpdateShopSettingsUseCase } from "@/src/application/use-cases/shop/UpdateShopSettingsUseCase";
+import { SaveShopImageUseCase } from "@/src/application/use-cases/shop/SaveShopImageUseCase";
+import { DeleteShopImageUseCase } from "@/src/application/use-cases/shop/DeleteShopImageUseCase";
+import type { ShopImageKind } from "@/src/domain/entities";
 import { CreateBranchUseCase } from "@/src/application/use-cases/shop/CreateBranchUseCase";
 import { UpdateBranchLocationUseCase } from "@/src/application/use-cases/shop/UpdateBranchLocationUseCase";
 import { CreateStaffUseCase } from "@/src/application/use-cases/shop/CreateStaffUseCase";
@@ -149,6 +152,58 @@ export async function updateSettingsAction(
     });
     revalidatePath("/shop/settings");
     return { success: "บันทึกการตั้งค่าแล้ว" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+const SHOP_IMAGE_KINDS: ShopImageKind[] = ["profile", "cover", "gallery"];
+
+/** Upload (or replace) a shop image — profile/cover/gallery. */
+export async function uploadShopImageAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  try {
+    const shopId = await ownerShopId();
+    const kind = String(formData.get("kind") ?? "");
+    if (!SHOP_IMAGE_KINDS.includes(kind as ShopImageKind)) {
+      return { error: "ชนิดรูปไม่ถูกต้อง" };
+    }
+    const file = formData.get("image");
+    if (!(file instanceof File) || file.size === 0) {
+      return { error: "ไม่พบไฟล์รูป" };
+    }
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    await new SaveShopImageUseCase(
+      container.shopImageRepository,
+      container.slipStorage,
+    ).execute({
+      shopId,
+      kind: kind as ShopImageKind,
+      filename: file.name,
+      contentType: file.type,
+      bytes,
+    });
+    revalidatePath("/shop/settings");
+    return { success: "อัปโหลดรูปแล้ว" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+/** Remove a shop image by id (scoped to the owner's shop). */
+export async function deleteShopImageAction(
+  imageId: string,
+): Promise<{ error?: string }> {
+  try {
+    const shopId = await ownerShopId();
+    await new DeleteShopImageUseCase(
+      container.shopImageRepository,
+      container.slipStorage,
+    ).execute(shopId, imageId);
+    revalidatePath("/shop/settings");
+    return {};
   } catch (e) {
     return { error: (e as Error).message };
   }

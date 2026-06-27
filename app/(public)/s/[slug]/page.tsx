@@ -45,6 +45,40 @@ export default async function CustomerHistoryPage({
   const shop = await container.shopRepository.findBySlug(slug);
   if (!shop) notFound();
 
+  // Shop imagery (hero = cover, else profile; plus a small gallery row).
+  const images = await container.shopImageRepository.listByShop(shop.id);
+  const hero =
+    images.find((i) => i.kind === "cover") ??
+    images.find((i) => i.kind === "profile") ??
+    null;
+  const gallery = images.filter((i) => i.kind === "gallery");
+  const heroBlock = (hero || gallery.length > 0) && (
+    <div className="flex flex-col gap-2">
+      {hero && (
+        // eslint-disable-next-line @next/next/no-img-element -- internal image route
+        <img
+          src={`/api/shop-images/${hero.id}`}
+          alt={shop.name}
+          className="aspect-video w-full rounded-2xl border border-border object-cover"
+        />
+      )}
+      {gallery.length > 0 && (
+        <ul className="flex gap-2 overflow-x-auto">
+          {gallery.map((img) => (
+            <li key={img.id} className="shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element -- internal image route */}
+              <img
+                src={`/api/shop-images/${img.id}`}
+                alt=""
+                className="size-20 rounded-lg border border-border object-cover"
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+
   const token = await getMemberToken(slug);
   const history = await new GetCustomerOrderHistoryUseCase(
     container.shopRepository,
@@ -56,6 +90,7 @@ export default async function CustomerHistoryPage({
   if (!history) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-4 px-4 py-8">
+        {heroBlock}
         <h1 className="text-xl font-bold text-foreground">{shop.name}</h1>
         {bind === "invalid" && (
           <Card>
@@ -79,6 +114,7 @@ export default async function CustomerHistoryPage({
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-4 px-4 py-8">
+      {heroBlock}
       <div>
         <h1 className="text-xl font-bold text-foreground">
           {t("myOrdersTitle")}

@@ -14,11 +14,10 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type { ShopMapLocation } from "@/src/application/repositories/IBranchRepository";
 import { OSM_STYLE, DEFAULT_CENTER, boundsOf } from "./osm-style";
 
-/**
- * A pinned shop branch. Easy Order has no reviews/profile images (unlike the
- * Easy Stamp original), so the pin/popup carry just the shop + branch + address.
- */
-export type MapShopLocation = ShopMapLocation;
+/** A pinned shop branch, enriched with the shop's profile image for the popup. */
+export type MapShopLocation = ShopMapLocation & {
+  profileImageId?: string | null;
+};
 
 export default function StoreMapView({
   locations,
@@ -79,15 +78,25 @@ export default function StoreMapView({
           maxWidth="250px"
         >
           <div className="w-[226px] p-3">
-            <div className="min-w-0 pr-5">
-              <p className="truncate font-semibold text-foreground">
-                {active.shopName}
-              </p>
-              <p className="truncate text-xs text-muted">
-                {active.categoryName
-                  ? `${active.categoryName} · ${active.branchName}`
-                  : active.branchName}
-              </p>
+            <div className="flex items-center gap-2.5 pr-5">
+              {active.profileImageId && (
+                // eslint-disable-next-line @next/next/no-img-element -- internal image route
+                <img
+                  src={`/api/shop-images/${active.profileImageId}`}
+                  alt={active.shopName}
+                  className="size-11 shrink-0 rounded-lg object-cover"
+                />
+              )}
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-foreground">
+                  {active.shopName}
+                </p>
+                <p className="truncate text-xs text-muted">
+                  {active.categoryName
+                    ? `${active.categoryName} · ${active.branchName}`
+                    : active.branchName}
+                </p>
+              </div>
             </div>
             {active.address && (
               <p className="mt-1 line-clamp-2 text-xs text-muted">

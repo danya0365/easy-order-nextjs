@@ -8,6 +8,7 @@ import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
 import { PAUSE_MAX_PER_30D } from "@/src/domain/services/subscription-status";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { SettingsForm } from "@/src/presentation/components/shop/SettingsForm";
+import { ShopImagesManager } from "@/src/presentation/components/shop/ShopImagesManager";
 import { KioskControl } from "@/src/presentation/components/kiosk/KioskControl";
 import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopControl";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
@@ -19,13 +20,14 @@ export default async function ShopSettingsPage() {
   const t = await getTranslations("shopPages");
   const shop = await container.shopRepository.findById(shopId);
   if (!shop) return null;
-  const [subscription, billing, pauseCapPeek, pauseCdPeek, categories] =
+  const [subscription, billing, pauseCapPeek, pauseCdPeek, categories, images] =
     await Promise.all([
       container.subscriptionRepository.findByShop(shop.id),
       getBillingState(shop.id),
       container.rateLimitRepository.peek(`shop_pause_cap:${shop.id}`),
       container.rateLimitRepository.peek(`shop_pause_cd:${shop.id}`),
       container.shopCategoryRepository.listActive(),
+      container.shopImageRepository.listByShop(shop.id),
     ]);
 
   // Pause quota/cooldown snapshot for the UI (read-only — does not consume).
@@ -54,6 +56,14 @@ export default async function ShopSettingsPage() {
           promptpayTarget={shop.promptpayTarget ?? ""}
         />
         <p className="mt-3 text-xs text-muted">{t("kioskPromptpayHint")}</p>
+      </Card>
+
+      <Card>
+        <CardHeader
+          title={t("shopImagesTitle")}
+          subtitle={t("shopImagesSubtitle")}
+        />
+        <ShopImagesManager images={images} />
       </Card>
 
       <Card>
