@@ -21,6 +21,8 @@ export interface ShopMapLocation {
   shopId: string;
   shopName: string;
   shopSlug: string;
+  /** Shop category name (for the popup), or null when uncategorised. */
+  categoryName: string | null;
   latitude: number;
   longitude: number;
   address: string | null;

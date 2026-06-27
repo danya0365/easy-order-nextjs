@@ -17,6 +17,17 @@ const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? "admin@easyorder.test";
 const DEMO_SHOP_SLUG = "demo";
 const DEMO_OWNER_EMAIL = "owner@demo.easyorder.test";
 
+// Reference data: shop types for the public /shops directory filter.
+const CATEGORIES = [
+  { slug: "coffee", name: "ร้านกาแฟ" },
+  { slug: "bakery", name: "เบเกอรี่ & ขนม" },
+  { slug: "food", name: "ร้านอาหาร" },
+  { slug: "beverage", name: "เครื่องดื่ม" },
+  { slug: "dessert", name: "ของหวาน" },
+  { slug: "streetfood", name: "สตรีทฟู้ด" },
+  { slug: "other", name: "อื่นๆ" },
+];
+
 export async function seedProduction({ db, passwordHash, log }: SeedContext) {
   // --- Platform admin ---
   const adminPassword = process.env.SEED_ADMIN_PASSWORD;
@@ -41,6 +52,22 @@ export async function seedProduction({ db, passwordHash, log }: SeedContext) {
       : `production: admin ${ADMIN_EMAIL} exists — skip`,
   );
 
+  // --- Shop categories (reference data) ---
+  const categoryId = new Map<string, string>();
+  for (let i = 0; i < CATEGORIES.length; i++) {
+    const cat = CATEGORIES[i];
+    const { id } = await getOrCreate(
+      db,
+      schema.shopCategories,
+      db.query.shopCategories.findFirst({
+        where: eq(schema.shopCategories.slug, cat.slug),
+      }),
+      { name: cat.name, slug: cat.slug, sortOrder: i },
+    );
+    categoryId.set(cat.slug, id);
+  }
+  log(`production: ${CATEGORIES.length} categories ensured`);
+
   // --- One real example shop the merchant can use immediately ---
   const shop = await getOrCreate(
     db,
@@ -50,6 +77,7 @@ export async function seedProduction({ db, passwordHash, log }: SeedContext) {
       name: "ร้านตัวอย่าง (Demo)",
       slug: DEMO_SHOP_SLUG,
       status: "active",
+      categoryId: categoryId.get("coffee") ?? null,
     },
   );
   if (!shop.created) {

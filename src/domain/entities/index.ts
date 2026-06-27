@@ -36,11 +36,23 @@ export interface AuditLog {
 
 // --- Tenant (the merchant account) ---
 
+/** Reference data: a shop type (cafe, bakery, ...) for the public directory. */
+export interface ShopCategory {
+  id: string;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface Shop {
   id: string;
   name: string;
   slug: string;
   status: ShopStatus;
+  /** Optional shop type (cafe/bakery/...) for the public directory, or null. */
+  categoryId: string | null;
   /** Storefront logo shown in the kiosk header (public URL), or null. */
   logoUrl: string | null;
   /** PromptPay target used to render the order-payment QR, or null. */

@@ -19,12 +19,14 @@ export default async function ShopSettingsPage() {
   const t = await getTranslations("shopPages");
   const shop = await container.shopRepository.findById(shopId);
   if (!shop) return null;
-  const [subscription, billing, pauseCapPeek, pauseCdPeek] = await Promise.all([
-    container.subscriptionRepository.findByShop(shop.id),
-    getBillingState(shop.id),
-    container.rateLimitRepository.peek(`shop_pause_cap:${shop.id}`),
-    container.rateLimitRepository.peek(`shop_pause_cd:${shop.id}`),
-  ]);
+  const [subscription, billing, pauseCapPeek, pauseCdPeek, categories] =
+    await Promise.all([
+      container.subscriptionRepository.findByShop(shop.id),
+      getBillingState(shop.id),
+      container.rateLimitRepository.peek(`shop_pause_cap:${shop.id}`),
+      container.rateLimitRepository.peek(`shop_pause_cd:${shop.id}`),
+      container.shopCategoryRepository.listActive(),
+    ]);
 
   // Pause quota/cooldown snapshot for the UI (read-only — does not consume).
   const pausesUsed = pauseCapPeek?.count ?? 0;
@@ -47,6 +49,8 @@ export default async function ShopSettingsPage() {
         />
         <SettingsForm
           name={shop.name}
+          categoryId={shop.categoryId}
+          categories={categories.map((c) => ({ id: c.id, name: c.name }))}
           promptpayTarget={shop.promptpayTarget ?? ""}
         />
         <p className="mt-3 text-xs text-muted">{t("kioskPromptpayHint")}</p>

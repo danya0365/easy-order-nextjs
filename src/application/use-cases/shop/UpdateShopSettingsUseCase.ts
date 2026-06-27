@@ -3,15 +3,25 @@ import type { IShopRepository } from "@/src/application/repositories/IShopReposi
 
 export interface UpdateSettingsInput {
   name?: string;
+  categoryId?: string | null;
   promptpayTarget?: string | null;
 }
 
-/** Update the shop's display name and PromptPay target (used for order QR). */
+/** Update the shop's display name, category, and PromptPay target (order QR). */
 export class UpdateShopSettingsUseCase {
   constructor(private readonly shops: IShopRepository) {}
 
   async execute(shopId: string, input: UpdateSettingsInput): Promise<Shop> {
-    const patch: { name?: string; promptpayTarget?: string | null } = {};
+    const patch: {
+      name?: string;
+      categoryId?: string | null;
+      promptpayTarget?: string | null;
+    } = {};
+
+    if (input.categoryId !== undefined) {
+      // Empty string from the form select means "no category".
+      patch.categoryId = input.categoryId ? input.categoryId : null;
+    }
 
     if (input.name !== undefined) {
       const name = input.name.trim();

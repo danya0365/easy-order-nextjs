@@ -83,7 +83,11 @@ export default function StoreMapView({
               <p className="truncate font-semibold text-foreground">
                 {active.shopName}
               </p>
-              <p className="truncate text-xs text-muted">{active.branchName}</p>
+              <p className="truncate text-xs text-muted">
+                {active.categoryName
+                  ? `${active.categoryName} · ${active.branchName}`
+                  : active.branchName}
+              </p>
             </div>
             {active.address && (
               <p className="mt-1 line-clamp-2 text-xs text-muted">

@@ -6,6 +6,10 @@
 ## [Unreleased]
 
 ### Added
+- **พอร์ตฟีเจอร์ generic ที่ตกหล่นตอน clone กลับมา (Phase 1/7): หมวดร้าน (shop categories)** —
+  ตาราง `shop_categories` + `shops.categoryId`, seed 7 หมวด (กาแฟ/เบเกอรี่/อาหาร/เครื่องดื่ม/ของหวาน/
+  สตรีทฟู้ด/อื่นๆ), เลือกหมวดในหน้าตั้งค่าร้าน, **คืน filter chips ตามหมวดในหน้า `/shops`** และโชว์
+  หมวดใน popup แผนที่
 - เริ่มต้นโปรเจค **Easy Order** โดย clone จาก Easy Stamp (SaaS starter) — เก็บแกน generic
   (auth / billing / multi-tenant / notifications / audit / ops / i18n / theme) แล้วเปลี่ยน domain
   เป็นระบบสั่งอาหารหน้าร้านบนแท็บเล็ต (kiosk)

@@ -6,19 +6,38 @@ import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
+import { cn } from "@/src/presentation/components/ui/cn";
 
 export const dynamic = "force-dynamic";
 
-export default async function ShopsDirectoryPage() {
+export default async function ShopsDirectoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const { category } = await searchParams;
   const t = await getTranslations("publicPages");
 
-  // Public directory: active shops only, sorted by name (Thai-aware). Easy Order
-  // has no reviews/categories/profile images, so this is a plain alphabetical
-  // list — each row links to the shop's page at /s/[slug].
-  const shops = await container.shopRepository.list();
+  const [shops, categories] = await Promise.all([
+    container.shopRepository.list(),
+    container.shopCategoryRepository.listActive(),
+  ]);
+  const nameById = new Map(categories.map((c) => [c.id, c.name]));
+  const slugById = new Map(categories.map((c) => [c.id, c.slug]));
+
+  // Public directory: active shops only, optional category filter, name-sorted.
   const items = shops
-    .filter((s) => s.status === "active")
+    .filter(
+      (s) =>
+        s.status === "active" &&
+        (!category || slugById.get(s.categoryId ?? "") === category),
+    )
     .sort((a, b) => a.name.localeCompare(b.name, "th"));
+
+  const filters = [
+    { slug: null as string | null, label: t("filterAll") },
+    ...categories.map((c) => ({ slug: c.slug, label: c.name })),
+  ];
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-4 px-4 py-6">
@@ -32,37 +51,70 @@ export default async function ShopsDirectoryPage() {
         </Link>
       </div>
 
+      <div className="flex flex-wrap gap-1.5">
+        {filters.map((f) => {
+          const activeChip = (f.slug ?? null) === (category ?? null);
+          return (
+            <Link
+              key={f.slug ?? "all"}
+              href={f.slug ? `/shops?category=${f.slug}` : "/shops"}
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-medium transition",
+                activeChip
+                  ? "bg-brand-500 text-on-brand"
+                  : "bg-muted-surface text-muted hover:text-foreground",
+              )}
+            >
+              {f.label}
+            </Link>
+          );
+        })}
+      </div>
+
       <Card>
         <CardHeader title={t("shopsCount", { count: items.length })} />
         {items.length === 0 ? (
-          <EmptyState icon={<Store />} title={t("noShops")} />
+          <EmptyState
+            icon={<Store />}
+            title={category ? t("noShopsInCategory") : t("noShops")}
+          />
         ) : (
           <ul className="flex flex-col divide-y divide-border">
-            {items.map((shop) => (
-              <li key={shop.slug}>
-                <Link
-                  href={`/s/${shop.slug}`}
-                  className="flex items-center gap-3 py-3 transition hover:opacity-80"
-                >
-                  {shop.logoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- external logo URL
-                    <img
-                      src={shop.logoUrl}
-                      alt={shop.name}
-                      className="size-12 shrink-0 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-muted-surface text-muted">
-                      <Store className="size-5" />
+            {items.map((shop) => {
+              const cat = shop.categoryId ? nameById.get(shop.categoryId) : null;
+              return (
+                <li key={shop.slug}>
+                  <Link
+                    href={`/s/${shop.slug}`}
+                    className="flex items-center gap-3 py-3 transition hover:opacity-80"
+                  >
+                    {shop.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- external logo URL
+                      <img
+                        src={shop.logoUrl}
+                        alt={shop.name}
+                        className="size-12 shrink-0 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-muted-surface text-muted">
+                        <Store className="size-5" />
+                      </span>
+                    )}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium text-foreground">
+                        {shop.name}
+                      </span>
+                      {cat && (
+                        <span className="block truncate text-xs text-muted">
+                          {cat}
+                        </span>
+                      )}
                     </span>
-                  )}
-                  <p className="min-w-0 flex-1 truncate font-medium text-foreground">
-                    {shop.name}
-                  </p>
-                  <ChevronRight className="size-5 shrink-0 text-muted" />
-                </Link>
-              </li>
-            ))}
+                    <ChevronRight className="size-5 shrink-0 text-muted" />
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </Card>

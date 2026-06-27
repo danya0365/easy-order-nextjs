@@ -83,12 +83,17 @@ export class DrizzleBranchRepository implements IBranchRepository {
         shopId: schema.shops.id,
         shopName: schema.shops.name,
         shopSlug: schema.shops.slug,
+        categoryName: schema.shopCategories.name,
         latitude: schema.branches.latitude,
         longitude: schema.branches.longitude,
         address: schema.branches.address,
       })
       .from(schema.branches)
       .innerJoin(schema.shops, eq(schema.branches.shopId, schema.shops.id))
+      .leftJoin(
+        schema.shopCategories,
+        eq(schema.shops.categoryId, schema.shopCategories.id),
+      )
       // Hide temporarily-paused shops from the public map.
       .leftJoin(
         schema.subscriptions,

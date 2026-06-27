@@ -52,6 +52,8 @@ interface ShopSpec {
   name: string;
   slug: string;
   billing: Billing;
+  /** Shop category slug (must match a seeded shop_categories row). */
+  category: string;
   /** Main-branch location (Bangkok). */
   lat: number;
   lng: number;
@@ -63,6 +65,7 @@ const SHOPS: ShopSpec[] = [
     name: "ร้านอาหาร A",
     slug: "diner-a",
     billing: "active",
+    category: "food",
     lat: 13.7466,
     lng: 100.5347,
     address: "สยามสแควร์ ปทุมวัน กรุงเทพฯ",
@@ -71,6 +74,7 @@ const SHOPS: ShopSpec[] = [
     name: "ร้านชานม C",
     slug: "tea-c",
     billing: "grace", // overdue ~3 days → escalating banner, not blocked
+    category: "beverage",
     lat: 13.7373,
     lng: 100.5601,
     address: "อโศก สุขุมวิท กรุงเทพฯ",
@@ -79,6 +83,7 @@ const SHOPS: ShopSpec[] = [
     name: "ร้านเบเกอรี่ B",
     slug: "bakery-b",
     billing: "suspended", // overdue > 7 days → blocked
+    category: "bakery",
     lat: 13.7649,
     lng: 100.5383,
     address: "อารีย์ พหลโยธิน กรุงเทพฯ",
@@ -87,6 +92,7 @@ const SHOPS: ShopSpec[] = [
     name: "ร้านสปา D",
     slug: "spa-d",
     billing: "admin", // admin-suspended
+    category: "other",
     lat: 13.7305,
     lng: 100.5697,
     address: "ทองหล่อ สุขุมวิท กรุงเทพฯ",
@@ -119,6 +125,10 @@ export async function seedMock(ctx: SeedContext) {
   }
   const adminId = admin.id;
 
+  // Map category slug → id (seeded by the production profile, which runs first).
+  const cats = await db.query.shopCategories.findMany();
+  const categoryIdBySlug = new Map(cats.map((c) => [c.slug, c.id]));
+
   for (const opts of SHOPS) {
     const bf = billingFields(opts.billing);
 
@@ -130,6 +140,7 @@ export async function seedMock(ctx: SeedContext) {
         name: opts.name,
         slug: opts.slug,
         status: bf.shopStatus,
+        categoryId: categoryIdBySlug.get(opts.category) ?? null,
       },
     );
     if (!shop.created) {

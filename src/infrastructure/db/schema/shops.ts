@@ -1,5 +1,6 @@
 import { sqliteTable, text, index } from "drizzle-orm/sqlite-core";
 import { id, createdAt, updatedAt } from "./_shared";
+import { shopCategories } from "./shop-categories";
 
 export const SHOP_STATUSES = ["active", "suspended_by_admin"] as const;
 export type ShopStatus = (typeof SHOP_STATUSES)[number];
@@ -13,6 +14,10 @@ export const shops = sqliteTable(
     slug: text().notNull().unique(),
     // Manual platform-level suspension; billing-derived suspension is computed, not stored.
     status: text({ enum: SHOP_STATUSES }).notNull().default("active"),
+    // Optional shop type (cafe, bakery, ...) for the public directory filter.
+    categoryId: text().references(() => shopCategories.id, {
+      onDelete: "set null",
+    }),
     // Optional storefront logo shown in the kiosk header (public URL).
     logoUrl: text(),
     // PromptPay target (mobile / tax id / e-wallet) used to render the order-payment QR.
@@ -22,5 +27,8 @@ export const shops = sqliteTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index("shops_slug_idx").on(t.slug)],
+  (t) => [
+    index("shops_slug_idx").on(t.slug),
+    index("shops_category_idx").on(t.categoryId),
+  ],
 );

@@ -321,6 +321,8 @@
     "staffAdding": "กำลังเพิ่ม…",
     "staffAdd": "เพิ่มพนักงาน",
     "setNameLabel": "ชื่อร้าน",
+    "setCategoryLabel": "หมวดร้าน",
+    "setCategoryNone": "— ไม่ระบุหมวด —",
     "setPromptpayLabel": "พร้อมเพย์ (เบอร์/เลขบัตร ปชช.)",
     "setPromptpayHint": "ใช้สร้าง QR รับชำระค่าออเดอร์",
     "setRewardHint": "เช่น เลือกเครื่องดื่มในร้านฟรี 1 แก้ว",

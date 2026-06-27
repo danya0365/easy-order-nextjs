@@ -1,3 +1,4 @@
+export * from "./shop-categories";
 export * from "./shops";
 export * from "./branches";
 export * from "./menu-categories";

@@ -144,6 +144,7 @@ export async function updateSettingsAction(
     const shopId = await ownerShopId();
     await new UpdateShopSettingsUseCase(container.shopRepository).execute(shopId, {
       name: String(formData.get("name") ?? ""),
+      categoryId: String(formData.get("categoryId") ?? ""),
       promptpayTarget: String(formData.get("promptpayTarget") ?? ""),
     });
     revalidatePath("/shop/settings");

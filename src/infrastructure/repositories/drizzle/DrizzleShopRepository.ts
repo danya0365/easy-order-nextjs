@@ -18,6 +18,7 @@ function toShop(r: Row): Shop {
     name: r.name,
     slug: r.slug,
     status: r.status,
+    categoryId: r.categoryId,
     logoUrl: r.logoUrl,
     promptpayTarget: r.promptpayTarget,
     hasKioskPin: r.kioskPinHash != null,
@@ -33,6 +34,7 @@ export class DrizzleShopRepository implements IShopRepository {
       .values({
         name: input.name,
         slug: input.slug,
+        categoryId: input.categoryId ?? null,
         logoUrl: input.logoUrl ?? null,
         promptpayTarget: input.promptpayTarget ?? null,
       })
@@ -67,6 +69,9 @@ export class DrizzleShopRepository implements IShopRepository {
       .update(schema.shops)
       .set({
         ...(input.name !== undefined ? { name: input.name } : {}),
+        ...(input.categoryId !== undefined
+          ? { categoryId: input.categoryId }
+          : {}),
         ...(input.logoUrl !== undefined ? { logoUrl: input.logoUrl } : {}),
         ...(input.promptpayTarget !== undefined
           ? { promptpayTarget: input.promptpayTarget }

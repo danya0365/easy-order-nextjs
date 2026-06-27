@@ -3,12 +3,14 @@ import type { Shop, ShopStatus } from "@/src/domain/entities";
 export interface CreateShopInput {
   name: string;
   slug: string;
+  categoryId?: string | null;
   logoUrl?: string | null;
   promptpayTarget?: string | null;
 }
 
 export interface UpdateShopSettingsInput {
   name?: string;
+  categoryId?: string | null;
   logoUrl?: string | null;
   promptpayTarget?: string | null;
   /** Bcrypt hash of the kiosk PIN; pass null to clear it. */
