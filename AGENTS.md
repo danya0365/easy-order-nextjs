@@ -6,11 +6,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Easy Order — Project Summary
 
-**คืออะไร:** in-store self-ordering SaaS — ร้านวาง iPad/แท็บเล็ตที่เคาน์เตอร์ใน *kiosk mode*; ลูกค้า walk-in แตะเพื่อ browse เมนู → สร้าง cart → สั่ง → จ่ายด้วย **PromptPay QR หรือเงินสด**. ลูกค้า **anonymous + read-only** (ไม่มีแอป ไม่มี login). ร้านจัดการเมนูเอง + ทำ live order queue.
+**คืออะไร:** in-store self-ordering SaaS — ร้านวาง iPad/แท็บเล็ตที่เคาน์เตอร์ใน *kiosk mode*; ลูกค้า walk-in แตะเพื่อ browse เมนู → สร้าง cart → สั่ง → จ่ายด้วย **PromptPay QR หรือเงินสด**. ลูกค้าสั่งแบบ **ขาจรได้โดยไม่ต้อง login** — แต่ถ้าใส่ **ชื่อ+เบอร์มือถือ** จะผูกเป็นลูกค้าของร้านและเก็บ **ประวัติการสั่ง** ที่ลูกค้าเปิดดูเองด้วยมือถือได้ (ดู Customer identity ด้านล่าง). ร้านจัดการเมนูเอง + ทำ live order queue.
 
 **ที่มา:** clone จาก **Easy Stamp** SaaS starter (v1.19.0) แล้วแทน domain แสตมป์สะสมด้วย in-store ordering. ส่วน generic ~40% (auth, billing, multi-tenant, notifications, audit, rate-limit, contact, ops, theming, i18n) reuse ตามเดิม. UI ภาษาไทย, v0.1.0.
 
-**Requirement หลัก / anti-fraud:** order สร้างได้เฉพาะบนเครื่องที่ร้าน activate แล้วเท่านั้น (กันออเดอร์ปลอม/มั่วจากนอกร้าน). **"Easy" = หลักการของโปรดักต์**: flow ต้องง่าย touch-friendly · ลูกค้าต้อง read-only เสมอ · เสนอฟีเจอร์เพิ่มได้แต่ต้องคงสองข้อนี้.
+**Requirement หลัก / anti-fraud:** order สร้างได้เฉพาะบนเครื่องที่ร้าน activate แล้วเท่านั้น (กันออเดอร์ปลอม/มั่วจากนอกร้าน). **"Easy" = หลักการของโปรดักต์**: flow ต้องง่าย touch-friendly · ลูกค้า**ไม่ต้องมี account/รหัสผ่าน** (สั่งขาจรได้; การระบุตัวตนเป็น optional ผ่านเบอร์มือถือ + สแกน QR เท่านั้น) · เสนอฟีเจอร์เพิ่มได้แต่ต้องคงข้อเหล่านี้.
 
 **Scope decisions (ยืนยันแล้ว):**
 - kiosk lock = **dedicated kiosk PIN** 4–6 หลัก (ไม่ใช่ session เต็มของเจ้าของ) — iPad รัน kiosk session แยก, ออกต้องใช้ PIN
@@ -18,8 +18,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - fulfillment = **order queue + สถานะ** (KDS-lite) + แจ้งเตือนออเดอร์ใหม่
 - QR payment = ร้าน **กดยืนยันรับเงินเอง** (โชว์ PromptPay QR → ลูกค้าจ่าย → staff กด confirm) — ไม่มี gateway/slip
 - tenant ยังเป็น `Shop` (+ `Branch`)
+- **Customer identity (ใน scope — ยังไม่ build):** ลูกค้า optional ใส่ชื่อ+เบอร์ตอนสั่ง → `Customer` ต่อร้าน (phone, displayName, publicCode) ผูกกับ order; ลูกค้าสแกน **bind-code QR** ที่ kiosk (ครั้งเดียว → httpOnly cookie, ไม่ต้อง login) เปิดดู **ประวัติการสั่ง** ที่ `/s/[slug]` + `/me` ได้ — พอร์ตจาก customer model ของ Easy Stamp (แต้ม→ออเดอร์)
 
-**Out of scope (ห้ามเพิ่มโดยไม่ถาม):** customer accounts/login · payment gateway/auto-verify · multi-locale (คง `th` เดี่ยว) · public web ordering / shop directory.
+**ใน scope แต่ยังไม่ build (planned):** customer identity + ประวัติการสั่ง (ด้านบน) · public **homepage map + `/shops` directory** (พอร์ตจาก Easy Stamp — เป็น discovery/marketing ไม่ใช่สั่งของจากนอกร้าน; ตอน clone โดน drop ทิ้งโดยพลาด แต่ deps/repo/i18n/e2e ยังค้างชี้อยู่).
+
+**Out of scope จริง (ห้ามเพิ่มโดยไม่ถาม):** customer **account/รหัสผ่าน** เต็มรูปแบบ (ระบุตัวตนใช้แค่เบอร์ + bind QR) · payment gateway/auto-verify · multi-locale (คง `th` เดี่ยว) · **การสั่งของจากนอกร้าน** (ออเดอร์ต้องมาจาก kiosk ที่ activate เท่านั้น).
 
 **Domain model:** `MenuCategory` · `MenuItem` (ราคาเป็น **satang** integer) · `Order` (`orderNo` = running number รายวันต่อร้าน, รีเซ็ตทุกวัน Bangkok; `status` `pending → preparing → ready → completed` forward-only หรือ `cancelled`; `paymentMethod` `promptpay_qr|cash`; `paymentStatus` `unpaid|paid`) · `OrderItem` (**snapshot ชื่อ+ราคา** ตอนสั่ง — แก้เมนูทีหลังไม่กระทบประวัติ) · `kiosk_sessions`.
 
@@ -34,7 +37,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 **Generic vs domain split:** 🟢 generic reuse ตามเดิม (`container.generic.ts` / `GenericContainer`) · 🔴 domain (menu/order/kiosk) register ใน [`src/infrastructure/di/container.ts`](src/infrastructure/di/container.ts).
 
-> รายละเอียด requirements / scope / domain / **file map** เต็มอยู่ใน [`MEMORY_SUMMARY.md`](MEMORY_SUMMARY.md) (auto-load ผ่าน `CLAUDE.md`). ส่วนของ AGENTS.md ที่ inherit มาจาก Easy Stamp และอาจ stale ดู §10 ของไฟล์นั้น.
+> Project Summary นี้คือ scope หลักของโปรเจค (auto-load ผ่าน `CLAUDE.md` → `@AGENTS.md`). Persistent memory เพิ่มเติมอยู่ใน [`.claude/memory/`](.claude/memory/). หัวข้ออื่นของ AGENTS.md ด้านล่าง inherit มาจาก Easy Stamp — reference ใดที่อ้างถึง stamp/แต้ม/บัตรสะสม ถือว่า stale (domain จริงคือ menu + order + kiosk + customer).
 
 # Versioning
 

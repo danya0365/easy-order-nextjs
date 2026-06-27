@@ -1,6 +1,8 @@
 # Easy Order
 
-A multi-tenant **in-store self-ordering SaaS** for merchants. The shop puts an **iPad/tablet at the counter** in *kiosk mode*; walk-in customers tap to **browse the menu, build a cart, and place an order**, paying by **PromptPay QR or cash**. Customers are **anonymous and read-only** — no app, no login. Orders can only be placed on a device the shop has activated (a DB-backed kiosk session), so nobody can fire fake orders remotely. Each shop pays as it goes by **topping up usage days** via PromptPay; the platform admin verifies slips manually. The UI is in Thai.
+A multi-tenant **in-store self-ordering SaaS** for merchants. The shop puts an **iPad/tablet at the counter** in *kiosk mode*; walk-in customers tap to **browse the menu, build a cart, and place an order**, paying by **PromptPay QR or cash**. Customers order **without an account or login**. Orders can only be placed on a device the shop has activated (a DB-backed kiosk session), so nobody can fire fake orders remotely. Each shop pays as it goes by **topping up usage days** via PromptPay; the platform admin verifies slips manually. The UI is in Thai.
+
+> **Roadmap (planned, not yet built):** optional **customer identity** — a customer can give their name + phone at checkout to build an **order history** they view on their own phone (one-time bind-code QR → device cookie, still no login); plus a public **homepage shop map + `/shops` directory** for discovery. See the Project Summary in [`AGENTS.md`](AGENTS.md).
 
 > Built by cloning the **Easy Stamp** SaaS starter — the generic half (auth, billing, multi-tenant, notifications, audit, ops, theming, i18n) is reused as-is; the domain is in-store ordering. See [docs/FORKING.md](docs/FORKING.md).
 
