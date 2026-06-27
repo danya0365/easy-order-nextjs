@@ -8,6 +8,8 @@ import { DrizzleMenuCategoryRepository } from "@/src/infrastructure/repositories
 import { DrizzleMenuItemRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMenuItemRepository";
 import { DrizzleOrderRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleOrderRepository";
 import { DrizzleCustomerRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleCustomerRepository";
+import { DrizzleCustomerDeviceRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleCustomerDeviceRepository";
+import { DrizzleBindCodeRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleBindCodeRepository";
 import { DrizzleKioskSessionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleKioskSessionRepository";
 
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
@@ -16,6 +18,8 @@ import type { IMenuCategoryRepository } from "@/src/application/repositories/IMe
 import type { IMenuItemRepository } from "@/src/application/repositories/IMenuItemRepository";
 import type { IOrderRepository } from "@/src/application/repositories/IOrderRepository";
 import type { ICustomerRepository } from "@/src/application/repositories/ICustomerRepository";
+import type { ICustomerDeviceRepository } from "@/src/application/repositories/ICustomerDeviceRepository";
+import type { IBindCodeRepository } from "@/src/application/repositories/IBindCodeRepository";
 import type { IKioskSessionRepository } from "@/src/application/repositories/IKioskSessionRepository";
 
 /**
@@ -36,6 +40,10 @@ class Container extends GenericContainer {
   readonly orderRepository: IOrderRepository = new DrizzleOrderRepository();
   readonly customerRepository: ICustomerRepository =
     new DrizzleCustomerRepository();
+  readonly customerDeviceRepository: ICustomerDeviceRepository =
+    new DrizzleCustomerDeviceRepository();
+  readonly bindCodeRepository: IBindCodeRepository =
+    new DrizzleBindCodeRepository();
   readonly kioskSessionRepository: IKioskSessionRepository =
     new DrizzleKioskSessionRepository();
 }

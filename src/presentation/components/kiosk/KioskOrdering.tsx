@@ -119,6 +119,23 @@ export function KioskOrdering({
           <p className="text-base text-muted">{t("resultCash")}</p>
         )}
 
+        {result.bindQrDataUrl && (
+          <div className="mt-2 flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4">
+            <p className="text-base font-semibold text-foreground">
+              {t("historyQrTitle")}
+            </p>
+            {/* eslint-disable-next-line @next/next/no-img-element -- data URL QR, not a remote asset */}
+            <img
+              src={result.bindQrDataUrl}
+              alt={t("historyQrTitle")}
+              className="size-48 rounded-xl border border-border bg-card p-2"
+            />
+            <p className="max-w-xs text-center text-sm text-muted">
+              {t("historyQrHint")}
+            </p>
+          </div>
+        )}
+
         <Button size="lg" fullWidth onClick={reset} className="mt-4">
           {t("startNew")}
         </Button>

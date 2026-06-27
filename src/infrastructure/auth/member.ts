@@ -5,16 +5,16 @@ import { cookies } from "next/headers";
 // One cookie per shop slug so a device can be bound to multiple shops.
 const MEMBER_TTL_MS = 365 * 24 * 60 * 60 * 1000; // 1 year
 
+const PREFIX = "eo_member_";
+
 export function memberCookieName(slug: string): string {
-  return `es_member_${slug}`;
+  return `${PREFIX}${slug}`;
 }
 
 /** Read the member device token for a shop (null if device not bound). */
 export async function getMemberToken(slug: string): Promise<string | null> {
   return (await cookies()).get(memberCookieName(slug))?.value ?? null;
 }
-
-const PREFIX = "es_member_";
 
 /** All shop bindings on this device — one cookie per shop the user joined. */
 export async function getAllMemberTokens(): Promise<

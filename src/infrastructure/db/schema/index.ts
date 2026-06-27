@@ -3,6 +3,8 @@ export * from "./branches";
 export * from "./menu-categories";
 export * from "./menu-items";
 export * from "./customers";
+export * from "./customer-devices";
+export * from "./bind-codes";
 export * from "./orders";
 export * from "./order-items";
 export * from "./kiosk-sessions";

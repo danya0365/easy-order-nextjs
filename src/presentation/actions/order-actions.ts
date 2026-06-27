@@ -9,9 +9,12 @@ import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
 import { PlaceOrderUseCase } from "@/src/application/use-cases/order/PlaceOrderUseCase";
 import { AdvanceOrderStatusUseCase } from "@/src/application/use-cases/order/AdvanceOrderStatusUseCase";
 import { ConfirmOrderPaymentUseCase } from "@/src/application/use-cases/order/ConfirmOrderPaymentUseCase";
+import { GenerateBindCodeUseCase } from "@/src/application/use-cases/member/GenerateBindCodeUseCase";
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
 import { getClientIp } from "@/src/presentation/lib/request-ip";
+import { getBaseUrl } from "@/src/presentation/lib/base-url";
 import { renderPromptPayQR } from "@/src/infrastructure/services/promptpay";
+import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
 import type { OrderStatus, OrderPaymentMethod } from "@/src/domain/entities";
 import type { Page } from "@/src/application/repositories/pagination";
 import type { OrderWithItems } from "@/src/domain/entities";
@@ -30,6 +33,8 @@ export interface PlaceOrderResult {
   paymentMethod?: OrderPaymentMethod;
   /** PromptPay QR PNG data URL when paymentMethod === "promptpay_qr". */
   qrDataUrl?: string;
+  /** Bind QR — present when the customer gave a phone; scan to view order history. */
+  bindQrDataUrl?: string;
 }
 
 export interface PlaceOrderActionInput {
@@ -106,6 +111,26 @@ export async function placeOrderAction(
       }
     }
 
+    // If the customer identified themselves, offer a one-time bind QR they scan
+    // with their own phone to view their order history. Non-fatal: the order is
+    // already placed, so any failure here (e.g. rate limit) is swallowed.
+    let bindQrDataUrl: string | undefined;
+    if (order.customerId && input.customerPhone?.trim()) {
+      try {
+        const shop = await container.shopRepository.findById(shopId);
+        if (shop) {
+          const { code } = await new GenerateBindCodeUseCase(
+            container.customerRepository,
+            container.bindCodeRepository,
+          ).execute(shopId, input.customerPhone);
+          const url = `${await getBaseUrl()}/s/${shop.slug}/link?code=${code}`;
+          bindQrDataUrl = await renderQrDataUrl(url);
+        }
+      } catch {
+        /* ignore — history binding is optional */
+      }
+    }
+
     return {
       ok: true,
       orderId: order.id,
@@ -113,6 +138,7 @@ export async function placeOrderAction(
       totalSatang: order.totalSatang,
       paymentMethod: order.paymentMethod,
       qrDataUrl,
+      bindQrDataUrl,
     };
   } catch (e) {
     return { error: (e as Error).message };

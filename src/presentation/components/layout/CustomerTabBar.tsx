@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Map, Store, Wallet, BookOpen, Info, type LucideIcon } from "lucide-react";
+import { History, BookOpen, Info, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { cn } from "@/src/presentation/components/ui/cn";
@@ -16,21 +16,14 @@ interface Tab {
   active: (pathname: string) => boolean;
 }
 
-// Order = frequency of use: map is the discovery home; returning customers open
-// "my cards" most → keep it second; help/about are rarely used → last.
+// Returning customers open their order history most → keep it first; help/about
+// are rarely used → last. (A shop map + directory tab come with that feature.)
 const TABS: Tab[] = [
-  { href: "/", label: "navMap", icon: Map, active: (p) => p === "/" },
   {
     href: "/me",
     label: "navMyCards",
-    icon: Wallet,
-    active: (p) => p === "/me" || p.startsWith("/me/"),
-  },
-  {
-    href: "/shops",
-    label: "navShops",
-    icon: Store,
-    active: (p) => p.startsWith("/shops"),
+    icon: History,
+    active: (p) => p === "/me" || p.startsWith("/me/") || p.startsWith("/s/"),
   },
   {
     href: "/tutorial",
