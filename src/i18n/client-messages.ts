@@ -29,5 +29,6 @@ export async function getClientMessages() {
     menu: messages.menu,
     order: messages.order,
     kiosk: messages.kiosk,
+    map: messages.map,
   };
 }

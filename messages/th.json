@@ -624,7 +624,7 @@
   },
   "map": {
     "noPinnedShops": "ยังไม่มีร้านค้าที่ปักหมุดตำแหน่ง",
-    "viewShopReviews": "ดูร้าน & รีวิว",
+    "viewShop": "ดูร้าน",
     "editLocation": "แก้ไขตำแหน่งบนแผนที่",
     "setLocation": "ตั้งตำแหน่งบนแผนที่",
     "tapToPin": "แตะบนแผนที่เพื่อปักหมุด หรือลากหมุดเพื่อปรับตำแหน่ง",
@@ -945,7 +945,7 @@
     "changePasswordTitle": "เปลี่ยนรหัสผ่าน"
   },
   "publicPages": {
-    "tagline": "ระบบบัตรสะสมแสตมป์สำหรับร้านค้าหลายสาขา",
+    "tagline": "ค้นหาร้านที่ร่วมรายการใกล้คุณ",
     "goToDashboard": "ไปที่แดชบอร์ด",
     "adminLogin": "เข้าสู่ระบบผู้ดูแล",
     "shopsParticipating": "ร้านค้าที่ร่วมรายการ {count} แห่ง",
@@ -954,6 +954,7 @@
     "filterAll": "ทั้งหมด",
     "shopsCount": "{count} ร้าน",
     "noShopsInCategory": "ยังไม่มีร้านในหมวดนี้",
+    "noShops": "ยังไม่มีร้านค้า",
     "myOrdersTitle": "ประวัติการสั่งของฉัน",
     "myOrdersSubtitle": "ที่ {shop}",
     "noOrdersYet": "ยังไม่มีประวัติการสั่ง",
