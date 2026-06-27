@@ -4,6 +4,38 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+# Easy Order — Project Summary
+
+**คืออะไร:** in-store self-ordering SaaS — ร้านวาง iPad/แท็บเล็ตที่เคาน์เตอร์ใน *kiosk mode*; ลูกค้า walk-in แตะเพื่อ browse เมนู → สร้าง cart → สั่ง → จ่ายด้วย **PromptPay QR หรือเงินสด**. ลูกค้า **anonymous + read-only** (ไม่มีแอป ไม่มี login). ร้านจัดการเมนูเอง + ทำ live order queue.
+
+**ที่มา:** clone จาก **Easy Stamp** SaaS starter (v1.19.0) แล้วแทน domain แสตมป์สะสมด้วย in-store ordering. ส่วน generic ~40% (auth, billing, multi-tenant, notifications, audit, rate-limit, contact, ops, theming, i18n) reuse ตามเดิม. UI ภาษาไทย, v0.1.0.
+
+**Requirement หลัก / anti-fraud:** order สร้างได้เฉพาะบนเครื่องที่ร้าน activate แล้วเท่านั้น (กันออเดอร์ปลอม/มั่วจากนอกร้าน). **"Easy" = หลักการของโปรดักต์**: flow ต้องง่าย touch-friendly · ลูกค้าต้อง read-only เสมอ · เสนอฟีเจอร์เพิ่มได้แต่ต้องคงสองข้อนี้.
+
+**Scope decisions (ยืนยันแล้ว):**
+- kiosk lock = **dedicated kiosk PIN** 4–6 หลัก (ไม่ใช่ session เต็มของเจ้าของ) — iPad รัน kiosk session แยก, ออกต้องใช้ PIN
+- menu = **Category + Item** (`MenuCategory` + `MenuItem`)
+- fulfillment = **order queue + สถานะ** (KDS-lite) + แจ้งเตือนออเดอร์ใหม่
+- QR payment = ร้าน **กดยืนยันรับเงินเอง** (โชว์ PromptPay QR → ลูกค้าจ่าย → staff กด confirm) — ไม่มี gateway/slip
+- tenant ยังเป็น `Shop` (+ `Branch`)
+
+**Out of scope (ห้ามเพิ่มโดยไม่ถาม):** customer accounts/login · payment gateway/auto-verify · multi-locale (คง `th` เดี่ยว) · public web ordering / shop directory.
+
+**Domain model:** `MenuCategory` · `MenuItem` (ราคาเป็น **satang** integer) · `Order` (`orderNo` = running number รายวันต่อร้าน, รีเซ็ตทุกวัน Bangkok; `status` `pending → preparing → ready → completed` forward-only หรือ `cancelled`; `paymentMethod` `promptpay_qr|cash`; `paymentStatus` `unpaid|paid`) · `OrderItem` (**snapshot ชื่อ+ราคา** ตอนสั่ง — แก้เมนูทีหลังไม่กระทบประวัติ) · `kiosk_sessions`.
+
+**Kiosk security model (จุดสำคัญ — ห้ามทำให้อ่อนลง):**
+1. PIN เก็บเป็น bcrypt บน `shops.kioskPinHash` (`SetKioskPinUseCase`)
+2. เจ้าของ (auth แล้ว) activate เครื่อง → `startKioskSession()` insert row + ตั้ง cookie **`eo_kiosk`** httpOnly (TTL ~12h)
+3. `requireKioskShop()` ([`src/infrastructure/auth/kiosk.ts`](src/infrastructure/auth/kiosk.ts)) อ่าน cookie + validate ว่า row มีจริง+ไม่หมดอายุ → คืน `shopId`. cookie ปลอมที่ไม่มี row = reject
+4. **`placeOrderAction` ดึง `shopId` จาก `requireKioskShop()` เท่านั้น** — ไม่เชื่อ client input → สั่งจากนอกร้านไม่ได้
+5. ราคา/ชื่อมาจาก **DB** ใน `PlaceOrderUseCase` (lookup item ตาม id, ต้องเป็นของร้าน + available) — payload ปลอมเปลี่ยนยอดไม่ได้
+6. placing order **rate-limited** ต่อ device+IP ผ่าน `sensitiveActionGuard`
+7. ออกจาก kiosk **ต้องใช้ PIN** (`VerifyKioskPinUseCase` → `endKioskSession()` revoke row + clear cookie)
+
+**Generic vs domain split:** 🟢 generic reuse ตามเดิม (`container.generic.ts` / `GenericContainer`) · 🔴 domain (menu/order/kiosk) register ใน [`src/infrastructure/di/container.ts`](src/infrastructure/di/container.ts).
+
+> รายละเอียด requirements / scope / domain / **file map** เต็มอยู่ใน [`MEMORY_SUMMARY.md`](MEMORY_SUMMARY.md) (auto-load ผ่าน `CLAUDE.md`). ส่วนของ AGENTS.md ที่ inherit มาจาก Easy Stamp และอาจ stale ดู §10 ของไฟล์นั้น.
+
 # Versioning
 
 ทำตาม [`VERSIONING.md`](VERSIONING.md): ใช้ SemVer อิงฟีเจอร์ (PATCH=แก้บั๊ก/polish, MINOR=ฟีเจอร์ใหม่, MAJOR=เปลี่ยนใหญ่/breaking) — เลขเวอร์ชั่นมาจาก `version` ใน `package.json` ที่เดียว (ไหลเข้า footer อัตโนมัติ ไม่ต้องแก้ที่อื่น) ตอนออกรุ่น: อัปเดต `CHANGELOG.md` แล้วรัน `npm run release:patch|minor|major` (bump + commit + git tag) อย่า bump ทุก commit
@@ -33,11 +65,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Brand / identity
 
-ห้าม hardcode ชื่อแอป ("Easy Stamp") — ใช้ `BRAND.*` จาก [`src/config/brand.ts`](src/config/brand.ts) เสมอ (name/tagline/description/totpIssuer/userAgent). เป็นจุดเดียวที่เปลี่ยนตอน clone เป็น product อื่น
+ห้าม hardcode ชื่อแอป ("Easy Order") — ใช้ `BRAND.*` จาก [`src/config/brand.ts`](src/config/brand.ts) เสมอ (name/tagline/description/totpIssuer/userAgent). เป็นจุดเดียวที่เปลี่ยนตอน clone เป็น product อื่น
 
 # Rate-limit / กัน abuse
 
-action ที่เสี่ยงถูก spam/brute-force ให้ผ่าน `container.sensitiveActionGuard` หรือ `container.rateLimitRepository` (เช่น แจกแสตมป์, ปิดร้านชั่วคราว, ยืนยัน OTP/2FA) — อย่าปล่อยไม่จำกัด
+action ที่เสี่ยงถูก spam/brute-force ให้ผ่าน `container.sensitiveActionGuard` หรือ `container.rateLimitRepository` (เช่น รับออเดอร์ `placeOrder`, ยืนยัน PIN kiosk, ปิดร้านชั่วคราว, ยืนยัน OTP/2FA) — อย่าปล่อยไม่จำกัด
 
 # Billing — ปิดร้านชั่วคราว (invariants ห้ามพลาด)
 
