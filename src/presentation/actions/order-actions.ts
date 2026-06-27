@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 import { container } from "@/src/infrastructure/di/container";
-import { requireShopWrite } from "@/src/infrastructure/auth/session";
+import {
+  requireShopWrite,
+  operatorContext,
+} from "@/src/infrastructure/auth/session";
 import { requireKioskShop } from "@/src/infrastructure/auth/kiosk";
 import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
 import { PlaceOrderUseCase } from "@/src/application/use-cases/order/PlaceOrderUseCase";
@@ -23,6 +26,9 @@ import type { OrderWithItems } from "@/src/domain/entities";
 // the window (real counters peak well below it); breaching alerts admins + owner.
 const ORDER_RATE_LIMIT = 30;
 const ORDER_RATE_WINDOW_MS = 5 * 60_000;
+// Counter staff/owner placing orders: generous hourly cap per operator.
+const STAFF_ORDER_RATE_LIMIT = 200;
+const STAFF_ORDER_RATE_WINDOW_MS = 60 * 60_000;
 
 export interface PlaceOrderResult {
   ok?: true;
@@ -100,49 +106,125 @@ export async function placeOrderAction(
       linkUrl: "/shop/orders",
     });
 
-    let qrDataUrl: string | undefined;
-    if (order.paymentMethod === "promptpay_qr") {
-      const shop = await container.shopRepository.findById(shopId);
-      if (shop?.promptpayTarget) {
-        qrDataUrl = await renderPromptPayQR(
-          shop.promptpayTarget,
-          order.totalSatang,
-        );
-      }
-    }
-
-    // If the customer identified themselves, offer a one-time bind QR they scan
-    // with their own phone to view their order history. Non-fatal: the order is
-    // already placed, so any failure here (e.g. rate limit) is swallowed.
-    let bindQrDataUrl: string | undefined;
-    if (order.customerId && input.customerPhone?.trim()) {
-      try {
-        const shop = await container.shopRepository.findById(shopId);
-        if (shop) {
-          const { code } = await new GenerateBindCodeUseCase(
-            container.customerRepository,
-            container.bindCodeRepository,
-          ).execute(shopId, input.customerPhone);
-          const url = `${await getBaseUrl()}/s/${shop.slug}/link?code=${code}`;
-          bindQrDataUrl = await renderQrDataUrl(url);
-        }
-      } catch {
-        /* ignore — history binding is optional */
-      }
-    }
-
-    return {
-      ok: true,
-      orderId: order.id,
-      orderNo: order.orderNo,
-      totalSatang: order.totalSatang,
-      paymentMethod: order.paymentMethod,
-      qrDataUrl,
-      bindQrDataUrl,
-    };
+    return await buildOrderResult(shopId, order, input.customerPhone ?? null);
   } catch (e) {
     return { error: (e as Error).message };
   }
+}
+
+/**
+ * Shared finalizer for a freshly placed order: render the PromptPay payment QR
+ * (if applicable) and, when the customer gave a phone, a one-time history bind
+ * QR they scan to view their orders. Bind-QR failures are non-fatal (the order
+ * is already placed).
+ */
+async function buildOrderResult(
+  shopId: string,
+  order: OrderWithItems,
+  customerPhone: string | null,
+): Promise<PlaceOrderResult> {
+  let qrDataUrl: string | undefined;
+  if (order.paymentMethod === "promptpay_qr") {
+    const shop = await container.shopRepository.findById(shopId);
+    if (shop?.promptpayTarget) {
+      qrDataUrl = await renderPromptPayQR(shop.promptpayTarget, order.totalSatang);
+    }
+  }
+
+  let bindQrDataUrl: string | undefined;
+  if (order.customerId && customerPhone?.trim()) {
+    try {
+      const shop = await container.shopRepository.findById(shopId);
+      if (shop) {
+        const { code } = await new GenerateBindCodeUseCase(
+          container.customerRepository,
+          container.bindCodeRepository,
+        ).execute(shopId, customerPhone);
+        const url = `${await getBaseUrl()}/s/${shop.slug}/link?code=${code}`;
+        bindQrDataUrl = await renderQrDataUrl(url);
+      }
+    } catch {
+      /* ignore — history binding is optional */
+    }
+  }
+
+  return {
+    ok: true,
+    orderId: order.id,
+    orderNo: order.orderNo,
+    totalSatang: order.totalSatang,
+    paymentMethod: order.paymentMethod,
+    qrDataUrl,
+    bindQrDataUrl,
+  };
+}
+
+/**
+ * Place an order on behalf of a customer from the authenticated counter UI
+ * (owner OR branch staff). The shop comes from the logged-in operator, not a
+ * kiosk device. Rate-limited per operator. Mirrors the customer identity +
+ * payment handling of the kiosk flow.
+ */
+export async function placeOrderForCustomerAction(
+  input: PlaceOrderActionInput,
+): Promise<PlaceOrderResult> {
+  try {
+    const { actor, shopId } = await operatorContext();
+    await assertShopActive(shopId);
+
+    const guard = await container.sensitiveActionGuard.check({
+      key: `order_staff:${shopId}:${actor.id}`,
+      limit: STAFF_ORDER_RATE_LIMIT,
+      windowMs: STAFF_ORDER_RATE_WINDOW_MS,
+      shopId,
+      actorUserId: actor.id,
+      ip: await getClientIp(),
+      alertTitle: "⚠️ มีการเปิดออเดอร์ถี่ผิดปกติ",
+      alertBody: `บัญชีหนึ่งเปิดออเดอร์เกิน ${STAFF_ORDER_RATE_LIMIT} ครั้ง/ชม.`,
+    });
+    if (!guard.allowed) {
+      return { error: "เปิดออเดอร์ถี่เกินไป กรุณารอสักครู่แล้วลองใหม่" };
+    }
+
+    if (input.paymentMethod === "promptpay_qr") {
+      const shop = await container.shopRepository.findById(shopId);
+      if (!shop?.promptpayTarget) {
+        return { error: "ร้านยังไม่ได้ตั้งค่า PromptPay กรุณาเลือกจ่ายเงินสด" };
+      }
+    }
+
+    const order = await new PlaceOrderUseCase(
+      container.orderRepository,
+      container.menuItemRepository,
+      container.customerRepository,
+    ).execute({
+      shopId,
+      paymentMethod: input.paymentMethod,
+      note: input.note ?? null,
+      customerName: input.customerName ?? null,
+      customerPhone: input.customerPhone ?? null,
+      cart: input.cart,
+    });
+
+    revalidatePath("/shop/orders");
+    revalidatePath("/staff");
+    return await buildOrderResult(shopId, order, input.customerPhone ?? null);
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+/** Typeahead for the staff order-entry customer picker (shop-scoped). */
+export async function searchCustomersAction(
+  query: string,
+): Promise<{ id: string; phone: string; displayName: string | null }[]> {
+  const { shopId } = await operatorContext();
+  const rows = await container.customerRepository.listByShop(shopId, query);
+  return rows.map((c) => ({
+    id: c.id,
+    phone: c.phone,
+    displayName: c.displayName,
+  }));
 }
 
 /** Shop staff/owner advances an order along the queue (or cancels it). */

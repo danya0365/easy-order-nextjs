@@ -170,6 +170,32 @@ export async function requireShopWrite(): Promise<ShopWriteAccess> {
   throw new Error("ไม่มีสิทธิ์แก้ไขข้อมูลร้านนี้");
 }
 
+export interface OperatorContext {
+  /** The real user performing the action (for audit / accountability). */
+  actor: User;
+  shopId: string;
+  /** The operator's branch, if a branch_staff (null for owner/admin). */
+  branchId: string | null;
+}
+
+/**
+ * Authorize a counter operation (e.g. placing an order for a customer) by anyone
+ * who works the shop: a `branch_staff` (scoped to their own shop) OR the
+ * `shop_owner` / impersonating `platform_admin` via `requireShopWrite`. Unlike
+ * `requireShopWrite`, this also lets branch staff act. Throws (not redirect) so
+ * the calling action returns a clean `{ error }`.
+ */
+export async function operatorContext(): Promise<OperatorContext> {
+  const user = await getSession();
+  if (user?.role === "branch_staff") {
+    if (!user.shopId) throw new Error("บัญชีนี้ไม่ได้ผูกกับร้านค้า");
+    return { actor: user, shopId: user.shopId, branchId: user.branchId ?? null };
+  }
+  // shop_owner, or a platform_admin impersonating this shop.
+  const { actor, shopId } = await requireShopWrite();
+  return { actor, shopId, branchId: actor.branchId ?? null };
+}
+
 /** Assert the user owns the given shop (platform_admin bypasses). */
 export function requireShopScope(user: User, shopId: string): void {
   if (user.role === "platform_admin") return;

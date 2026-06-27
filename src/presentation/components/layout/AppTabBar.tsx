@@ -15,6 +15,7 @@ import {
   MoreHorizontal,
   Settings,
   ShieldAlert,
+  ShoppingCart,
   Store,
   UserCog,
   UtensilsCrossed,
@@ -26,6 +27,7 @@ import { cn } from "@/src/presentation/components/ui/cn";
 /** A `layout`-namespace message key for a nav label (resolved with `t()`). */
 type NavLabelKey =
   | "navOrders"
+  | "navNewOrder"
   | "navDashboard"
   | "navMenu"
   | "navNotifications"
@@ -53,10 +55,11 @@ interface NavItem {
 // primary tabs; the rest fold into the "more" sheet.
 const NAVS = {
   shop: [
-    // Primary (daily): the live order queue is the core counter action.
+    // Primary (daily): the live order queue + opening orders are the core counter actions.
     { href: "/shop/orders", label: "navOrders", icon: ClipboardList },
-    { href: "/shop", label: "navDashboard", icon: LayoutDashboard },
+    { href: "/shop/new-order", label: "navNewOrder", icon: ShoppingCart },
     { href: "/shop/menu", label: "navMenu", icon: UtensilsCrossed },
+    { href: "/shop", label: "navDashboard", icon: LayoutDashboard },
     { href: "/shop/notifications", label: "navNotifications", icon: Bell },
     // Overflow (periodic → setup → rare)
     { href: "/shop/billing", label: "navBilling", icon: CreditCard },
@@ -77,7 +80,7 @@ const NAVS = {
     { href: "/admin/security", label: "navSecurity", icon: ShieldAlert },
   ],
   staff: [
-    { href: "/staff", label: "navOrders", icon: ClipboardList },
+    { href: "/staff", label: "navNewOrder", icon: ShoppingCart },
     { href: "/staff/notifications", label: "navNotifications", icon: Bell },
     { href: "/staff/settings", label: "navSettings", icon: Settings },
   ],

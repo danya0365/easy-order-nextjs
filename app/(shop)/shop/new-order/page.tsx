@@ -1,14 +1,12 @@
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { GetKioskMenuUseCase } from "@/src/application/use-cases/menu/GetKioskMenuUseCase";
 import { StaffOrderEntry } from "@/src/presentation/components/order/StaffOrderEntry";
 
 export const dynamic = "force-dynamic";
 
-export default async function StaffHomePage() {
-  const user = await requireRole("branch_staff");
-  const shopId = user.shopId;
-  if (!shopId) return null;
+export default async function NewOrderPage() {
+  const { shopId } = await requireShopAccess();
 
   const [shop, sections, customers] = await Promise.all([
     container.shopRepository.findById(shopId),
