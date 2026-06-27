@@ -18,9 +18,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - fulfillment = **order queue + สถานะ** (KDS-lite) + แจ้งเตือนออเดอร์ใหม่
 - QR payment = ร้าน **กดยืนยันรับเงินเอง** (โชว์ PromptPay QR → ลูกค้าจ่าย → staff กด confirm) — ไม่มี gateway/slip
 - tenant ยังเป็น `Shop` (+ `Branch`)
-- **Customer identity (ใน scope — ยังไม่ build):** ลูกค้า optional ใส่ชื่อ+เบอร์ตอนสั่ง → `Customer` ต่อร้าน (phone, displayName, publicCode) ผูกกับ order; ลูกค้าสแกน **bind-code QR** ที่ kiosk (ครั้งเดียว → httpOnly cookie, ไม่ต้อง login) เปิดดู **ประวัติการสั่ง** ที่ `/s/[slug]` + `/me` ได้ — พอร์ตจาก customer model ของ Easy Stamp (แต้ม→ออเดอร์)
+- **Customer identity + ประวัติการสั่ง — ✅ build แล้ว:** ลูกค้า optional ใส่ชื่อ+เบอร์ตอนสั่ง → `Customer` ต่อร้าน (phone, displayName, publicCode) ผูกกับ order; ลูกค้าสแกน **bind-code QR** บนจอ kiosk (ครั้งเดียว → httpOnly cookie `eo_member_<slug>`, ไม่ต้อง login) เปิดดู **ประวัติการสั่ง** ที่ `/s/[slug]` + `/me` ได้. ตาราง `customers`/`customer_devices`/`bind_codes`; use-cases ใน `application/use-cases/member/`. พอร์ตจาก customer model ของ Easy Stamp (แต้ม→ออเดอร์)
 
-**ใน scope แต่ยังไม่ build (planned):** customer identity + ประวัติการสั่ง (ด้านบน) · public **homepage map + `/shops` directory** (พอร์ตจาก Easy Stamp — เป็น discovery/marketing ไม่ใช่สั่งของจากนอกร้าน; ตอน clone โดน drop ทิ้งโดยพลาด แต่ deps/repo/i18n/e2e ยังค้างชี้อยู่).
+**ยังไม่ build (planned, ทำต่อ):** public **homepage map + `/shops` directory** (พอร์ตจาก Easy Stamp — เป็น discovery/marketing ไม่ใช่สั่งของจากนอกร้าน; ตอน clone โดน drop ทิ้งโดยพลาด แต่ deps/repo/i18n/e2e ยังค้างชี้อยู่; tabs Map/Shops ใน `CustomerTabBar` ถูกถอดออกไว้ก่อน จะกลับมาพร้อมฟีเจอร์นี้).
 
 **Out of scope จริง (ห้ามเพิ่มโดยไม่ถาม):** customer **account/รหัสผ่าน** เต็มรูปแบบ (ระบุตัวตนใช้แค่เบอร์ + bind QR) · payment gateway/auto-verify · multi-locale (คง `th` เดี่ยว) · **การสั่งของจากนอกร้าน** (ออเดอร์ต้องมาจาก kiosk ที่ activate เท่านั้น).
 
