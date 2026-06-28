@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PauseCircle, Smartphone, Store, TriangleAlert } from "lucide-react";
@@ -19,6 +20,23 @@ import { formatDateTime } from "@/src/presentation/lib/format-date";
 import type { OrderStatus } from "@/src/domain/entities";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const shop = await container.shopRepository.findBySlug(slug);
+  const t = await getTranslations("publicPages");
+  return {
+    title: shop
+      ? t("metaShopTitle", { name: shop.name })
+      : t("metaShopNotFound"),
+    // Per-shop manifest → an installed icon opens this shop's page.
+    manifest: shop ? `/s/${slug}/site.webmanifest` : undefined,
+  };
+}
 
 const STATUS_TONE: Record<OrderStatus, "neutral" | "warning" | "success"> = {
   pending: "warning",

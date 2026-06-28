@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { History, ChevronRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
@@ -9,6 +10,11 @@ import { Card } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("publicPages");
+  return { title: t("myShopsTitle") };
+}
 
 export default async function MyShopsPage() {
   const t = await getTranslations("publicPages");
