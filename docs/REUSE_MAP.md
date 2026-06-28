@@ -1,71 +1,88 @@
-# Reuse Map — generic vs domain
+# Reuse Map — what a fork keeps vs replaces
 
-When cloning this template into a new product (e.g. **Easy Queue**), this map says what to **keep**,
-what to **configure**, and what to **rewrite**. It's a documented boundary — files are intentionally
-**not** physically split into `generic/` vs `domain/` folders (that bulk move would churn imports
-across the whole repo for little gain). Use this as the fork checklist.
+When cloning into a new vertical, this map says what to **keep**, **reconfigure**, and **replace**. Files
+are intentionally **not** physically split into `generic/` vs `domain/` folders. Use it with
+[FORKING.md](FORKING.md).
 
-Legend: 🟢 **generic** (keep ~as-is) · 🟡 **configure** (keep, set per product) · 🔴 **domain** (rewrite for the new product)
+> **Canonical base for new verticals = `easy-stamp-nextjs`.** This repo (**Easy Order**) is itself a fork
+> of it — its vertical is **order / menu / kiosk**. This doc applies the same doctrine here, so the map is
+> accurate if you ever fork *from* Easy Order too.
+>
+> **The one rule: keep by default. A fork subtracts only the *vertical bounded-context*.** Everything else
+> — the whole platform **and** the whole storefront — stays. The first easy-stamp→easy-order clone got
+> this wrong (deleted the storefront) and had to re-port it across 9 phases / 14+ commits. Don't repeat
+> it; see the cautionary tale in [FORKING.md](FORKING.md).
 
-## The quick version
-- **Keep (the ~40% that's product-agnostic):** auth/session/2FA, billing (prepaid day-topup),
-  notifications, audit log, rate-limiting + abuse guard, file storage, geocoding, payments/slip,
-  theming, brand config, i18n, ops (health/env-validation/cron dispatcher), the Clean-Arch skeleton
-  + DI container.
-- **Rewrite (the domain):** stamp cards / stamp types / balances / reward redemptions, shop & branch
-  onboarding, customer + device binding, lead/CRM, shop reviews. Swap these for the new product's
-  nouns (queue tickets, venues, parties, …).
+## Three tiers (replaces the old binary generic/domain split)
 
-## Domain layer (`src/domain`)
-| Module | Class | Notes |
+Legend: 🟢 **Tier 1 — platform core** (keep as-is) · 🟡 **Tier 2 — storefront substrate** (keep, reconfigure copy/metrics) · 🔴 **Tier 3 — vertical domain** (the *only* thing you replace)
+
+- **🟢 Tier 1 — platform core (~half the repo, never touched):** auth/session/2FA, billing (prepaid
+  day-topup), payments/slip, subscriptions, notifications, audit log, rate-limiting + abuse guard, file
+  storage (R2/local), geocoding, theming, brand config, i18n scaffold, ops (health / env-validation /
+  cron dispatcher), the Clean-Arch skeleton + `GenericContainer`.
+- **🟡 Tier 2 — storefront substrate (the reusable "local-business SaaS" layer — KEEP):** Shop & Branch,
+  ShopProfile (about/hours/contacts), ShopImage/gallery, ShopCategory, ShopReview, the **public
+  `/s/[slug]` profile page** + `ShopHero/ShopGallery/ShopDetails`, the homepage **map**, the **`/shops`
+  directory**, Customer identity + device-binding + self-service history, leads/CRM, analytics,
+  promote/poster studio. NOT vertical-specific. Some carry order *flavor* (analytics metrics, poster copy,
+  the customers page showing order history) → light edit, **never delete**.
+- **🔴 Tier 3 — vertical domain (REPLACE):** order/menu/kiosk only — menu categories/items, orders/order
+  items, kiosk sessions, the kiosk ordering UI + KDS queue + counter POS. Swap this box for the next
+  product's nouns (print jobs / queue tickets / …).
+
+**Bottom line: ~85% of the repo (Tier 1 + Tier 2) is reused on every fork. Only Tier 3 is rewritten.**
+
+## Tier 3 — the order/menu/kiosk box to DELETE (exhaustive)
+| Layer | Paths |
+| --- | --- |
+| schema | `db/schema/{menu-categories,menu-items,orders,order-items,kiosk-sessions}.ts` |
+| use-cases | `use-cases/{menu,order,kiosk}/` (whole dirs) + `use-cases/member/GetCustomerOrderHistoryUseCase.ts` |
+| repo interfaces | `I{MenuCategory,MenuItem,Order,KioskSession}Repository.ts` |
+| drizzle repos | the matching `Drizzle*Repository.ts` |
+| components | `components/{menu,order,kiosk}/` (whole dirs) |
+| actions | `actions/{menu,order,kiosk}-actions.ts` |
+| routes | `app/(kiosk)/` + `app/(shop)/shop/{menu,orders,new-order}/` |
+| i18n | the `menu` / `order` / `kiosk` namespaces in `messages/th.json` (+ vertical keys inside `shopPages/adminPages/staffPages/publicPages`) |
+
+> Note: unlike easy-stamp, Easy Order has **no** vertical files under `domain/services/` (analytics lives
+> in `use-cases/analytics/`; `promo-poster.ts` is Tier 2). And `CreateShopUseCase` does **not** auto-create
+> a default menu — so there's no shop-creation coupling to undo.
+
+## Tier 2 — storefront kept, but these are order-FLAVORED (reconfigure, don't delete)
+| File | Why it touches the vertical | Fork edit |
 | --- | --- | --- |
-| `services/{subscription-status,topup-pricing}.ts` | 🟢 | Billing math (day-topup). |
-| `services/{geo,osm-poi,phone}.ts` | 🟢 | Geo + TH phone utils. |
-| `services/{card-view,promo-poster,analytics}.ts` | 🔴 | Stamp/shop-specific. (analytics *pattern* is reusable, metrics aren't.) |
-| `types/roles.ts` | 🟡 | RBAC pattern is generic; the role names (`shop_owner`/`branch_staff`) are domain. |
-| `entities/` | 🟡 | Mixed file — `User/Session/Subscription/Payment/Notification/AuditLog/ContactRequest` 🟢; `Shop/Stamp*/Customer/Reward*/Lead*` 🔴. |
+| `use-cases/customer/ExportCustomerDataUseCase.ts` | PDPA export pulls the orders tables | remove the order sections from the export |
+| `use-cases/member/GetCustomerOrderHistoryUseCase.ts` | this IS the "what the customer sees after binding" view (the easy-stamp `loadCardView` equivalent) | listed in Tier 3 above; on fork, replace with your domain's customer view — the one non-trivial rewire |
+| `use-cases/analytics/{GetShopAnalyticsUseCase,GetPlatformAnalyticsUseCase}.ts` + `DrizzleAnalyticsRepository`/`DrizzlePlatformAnalyticsRepository` | compute order metrics | rewrite the metrics for your domain |
+| `app/(shop)/shop/customers/` + `components/shop/CustomerRowActions.tsx` | customers view shows order history | re-point to your domain's customer activity |
+| `components/shop/promote/*` + `domain/services/promo-poster.ts` | poster copy is order-flavored | parameterize the copy/icon; keep the studio |
 
-## Application layer (`src/application`)
-| Group | Class | Notes |
-| --- | --- | --- |
-| `use-cases/{auth,billing,contact,line,platform}` | 🟢 | Account, day-topup billing, support contact, LINE linking. |
-| `use-cases/{stamp,shop,member,lead,review}` | 🔴 | Core domain — rewrite. (`member` = customer device-binding, pattern reusable.) |
-| `services/*` (AuditLogger, LoginSecurityService, NotificationService, SensitiveActionGuard, `I*` interfaces, slip-media) | 🟢 | All product-agnostic. |
-| `repositories/I{User,Session,AuditLog,Notification,RateLimit,Subscription,Payment,TopupTransaction,ContactRequest}` + `pagination` | 🟢 | Generic interfaces. |
-| `repositories/I{Shop*,Branch,Customer*,BindCode,Stamp*,RewardRedemption,Lead*,Analytics,PlatformAnalytics}` | 🔴 | Domain interfaces. |
+## Tier 1 — platform core (keep as-is)
+| Group | Paths |
+| --- | --- |
+| domain services | `services/{subscription-status,topup-pricing,geo,osm-poi,phone,image-signature}.ts` |
+| use-cases | `use-cases/{auth,billing,contact,line,platform,maintenance}` |
+| app services | `services/*` (AuditLogger, LoginSecurityService, NotificationService, SensitiveActionGuard, all `I*` interfaces) |
+| generic repos | `I{User,Session,AuditLog,Notification,RateLimit,Subscription,Payment,TopupTransaction,ContactRequest}Repository` + `pagination` + matching Drizzle impls |
+| infra services | `Bcrypt…`, `CryptoTotpService`, `HibpPasswordBreachChecker`, `LineMessagingPusher`, `{Local,R2}SlipStorage`, `ManualSlipPaymentVerifier`, `OsmGeocoder`, `TurnstileVerifier`, `qr`, `promptpay` |
+| generic schema | `db/schema/{users,sessions,audit-logs,notifications,rate-limits,subscriptions,payments,topup-transactions,contact-requests,_shared}` |
+| generic UI/actions | `components/{ui,layout,auth,billing,channels,notification,pwa,settings}` + `ThemeSwitcher`; `actions/{auth,billing,contact,line,notification,security}-actions` |
+| routes | `app/(auth)`, `app/(platform)`, `app/api/{health,cron,line,client-error}` |
+| DI | `di/container.generic.ts` → `GenericContainer` (do not touch) |
 
-## Infrastructure layer (`src/infrastructure`)
-| Group | Class | Notes |
-| --- | --- | --- |
-| `auth/`, `di/container.ts`, `db/client.ts`, `config/env.ts` | 🟢/🟡 | Skeleton — keep; container registers both generic + domain repos (prune the domain ones). |
-| `services/{BcryptPasswordHasher,CryptoTotpService,HibpPasswordBreachChecker,LineMessagingPusher,Local/R2SlipStorage,ManualSlipPaymentVerifier,OsmGeocoder,TurnstileVerifier,qr,promptpay}` | 🟢 | All reusable (promptpay = TH payments). |
-| `repositories/drizzle/Drizzle{User,Session,AuditLog,Notification,RateLimit,Subscription,Payment,TopupTransaction,ContactRequest}Repository` | 🟢 | Generic. |
-| `repositories/drizzle/Drizzle{Shop*,Branch,Customer*,BindCode,Stamp*,RewardRedemption,Lead*,Analytics}Repository` | 🔴 | Domain. |
-| `db/schema/{users,sessions,audit-logs,notifications,rate-limits,subscriptions,payments,topup-transactions,contact-requests,_shared}` | 🟢 | Generic tables. |
-| `db/schema/{shops,branches,shop-*,customers,customer-devices,bind-codes,stamp-*,reward-redemptions,leads,lead-visit-logs}` | 🔴 | Domain tables. |
-
-## Presentation layer (`src/presentation` + `app/`)
-| Group | Class | Notes |
-| --- | --- | --- |
-| `components/{ui,layout,auth,billing,channels,notification,pwa,settings}`, `ThemeSwitcher` | 🟢 | Reusable UI. (`layout` tab config + `settings` tab content are domain; the components are generic.) |
-| `components/{stamp,shop,reviews,leads,analytics}`, parts of `admin` | 🔴 | Domain UI. (`map` is generic mapping, currently wired to shops.) |
-| `actions/{auth,billing,contact,line,notification,security}-actions` | 🟢 | Generic actions. |
-| `actions/{stamp,shop,lead,review}-actions`, parts of `admin-actions` | 🔴 | Domain actions. |
-| `app/(auth)`, `app/api/{health,cron,line}` | 🟢 | Auth shell + ops/integration routes. |
-| `app/(shop)`, `app/(staff)`, `app/(platform)`, `app/(public)`, `app/api/{shop-images,slips,lead-photos,geo}` | 🔴/🟡 | Shells/structure reusable; routes + copy are domain. |
+> Tier 2 storefront kept as-is (not in the tables above): `shops · shop-categories · shop-images ·
+> shop-profiles · shop-reviews · branches · customers · customer-devices · bind-codes · leads ·
+> lead-visit-logs` (+ repos), `components/{shop,reviews,leads,map}`, `actions/{shop,lead,review}-actions`,
+> `use-cases/{shop,lead,review}` + `member/{ClaimBindCode,GenerateBindCode,GetBoundShops}`, and
+> `app/(public)/*` + `app/(shop)`/`app/(staff)` shells.
 
 ## Cross-cutting (always keep)
 `src/config/brand.ts` · `src/i18n/*` · `instrumentation.ts` · theming (`public/styles/**`) · the four-layer
 rule + `.dependency-cruiser.cjs` + lint setup · `scripts/` (test/seed/migrate/release helpers).
 
-## Fork procedure (Easy Queue, in order)
-1. Copy the repo; set `src/config/brand.ts` (name/tagline) + `public/icons/*` + `app/*-image.alt.txt`.
-2. Keep all 🟢. Delete the 🔴 schema/entities/repos/use-cases/components/actions for stamps/shops/leads/reviews.
-3. Model the new domain (e.g. `Venue`, `QueueTicket`, `TicketStatus`) following [EXTENDING.md](EXTENDING.md):
-   schema → migration → entity → repo interface → Drizzle repo → container → use case → action → UI.
-4. Reuse billing/notifications/audit/auth as-is; adjust analytics metrics + the tab nav config.
-5. Translate copy via the i18n catalog; work the [TEMPLATE_AUDIT.md](TEMPLATE_AUDIT.md) P2 items.
-
-> Optional hardening (deferred): once the boundary is stable, a `dependency-cruiser` rule could flag
-> 🟢→🔴 imports so generic code never depends on domain code. Not added now because the current
-> container + a few shells legitimately reference both; adding it would require first untangling those.
+## DI naming (correct)
+Two files, not "container.domain.ts": `di/container.generic.ts` (`GenericContainer`, Tier 1) and
+`di/container.ts` (`class Container extends GenericContainer`, registers Tier 2 + Tier 3 repos). A fork
+edits only `container.ts`: drop the Tier 3 vertical repos, add the new vertical's repos; keep all Tier 2
+storefront repos registered.
