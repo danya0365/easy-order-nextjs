@@ -32,5 +32,6 @@ export async function getClientMessages() {
     map: messages.map,
     reviews: messages.reviews,
     analytics: messages.analytics,
+    promote: messages.promote,
   };
 }

@@ -16,6 +16,7 @@ import {
   Settings,
   ShieldAlert,
   BarChart3,
+  Megaphone,
   ShoppingCart,
   Star,
   Store,
@@ -36,6 +37,7 @@ type NavLabelKey =
   | "navCustomers"
   | "navReviews"
   | "navAnalytics"
+  | "navPromote"
   | "navNotifications"
   | "navBilling"
   | "navBranches"
@@ -71,6 +73,7 @@ const NAVS = {
     { href: "/shop/customers", label: "navCustomers", icon: Users },
     { href: "/shop/reviews", label: "navReviews", icon: Star },
     { href: "/shop/analytics", label: "navAnalytics", icon: BarChart3 },
+    { href: "/shop/promote", label: "navPromote", icon: Megaphone },
     { href: "/shop/billing", label: "navBilling", icon: CreditCard },
     { href: "/shop/branches", label: "navBranches", icon: Building2 },
     { href: "/shop/staff", label: "navStaff", icon: UserCog },
