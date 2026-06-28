@@ -55,7 +55,9 @@ All needed npm deps (recharts/html-to-image/maplibre/qrcode/dayjs/browser-image-
 - **order `performedBy` + audit** (`4e08f33`): `orders.performed_by` column (migration `0008`, nullable FK users, set-null) threaded through entity/`CreateOrderInput`/`PlaceOrderUseCase`. `placeOrderForCustomerAction` (POS) stamps `actor.id` + records `AUDIT_ACTIONS.orderPlaced`; kiosk `placeOrderAction` leaves it null. Integration test added (POS stamps operator, kiosk null) → 146 tests.
 - **owner inline image edit-overlay on `/s/[slug]`** (`03ed3f1`): ported `ShopImageEditor` (`ShopImageEditButton` + `EditableShopGallery`), re-added optional `coverOverlay`/`profileOverlay` to `ShopHero`; page shows owner-view notice + edit affordances when a real `shop_owner` views their own shop (via `getSession()`), plain visitors unaffected, writes still server-guarded.
 
-**⏳ STILL PENDING:** nothing requested. Remaining optional (not requested, low priority): swap OSM community tiles for a real provider before heavy production load; dashboard onboarding-checklist/feature-carousel (deliberately skipped as marketing bloat). Migrations now through `0008`.
+**✅ DONE — dashboard onboarding checklist + feature carousel** (`7e079f2`): ported `FeatureCarousel` (auto-slide: analytics/promote/reviews/pause) + `OnboardingSuggestions` (smart per-shop checklist: menu/kiosk+PromptPay/LINE/staff, dismiss persisted in the dangling `onboarding.store` zustand) into `/shop`; shown only to a real owner (`!impersonating`). Replaced the dangling stamp-flavored `ob*/car*` i18n with a clean ordering set.
+
+**⏳ STILL PENDING:** nothing requested. Only remaining optional (not requested): swap OSM community tiles for a real provider before heavy production load. Migrations through `0008`; ~146 tests.
 
 **Genuinely out of scope** (the earlier "anonymous only / accounts out of scope / directory out of scope" notes were WRONG — a clone miss + bad handoff): full customer account/password, payment gateway/auto-verify, multi-locale, and **placing orders from off-site** (orders must come from an activated kiosk or a logged-in operator).
 

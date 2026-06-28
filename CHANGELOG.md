@@ -6,6 +6,10 @@
 ## [Unreleased]
 
 ### Added
+- **แดชบอร์ดร้าน: checklist เริ่มต้นใช้งาน + แบนเนอร์ไฮไลต์ฟีเจอร์** — `FeatureCarousel`
+  (สไลด์อัตโนมัติ: สถิติ/โปรโมท/รีวิว/ปิดร้านชั่วคราว) + `OnboardingSuggestions` (checklist
+  อัจฉริยะ โชว์เฉพาะขั้นที่ยังไม่ได้ทำ: เพิ่มเมนู/ตั้ง kiosk+PromptPay/เชื่อม LINE/เพิ่มพนักงาน,
+  ปิดทีละข้อได้ เก็บใน localStorage) — แสดงเฉพาะเจ้าของร้านจริง
 - **บันทึกผู้เปิดออเดอร์ + audit (staff accountability)** — เพิ่มคอลัมน์ `orders.performed_by`
   (migration 0008): ออเดอร์ที่เปิดจากเคาน์เตอร์ (POS) บันทึกพนักงาน/เจ้าของที่เปิด + ลง audit log
   `order_placed`; ออเดอร์จาก kiosk (ลูกค้าสั่งเอง) เป็น null
