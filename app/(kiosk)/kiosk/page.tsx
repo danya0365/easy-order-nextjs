@@ -1,8 +1,8 @@
-import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { MonitorOff } from "lucide-react";
 
-import { getKioskShopId } from "@/src/infrastructure/auth/kiosk";
+import { getKioskShopId, endKioskSession } from "@/src/infrastructure/auth/kiosk";
 import { container } from "@/src/infrastructure/di/container";
 import { GetKioskMenuUseCase } from "@/src/application/use-cases/menu/GetKioskMenuUseCase";
 import { Button } from "@/src/presentation/components/ui/Button";
@@ -24,9 +24,17 @@ export default async function KioskPage() {
           title={t("notActiveTitle")}
           description={t("notActiveDesc")}
           action={
-            <Link href="/login">
-              <Button>{t("goToLogin")}</Button>
-            </Link>
+            // Clear any stale eo_kiosk cookie before leaving, otherwise the proxy
+            // kiosk lockdown would bounce /login straight back here (loop).
+            <form
+              action={async () => {
+                "use server";
+                await endKioskSession();
+                redirect("/login");
+              }}
+            >
+              <Button type="submit">{t("goToLogin")}</Button>
+            </form>
           }
         />
       </div>

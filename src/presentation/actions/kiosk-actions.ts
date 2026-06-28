@@ -92,7 +92,11 @@ export async function exitKioskAction(
   try {
     const shopId = await getKioskShopId();
     if (!shopId) {
-      exited = true; // already not in kiosk mode
+      // Already not in kiosk mode — but a stale/invalid eo_kiosk cookie may still
+      // be set (it traps navigation via the proxy lockdown). Clear it so leaving
+      // actually escapes instead of bouncing back to /kiosk.
+      await endKioskSession();
+      exited = true;
     } else {
       const ok = await new VerifyKioskPinUseCase(
         container.shopRepository,
