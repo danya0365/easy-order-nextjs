@@ -57,6 +57,8 @@ All needed npm deps (recharts/html-to-image/maplibre/qrcode/dayjs/browser-image-
 
 **✅ DONE — dashboard onboarding checklist + feature carousel** (`7e079f2`): ported `FeatureCarousel` (auto-slide: analytics/promote/reviews/pause) + `OnboardingSuggestions` (smart per-shop checklist: menu/kiosk+PromptPay/LINE/staff, dismiss persisted in the dangling `onboarding.store` zustand) into `/shop`; shown only to a real owner (`!impersonating`). Replaced the dangling stamp-flavored `ob*/car*` i18n with a clean ordering set.
 
+**i18n client gotcha (bit us in `e65edc0`):** a CLIENT component (`"use client"` + `useTranslations("X")`) may only use a namespace listed in [`src/i18n/client-messages.ts`](src/i18n/client-messages.ts). The page-catalog namespaces **`shopPages`/`staffPages`/`adminPages`/`publicPages` are server-only and NOT allowlisted** — a client component using them throws `MISSING_MESSAGE: Could not resolve` at render. Fix by using/moving keys to an allowlisted namespace (`shop`/`kiosk`/`order`/…), not by adding the big *Pages catalog to the client bundle. Dev-only flag `DEV_DISABLE_2FA="true"` in `.env.local` skips the admin mandatory-2FA gate (hard-gated to non-prod + non-Vercel via `is2faBypassed`).
+
 **⏳ STILL PENDING:** nothing requested. Only remaining optional (not requested): swap OSM community tiles for a real provider before heavy production load. Migrations through `0008`; ~146 tests.
 
 **Genuinely out of scope** (the earlier "anonymous only / accounts out of scope / directory out of scope" notes were WRONG — a clone miss + bad handoff): full customer account/password, payment gateway/auto-verify, multi-locale, and **placing orders from off-site** (orders must come from an activated kiosk or a logged-in operator).
