@@ -34,6 +34,7 @@ export const AUDIT_ACTIONS = {
   orderPlaced: "order_placed",
   orderPaymentConfirmed: "order_payment_confirmed",
   orderCancelled: "order_cancelled",
+  customerErased: "customer_erased",
 } as const;
 
 /**

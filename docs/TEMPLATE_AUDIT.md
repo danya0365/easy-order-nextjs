@@ -143,26 +143,27 @@ checkboxes as items land.
   customer's full data as JSON via `GET /api/shop/customers/[customerId]/data-export`
   (`ExportCustomerDataUseCase`, shop-scoped). **Erase** via **anonymize**
   (`AnonymizeCustomerUseCase` + `anonymizeCustomerAction`): strips PII (phone/name/QR code, synthetic
-  per-customer unique values keep the constraints) and drops device bindings, keeping
-  cards/balances/transactions so the shop's aggregates/financials stay consistent. Irreversible,
-  shop-scoped, audited (`customer_erased`). Both wired into the customer-list row actions.
-- [~] **Action/API-route tests** — money path covered: `billing-flow.integration.test.ts` (approve
+  per-customer unique values keep the constraints) and drops device bindings, keeping the customer's
+  **order rows** so the shop's aggregates/financials stay consistent. Irreversible, shop-scoped, audited
+  (`customer_erased`). Both wired into the customer-list row actions. Covered by
+  `{anonymize-customer,export-customer-data}.integration.test.ts` + `customer-actions.integration.test.ts`.
+- [x] **Action/API-route tests** — money path covered: `billing-flow.integration.test.ts` (approve
   credits exact days + ledger; double-verify guarded; reject doesn't extend). **Session/cookie
-  mocking solved** — `shop-actions.integration.test.ts` drives real server actions end-to-end by
-  stubbing `next/headers`·`next/cache`·`next/navigation` with `mock.module` (runner now passes
-  `--experimental-test-module-mocks`) and seeding a real session row; covers the auth matrix
-  (owner / cross-shop / admin-impersonation w/ audit accountability / admin-without-impersonation /
-  unauthenticated). Pattern documented in TESTING.md. **Now covered:** the **LINE webhook**
-  (`app/api/line/webhook/route.test.ts` — HMAC signature, link-code success/lowercase/unknown,
-  non-code chat, already-bound conflict, follow event; the test also surfaced + fixed a bug where the
-  "already linked elsewhere" reply never fired because the UNIQUE error text is on the drizzle error's
-  `cause` chain, not `message`) and the **auth server actions**
-  (`auth-actions.integration.test.ts` — login / OTP / 2FA verify + setup / rate-limit / password
-  change / dev-login guard). **Remaining (optional):** more shop/admin actions as touched.
+  mocking solved** — server-action tests drive real actions end-to-end by stubbing
+  `next/headers`·`next/cache`·`next/navigation` with `mock.module` (runner passes
+  `--experimental-test-module-mocks`) and seeding a real session row. Pattern documented in TESTING.md.
+  **Covered:** auth actions (`auth-actions.integration.test.ts` — login / OTP / 2FA verify + setup /
+  rate-limit / password change / dev-login guard); customer/PDPA actions
+  (`customer-actions.integration.test.ts` — the auth matrix: owner / cross-shop / admin-impersonation
+  w/ audit accountability / admin-without-impersonation / unauthenticated); and the **order vertical**:
+  `order-actions` (kiosk shop derived from the server session, prices from DB, off-premise rejected,
+  cross-shop item rejected, POS `performedBy`), `menu-actions` (CRUD + shop-scoping + auth),
+  `kiosk-actions` (PIN set/activate/verify/exit security invariants). **Remaining (optional):** LINE
+  webhook + more admin actions as touched.
 - [x] **Negative tenant-isolation tests** — `tenant-isolation.integration.test.ts` asserts shop B
-  can't see shop A's customers/cards/ledgers/reviews (4 cases). ⏳ **Coverage gate still deferred** —
-  Node 20 `node:test` has no threshold flags (Node 22+); enforce via Node 22 `--test-coverage-lines`
-  or `c8 --check-coverage` later (see TESTING.md).
+  can't see shop A's customers / orders / menu / reviews / kiosk sessions (6 cases). ⏳ **Coverage gate
+  still deferred** — Node 20 `node:test` has no threshold flags (Node 22+); enforce via Node 22
+  `--test-coverage-lines` or `c8 --check-coverage` later (see TESTING.md).
 - [x] **Retry for external calls** — generic `retry()` helper (`src/infrastructure/services/retry.ts`,
   unit-tested) applied to the LINE push `fetch`, the OSM geocoder (`OsmGeocoder.fetchJson`), and the
   HIBP breach check (`HibpPasswordBreachChecker`, tested). All retry network/timeout + 5xx/429 and

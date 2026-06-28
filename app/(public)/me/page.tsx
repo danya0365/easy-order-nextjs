@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("publicPages");
-  return { title: t("myShopsTitle") };
+  return { title: t("myShopsTitle"), manifest: "/me/site.webmanifest" };
 }
 
 export default async function MyShopsPage() {

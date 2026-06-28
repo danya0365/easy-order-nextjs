@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-28
+
 ### Security
 - **ล็อกโหมด kiosk ไว้ที่หน้าสั่งอาหาร (URL containment)** — เดิมลูกค้าบนเครื่อง kiosk พิมพ์ URL
   ในเบราว์เซอร์เพื่อออกไปหน้าอื่นในแอปได้ (/, /shops, /s/[slug], /me, /login ฯลฯ). ตอนนี้ `proxy.ts`
@@ -97,6 +99,22 @@
 ### Removed
 - โค้ด/i18n ที่ตายแล้วจากยุคแสตมป์: i18n namespaces `stamp`/`reviews`/`analytics`/`promote`/`leads`
   + 61 dead keys, component `StampDots` และ `SettingsTabs` ที่ไม่ถูกใช้งาน
+
+### Tests
+- **ยกระดับ test coverage ให้พร้อม prod** — clone จาก Easy Stamp ทำเทสหล่นไป ~10 ไฟล์; พอร์ตกลับมา
+  พร้อม adapt เป็น domain การสั่งอาหาร และเพิ่มเทสของ vertical ใหม่ (146 → 211 tests):
+  `tenant-isolation` (กันข้อมูลข้ามร้าน — orders/menu/customers/reviews/kiosk, มี bite-check),
+  `repos` contract, `auth-actions`, PDPA `anonymize-customer`/`export-customer-data`, `review-flow`,
+  `promo-poster`, `analytics`, และเทส action ของ `order`/`menu`/`kiosk`/`customer`
+  (รวม kiosk PIN/session invariants + การกันสั่งนอกร้าน + `performedBy`)
+
+### Added
+- **PWA manifest ของหน้า `/me`** (`/me/site.webmanifest`) — ติดตั้งหน้า "ออเดอร์ของฉัน" เป็นไอคอนได้
+  (parity กับ `/s/[slug]`)
+
+### Fixed
+- **บันทึก audit `customer_erased`** ตอนลบข้อมูลลูกค้า (PDPA) — แต่เดิม action นี้ไม่ได้ลง audit;
+  ตอนนี้ผูกกับ actor ตัวจริง (รวมถึง admin ที่ impersonate)
 
 ## [0.1.0] - 2026-06-27
 - จุดเริ่มต้น (bootstrap จาก easy-stamp v1.19.0)
