@@ -30,5 +30,6 @@ export async function getClientMessages() {
     order: messages.order,
     kiosk: messages.kiosk,
     map: messages.map,
+    reviews: messages.reviews,
   };
 }

@@ -36,6 +36,13 @@
       "when": 1782604179391,
       "tag": "0004_plain_zuras",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1782605399319,
+      "tag": "0005_sturdy_microchip",
+      "breakpoints": true
     }
   ]
 }

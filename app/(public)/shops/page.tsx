@@ -6,6 +6,7 @@ import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
+import { StarRating } from "@/src/presentation/components/ui/StarRating";
 import { cn } from "@/src/presentation/components/ui/cn";
 
 export const dynamic = "force-dynamic";
@@ -34,10 +35,12 @@ export default async function ShopsDirectoryPage({
     )
     .sort((a, b) => a.name.localeCompare(b.name, "th"));
 
-  // Batched profile images for the visible shops (no N+1).
-  const profiles = await container.shopImageRepository.profilesByShop(
-    items.map((s) => s.id),
-  );
+  // Batched profile images + rating summaries for the visible shops (no N+1).
+  const ids = items.map((s) => s.id);
+  const [profiles, summaries] = await Promise.all([
+    container.shopImageRepository.profilesByShop(ids),
+    container.shopReviewRepository.summariesByShop(ids),
+  ]);
 
   const filters = [
     { slug: null as string | null, label: t("filterAll") },
@@ -87,6 +90,7 @@ export default async function ShopsDirectoryPage({
           <ul className="flex flex-col divide-y divide-border">
             {items.map((shop) => {
               const cat = shop.categoryId ? nameById.get(shop.categoryId) : null;
+              const rating = summaries[shop.id];
               const profileId = profiles[shop.id];
               const imgSrc = profileId
                 ? `/api/shop-images/${profileId}`
@@ -116,6 +120,14 @@ export default async function ShopsDirectoryPage({
                       {cat && (
                         <span className="block truncate text-xs text-muted">
                           {cat}
+                        </span>
+                      )}
+                      {rating && rating.count > 0 && (
+                        <span className="mt-0.5 flex items-center gap-1">
+                          <StarRating value={rating.average} size="sm" />
+                          <span className="text-xs text-muted">
+                            {rating.average.toFixed(1)} ({rating.count})
+                          </span>
                         </span>
                       )}
                     </span>

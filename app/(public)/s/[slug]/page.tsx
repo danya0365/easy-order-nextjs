@@ -8,6 +8,8 @@ import { GetCustomerOrderHistoryUseCase } from "@/src/application/use-cases/memb
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
+import { StarRating } from "@/src/presentation/components/ui/StarRating";
+import { ReviewForm } from "@/src/presentation/components/reviews/ReviewForm";
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { formatDateTime } from "@/src/presentation/lib/format-date";
 import type { OrderStatus } from "@/src/domain/entities";
@@ -86,6 +88,69 @@ export default async function CustomerHistoryPage({
     container.orderRepository,
   ).execute(slug, token);
 
+  // Reviews: public summary + list (hidden excluded); a bound customer also gets
+  // the rating form, pre-filled with their existing review when they have one.
+  const tReview = await getTranslations("reviews");
+  const [summary, reviewsPage, myReview] = await Promise.all([
+    container.shopReviewRepository.summary(shop.id),
+    container.shopReviewRepository.pageByShop(shop.id, { limit: 20 }),
+    history
+      ? container.shopReviewRepository.findByCustomer(shop.id, history.customer.id)
+      : Promise.resolve(null),
+  ]);
+
+  const reviewsBlock = (
+    <Card>
+      <CardHeader title={tReview("sectionTitle")} />
+      {summary.count > 0 ? (
+        <div className="flex items-center gap-2">
+          <StarRating value={summary.average} />
+          <span className="text-sm text-muted">
+            {summary.average.toFixed(1)} ({summary.count})
+          </span>
+        </div>
+      ) : (
+        <p className="text-sm text-muted">{tReview("noReviews")}</p>
+      )}
+
+      {history && (
+        <div className="mt-4 border-t border-border pt-4">
+          <ReviewForm
+            slug={slug}
+            initialRating={myReview?.rating ?? 0}
+            initialComment={myReview?.comment ?? ""}
+          />
+        </div>
+      )}
+
+      {reviewsPage.items.length > 0 && (
+        <ul className="mt-4 flex flex-col divide-y divide-border border-t border-border">
+          {reviewsPage.items.map((r) => (
+            <li key={r.id} className="flex flex-col gap-1 py-3">
+              <div className="flex items-center justify-between gap-2">
+                <StarRating value={r.rating} size="sm" />
+                <span className="text-xs text-muted">
+                  {formatDateTime(r.createdAt)}
+                </span>
+              </div>
+              {r.comment && (
+                <p className="text-sm text-foreground">{r.comment}</p>
+              )}
+              {r.ownerReply && (
+                <div className="mt-1 rounded-lg bg-muted-surface px-3 py-2">
+                  <p className="text-xs font-medium text-brand-700">
+                    {tReview("ownerReply")}
+                  </p>
+                  <p className="text-sm text-muted">{r.ownerReply}</p>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+
   // Not bound on this device (or token invalid): show the "scan at the shop" CTA.
   if (!history) {
     return (
@@ -105,6 +170,7 @@ export default async function CustomerHistoryPage({
           title={t("notBoundTitle")}
           description={t("notBoundDesc")}
         />
+        {reviewsBlock}
       </main>
     );
   }
@@ -150,6 +216,8 @@ export default async function CustomerHistoryPage({
           </ul>
         )}
       </Card>
+
+      {reviewsBlock}
     </main>
   );
 }

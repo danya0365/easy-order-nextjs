@@ -46,6 +46,26 @@ export interface ShopCategory {
   createdAt: string;
 }
 
+/** A customer's review of a shop (rating + optional comment + owner reply). */
+export interface ShopReview {
+  id: string;
+  shopId: string;
+  customerId: string;
+  rating: number;
+  comment: string | null;
+  ownerReply: string | null;
+  ownerRepliedAt: string | null;
+  isHidden: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Aggregate rating for a shop (average + count, hidden excluded). */
+export interface ReviewSummary {
+  average: number;
+  count: number;
+}
+
 export type ShopImageKind = "profile" | "gallery" | "cover";
 
 /** Owner-uploaded shop imagery (profile/cover/gallery). */

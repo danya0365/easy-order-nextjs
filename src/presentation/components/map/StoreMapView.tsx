@@ -12,11 +12,14 @@ import { useTranslations } from "next-intl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import type { ShopMapLocation } from "@/src/application/repositories/IBranchRepository";
+import type { ReviewSummary } from "@/src/domain/entities";
+import { StarRating } from "@/src/presentation/components/ui/StarRating";
 import { OSM_STYLE, DEFAULT_CENTER, boundsOf } from "./osm-style";
 
-/** A pinned shop branch, enriched with the shop's profile image for the popup. */
+/** A pinned shop branch, enriched with the shop's profile image + rating. */
 export type MapShopLocation = ShopMapLocation & {
   profileImageId?: string | null;
+  rating?: ReviewSummary;
 };
 
 export default function StoreMapView({
@@ -98,6 +101,14 @@ export default function StoreMapView({
                 </p>
               </div>
             </div>
+            {active.rating && active.rating.count > 0 && (
+              <div className="mt-1.5 flex items-center gap-1">
+                <StarRating value={active.rating.average} size="sm" />
+                <span className="text-xs text-muted">
+                  {active.rating.average.toFixed(1)} ({active.rating.count})
+                </span>
+              </div>
+            )}
             {active.address && (
               <p className="mt-1 line-clamp-2 text-xs text-muted">
                 {active.address}

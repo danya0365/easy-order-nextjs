@@ -20,12 +20,16 @@ export default async function HomePage() {
   ]);
   const t = await getTranslations("publicPages");
 
-  // Enrich pins with each shop's profile image (batched, no N+1).
+  // Enrich pins with each shop's profile image + rating (batched, no N+1).
   const shopIds = [...new Set(locations.map((l) => l.shopId))];
-  const profiles = await container.shopImageRepository.profilesByShop(shopIds);
+  const [profiles, summaries] = await Promise.all([
+    container.shopImageRepository.profilesByShop(shopIds),
+    container.shopReviewRepository.summariesByShop(shopIds),
+  ]);
   const mapLocations = locations.map((l) => ({
     ...l,
     profileImageId: profiles[l.shopId] ?? null,
+    rating: summaries[l.shopId] ?? { average: 0, count: 0 },
   }));
 
   // Logged-in operators skip the /login round-trip and go straight to their

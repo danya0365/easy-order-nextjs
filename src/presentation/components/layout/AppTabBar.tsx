@@ -16,6 +16,7 @@ import {
   Settings,
   ShieldAlert,
   ShoppingCart,
+  Star,
   Store,
   UserCog,
   Users,
@@ -32,6 +33,7 @@ type NavLabelKey =
   | "navDashboard"
   | "navMenu"
   | "navCustomers"
+  | "navReviews"
   | "navNotifications"
   | "navBilling"
   | "navBranches"
@@ -65,6 +67,7 @@ const NAVS = {
     { href: "/shop/notifications", label: "navNotifications", icon: Bell },
     // Overflow (periodic → setup → rare)
     { href: "/shop/customers", label: "navCustomers", icon: Users },
+    { href: "/shop/reviews", label: "navReviews", icon: Star },
     { href: "/shop/billing", label: "navBilling", icon: CreditCard },
     { href: "/shop/branches", label: "navBranches", icon: Building2 },
     { href: "/shop/staff", label: "navStaff", icon: UserCog },
@@ -80,6 +83,7 @@ const NAVS = {
     { href: "/admin/notifications", label: "navNotifications", icon: Bell },
     // Overflow
     { href: "/admin/contacts", label: "navContacts", icon: MessageSquare },
+    { href: "/admin/reviews", label: "navReviews", icon: Star },
     { href: "/admin/security", label: "navSecurity", icon: ShieldAlert },
   ],
   staff: [
