@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PauseCircle, Smartphone, Store, TriangleAlert } from "lucide-react";
+import { PauseCircle, Pencil, Smartphone, Store, TriangleAlert } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
 import { getMemberToken } from "@/src/infrastructure/auth/member";
+import { getSession } from "@/src/infrastructure/auth/session";
 import { GetCustomerOrderHistoryUseCase } from "@/src/application/use-cases/member/GetCustomerOrderHistoryUseCase";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Badge } from "@/src/presentation/components/ui/Badge";
@@ -13,6 +14,10 @@ import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { InstallHint } from "@/src/presentation/components/pwa/InstallHint";
 import { ShopHero } from "@/src/presentation/components/shop/ShopHero";
 import { ShopGallery } from "@/src/presentation/components/shop/ShopGallery";
+import {
+  ShopImageEditButton,
+  EditableShopGallery,
+} from "@/src/presentation/components/shop/ShopImageEditor";
 import { ShopDetails } from "@/src/presentation/components/shop/ShopDetails";
 import { ShopReviewsSection } from "@/src/presentation/components/reviews/ShopReviewsSection";
 import { satangToBaht } from "@/src/presentation/lib/money";
@@ -106,6 +111,13 @@ export default async function CustomerShopPage({
     branches[0] ??
     null;
 
+  // Owner viewing their OWN page → show inline image edit affordances. Writes
+  // stay guarded server-side (uploadShopImageAction scopes to the session's own
+  // shop), so this only gates the UI.
+  const sessionUser = await getSession();
+  const isOwner =
+    sessionUser?.role === "shop_owner" && sessionUser.shopId === shop.id;
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-8">
       {isPaused && (
@@ -115,15 +127,36 @@ export default async function CustomerShopPage({
         </p>
       )}
 
+      {isOwner && (
+        <p className="rounded-xl bg-brand-50 px-4 py-2.5 text-center text-sm text-brand-700 ring-1 ring-brand-100">
+          <Pencil className="mr-1 inline size-4 align-text-bottom" />
+          {t("ownerViewNotice")}
+        </p>
+      )}
+
       <ShopHero
         coverImage={coverImage}
         profileImage={profileImage}
         shopName={shop.name}
         categoryName={category?.name ?? null}
         rating={reviewSummary}
+        coverOverlay={
+          isOwner ? (
+            <ShopImageEditButton kind="cover" imageId={coverImage?.id} />
+          ) : undefined
+        }
+        profileOverlay={
+          isOwner ? (
+            <ShopImageEditButton kind="profile" imageId={profileImage?.id} />
+          ) : undefined
+        }
       />
 
-      <ShopGallery images={gallery} />
+      {isOwner ? (
+        <EditableShopGallery images={gallery} />
+      ) : (
+        <ShopGallery images={gallery} />
+      )}
 
       {history ? (
         <>

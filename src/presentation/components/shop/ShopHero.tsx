@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Store } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
@@ -8,6 +9,10 @@ import { StarRating } from "@/src/presentation/components/ui/StarRating";
  * Social-profile style shop hero: a full-width cover banner (or brand gradient
  * fallback) with the circular profile avatar overlapping its bottom edge, then
  * the shop name, category, and rating centered below.
+ *
+ * `coverOverlay` / `profileOverlay` are optional edit affordances (Facebook-style
+ * "tap to change") layered over each image — passed only when the shop owner
+ * views their own page. Omitted = the plain public view.
  */
 export async function ShopHero({
   coverImage,
@@ -15,12 +20,16 @@ export async function ShopHero({
   shopName,
   categoryName,
   rating,
+  coverOverlay,
+  profileOverlay,
 }: {
   coverImage: ShopImage | null;
   profileImage: ShopImage | null;
   shopName: string;
   categoryName: string | null;
   rating: ReviewSummary;
+  coverOverlay?: ReactNode;
+  profileOverlay?: ReactNode;
 }) {
   const t = await getTranslations("shop");
   return (
@@ -36,6 +45,9 @@ export async function ShopHero({
           />
         ) : (
           <div className="h-full w-full bg-linear-to-br from-brand-300 to-brand-500" />
+        )}
+        {coverOverlay && (
+          <div className="absolute bottom-2 right-2">{coverOverlay}</div>
         )}
       </div>
 
@@ -53,6 +65,9 @@ export async function ShopHero({
             <div className="flex size-24 items-center justify-center rounded-full bg-brand-100 text-brand-500 ring-4 ring-card">
               <Store className="size-10" />
             </div>
+          )}
+          {profileOverlay && (
+            <div className="absolute -bottom-1 -right-1">{profileOverlay}</div>
           )}
         </div>
 
