@@ -174,6 +174,19 @@ export async function seedMock(ctx: SeedContext) {
       address: opts.address,
     });
 
+    // Public profile (about / hours / contacts) shown on /s/[slug]. shop_profiles
+    // has no `id` column, so insert directly rather than via the id-injecting helper.
+    await db.insert(schema.shopProfiles).values({
+      shopId,
+      description: `${opts.name} — ยินดีต้อนรับ! สั่งง่าย ๆ ผ่านแท็บเล็ตที่เคาน์เตอร์ รับชำระ PromptPay และเงินสด`,
+      openingHours: "จ–ศ 8:00–20:00 · ส–อา 9:00–21:00",
+      phone: "021234567",
+      lineUrl: "https://lin.ee/example",
+      facebookUrl: `https://facebook.com/${opts.slug}`,
+      instagramUrl: null,
+      websiteUrl: null,
+    });
+
     // Owner + 2 staff (staff2 inactive on the suspended shop).
     const ownerId = await insert(db, schema.users, {
       email: `owner@${opts.slug}.test`,

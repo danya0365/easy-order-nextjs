@@ -58,6 +58,14 @@ export async function submitReviewAction(input: {
   }
 }
 
+/** Next page of a shop's public reviews (hidden already excluded). */
+export async function loadMorePublicReviewsAction(
+  shopId: string,
+  cursor: string,
+) {
+  return container.shopReviewRepository.pageByShop(shopId, { cursor });
+}
+
 /** Shop owner replies to a review of their own shop. */
 export async function replyToReviewAction(
   reviewId: string,

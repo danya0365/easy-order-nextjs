@@ -160,6 +160,22 @@ export interface ShopImage {
   createdAt: string;
 }
 
+/**
+ * Owner-managed public-facing shop details (1:1 with a shop). All optional;
+ * shown on the public page /s/[slug].
+ */
+export interface ShopProfile {
+  shopId: string;
+  description: string | null;
+  openingHours: string | null;
+  phone: string | null;
+  lineUrl: string | null;
+  facebookUrl: string | null;
+  instagramUrl: string | null;
+  websiteUrl: string | null;
+  updatedAt: string;
+}
+
 export interface Shop {
   id: string;
   name: string;

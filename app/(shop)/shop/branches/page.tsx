@@ -7,6 +7,7 @@ import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { AddBranchForm } from "@/src/presentation/components/shop/AddBranchForm";
 import { ToggleActiveButton } from "@/src/presentation/components/shop/ToggleActiveButton";
+import { BranchLocationEditor } from "@/src/presentation/components/map/BranchLocationEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -29,15 +30,20 @@ export default async function ShopBranchesPage() {
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {branches.map((b) => (
-              <li
-                key={b.id}
-                className="flex items-center justify-between gap-2 py-3"
-              >
-                <span className="text-foreground">{b.name}</span>
-                <ToggleActiveButton
-                  kind="branch"
-                  id={b.id}
-                  isActive={b.isActive}
+              <li key={b.id} className="flex flex-col gap-2 py-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-foreground">{b.name}</span>
+                  <ToggleActiveButton
+                    kind="branch"
+                    id={b.id}
+                    isActive={b.isActive}
+                  />
+                </div>
+                <BranchLocationEditor
+                  branchId={b.id}
+                  latitude={b.latitude}
+                  longitude={b.longitude}
+                  address={b.address}
                 />
               </li>
             ))}

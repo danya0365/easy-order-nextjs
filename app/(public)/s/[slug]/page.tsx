@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { History, Store } from "lucide-react";
+import { PauseCircle, Smartphone, Store, TriangleAlert } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -8,8 +9,11 @@ import { GetCustomerOrderHistoryUseCase } from "@/src/application/use-cases/memb
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
-import { StarRating } from "@/src/presentation/components/ui/StarRating";
-import { ReviewForm } from "@/src/presentation/components/reviews/ReviewForm";
+import { InstallHint } from "@/src/presentation/components/pwa/InstallHint";
+import { ShopHero } from "@/src/presentation/components/shop/ShopHero";
+import { ShopGallery } from "@/src/presentation/components/shop/ShopGallery";
+import { ShopDetails } from "@/src/presentation/components/shop/ShopDetails";
+import { ShopReviewsSection } from "@/src/presentation/components/reviews/ShopReviewsSection";
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { formatDateTime } from "@/src/presentation/lib/format-date";
 import type { OrderStatus } from "@/src/domain/entities";
@@ -32,7 +36,7 @@ const STATUS_KEY = {
   cancelled: "statusCancelled",
 } as const;
 
-export default async function CustomerHistoryPage({
+export default async function CustomerShopPage({
   params,
   searchParams,
 }: {
@@ -47,40 +51,11 @@ export default async function CustomerHistoryPage({
   const shop = await container.shopRepository.findBySlug(slug);
   if (!shop) notFound();
 
-  // Shop imagery (hero = cover, else profile; plus a small gallery row).
-  const images = await container.shopImageRepository.listByShop(shop.id);
-  const hero =
-    images.find((i) => i.kind === "cover") ??
-    images.find((i) => i.kind === "profile") ??
-    null;
-  const gallery = images.filter((i) => i.kind === "gallery");
-  const heroBlock = (hero || gallery.length > 0) && (
-    <div className="flex flex-col gap-2">
-      {hero && (
-        // eslint-disable-next-line @next/next/no-img-element -- internal image route
-        <img
-          src={`/api/shop-images/${hero.id}`}
-          alt={shop.name}
-          className="aspect-video w-full rounded-2xl border border-border object-cover"
-        />
-      )}
-      {gallery.length > 0 && (
-        <ul className="flex gap-2 overflow-x-auto">
-          {gallery.map((img) => (
-            <li key={img.id} className="shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element -- internal image route */}
-              <img
-                src={`/api/shop-images/${img.id}`}
-                alt=""
-                className="size-20 rounded-lg border border-border object-cover"
-              />
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+  // Temporarily-closed shops: show a notice but keep the page viewable.
+  const subscription = await container.subscriptionRepository.findByShop(shop.id);
+  const isPaused = !!subscription?.pausedAt;
 
+  // Order history comes ONLY from a bound device (secret token cookie).
   const token = await getMemberToken(slug);
   const history = await new GetCustomerOrderHistoryUseCase(
     container.shopRepository,
@@ -88,136 +63,138 @@ export default async function CustomerHistoryPage({
     container.orderRepository,
   ).execute(slug, token);
 
-  // Reviews: public summary + list (hidden excluded); a bound customer also gets
-  // the rating form, pre-filled with their existing review when they have one.
-  const tReview = await getTranslations("reviews");
-  const [summary, reviewsPage, myReview] = await Promise.all([
-    container.shopReviewRepository.summary(shop.id),
-    container.shopReviewRepository.pageByShop(shop.id, { limit: 20 }),
-    history
-      ? container.shopReviewRepository.findByCustomer(shop.id, history.customer.id)
-      : Promise.resolve(null),
-  ]);
+  // Shop presentation: imagery, category, profile, reviews, location.
+  const images = await container.shopImageRepository.listByShop(shop.id);
+  const coverImage = images.find((i) => i.kind === "cover") ?? null;
+  const profileImage = images.find((i) => i.kind === "profile") ?? null;
+  const gallery = images.filter((i) => i.kind === "gallery");
 
-  const reviewsBlock = (
-    <Card>
-      <CardHeader title={tReview("sectionTitle")} />
-      {summary.count > 0 ? (
-        <div className="flex items-center gap-2">
-          <StarRating value={summary.average} />
-          <span className="text-sm text-muted">
-            {summary.average.toFixed(1)} ({summary.count})
-          </span>
-        </div>
-      ) : (
-        <p className="text-sm text-muted">{tReview("noReviews")}</p>
-      )}
-
-      {history && (
-        <div className="mt-4 border-t border-border pt-4">
-          <ReviewForm
-            slug={slug}
-            initialRating={myReview?.rating ?? 0}
-            initialComment={myReview?.comment ?? ""}
-          />
-        </div>
-      )}
-
-      {reviewsPage.items.length > 0 && (
-        <ul className="mt-4 flex flex-col divide-y divide-border border-t border-border">
-          {reviewsPage.items.map((r) => (
-            <li key={r.id} className="flex flex-col gap-1 py-3">
-              <div className="flex items-center justify-between gap-2">
-                <StarRating value={r.rating} size="sm" />
-                <span className="text-xs text-muted">
-                  {formatDateTime(r.createdAt)}
-                </span>
-              </div>
-              {r.comment && (
-                <p className="text-sm text-foreground">{r.comment}</p>
-              )}
-              {r.ownerReply && (
-                <div className="mt-1 rounded-lg bg-muted-surface px-3 py-2">
-                  <p className="text-xs font-medium text-brand-700">
-                    {tReview("ownerReply")}
-                  </p>
-                  <p className="text-sm text-muted">{r.ownerReply}</p>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
-  );
-
-  // Not bound on this device (or token invalid): show the "scan at the shop" CTA.
-  if (!history) {
-    return (
-      <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-4 px-4 py-8">
-        {heroBlock}
-        <h1 className="text-xl font-bold text-foreground">{shop.name}</h1>
-        {bind === "invalid" && (
-          <Card>
-            <p className="text-sm font-medium text-error">
-              {t("bindInvalidTitle")}
-            </p>
-            <p className="mt-1 text-sm text-muted">{t("bindInvalidDesc")}</p>
-          </Card>
-        )}
-        <EmptyState
-          icon={<History />}
-          title={t("notBoundTitle")}
-          description={t("notBoundDesc")}
-        />
-        {reviewsBlock}
-      </main>
-    );
-  }
-
-  const { customer, orders } = history;
-  const who = customer.displayName || customer.phone;
+  const [reviewSummary, reviewsPage, myReview, category, profile, branches] =
+    await Promise.all([
+      container.shopReviewRepository.summary(shop.id),
+      container.shopReviewRepository.pageByShop(shop.id),
+      history
+        ? container.shopReviewRepository.findByCustomer(shop.id, history.customer.id)
+        : Promise.resolve(null),
+      shop.categoryId
+        ? container.shopCategoryRepository.findById(shop.categoryId)
+        : Promise.resolve(null),
+      container.shopProfileRepository.get(shop.id),
+      container.branchRepository.listByShop(shop.id),
+    ]);
+  // Prefer a branch that has coordinates (for the navigate button).
+  const primaryBranch =
+    branches.find((b) => b.latitude !== null && b.longitude !== null) ??
+    branches[0] ??
+    null;
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-4 px-4 py-8">
-      {heroBlock}
-      <div>
-        <h1 className="text-xl font-bold text-foreground">
-          {t("myOrdersTitle")}
-        </h1>
-        <p className="text-sm text-muted">
-          {t("myOrdersSubtitle", { shop: shop.name })} · {who}
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-8">
+      {isPaused && (
+        <p className="rounded-xl bg-warning-surface px-4 py-3 text-center text-sm text-warning">
+          <PauseCircle className="mr-1 inline size-4 align-text-bottom" />
+          {t("pausedNotice")}
         </p>
+      )}
+
+      <ShopHero
+        coverImage={coverImage}
+        profileImage={profileImage}
+        shopName={shop.name}
+        categoryName={category?.name ?? null}
+        rating={reviewSummary}
+      />
+
+      <ShopGallery images={gallery} />
+
+      {history ? (
+        <>
+          <div>
+            <h2 className="text-lg font-bold text-foreground">
+              {t("myOrdersTitle")}
+            </h2>
+            <p className="text-sm text-muted">
+              {t("myOrdersSubtitle", { shop: shop.name })} ·{" "}
+              {history.customer.displayName || history.customer.phone}
+            </p>
+          </div>
+          <Card>
+            <CardHeader title={shop.name} />
+            {history.orders.items.length === 0 ? (
+              <EmptyState icon={<Store />} title={t("noOrdersYet")} />
+            ) : (
+              <ul className="flex flex-col divide-y divide-border">
+                {history.orders.items.map((o) => (
+                  <li
+                    key={o.id}
+                    className="flex items-center justify-between gap-3 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-semibold text-foreground">#{o.orderNo}</p>
+                      <p className="text-xs text-muted">
+                        {formatDateTime(o.createdAt)}
+                      </p>
+                      <p className="mt-0.5 truncate text-sm text-muted">
+                        {t("orderItemsSummary", {
+                          count: o.items.length,
+                          amount: satangToBaht(o.totalSatang),
+                        })}
+                      </p>
+                    </div>
+                    <Badge tone={STATUS_TONE[o.status]}>
+                      {tOrder(STATUS_KEY[o.status])}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <details className="text-center">
+            <summary className="cursor-pointer text-xs text-muted">
+              {t("addToHomeOptional")}
+            </summary>
+            <div className="mt-2">
+              <InstallHint />
+            </div>
+          </details>
+        </>
+      ) : bind === "invalid" ? (
+        <EmptyState
+          icon={<TriangleAlert />}
+          title={t("bindInvalidTitle")}
+          description={t("bindInvalidDesc")}
+        />
+      ) : (
+        <Card className="bg-brand-50 ring-brand-100">
+          <p className="flex items-center gap-2 text-sm text-brand-700">
+            <Smartphone className="size-5 shrink-0" />
+            <span>
+              <strong>{t("notBoundTitle")}</strong> {t("notBoundDesc")}
+            </span>
+          </p>
+        </Card>
+      )}
+
+      <ShopDetails profile={profile} branch={primaryBranch} />
+
+      <ShopReviewsSection
+        slug={slug}
+        shopId={shop.id}
+        summary={reviewSummary}
+        initial={reviewsPage}
+        myReview={myReview}
+        canReview={!!history}
+      />
+
+      <div className="mt-auto flex justify-center gap-4 text-xs text-muted">
+        <Link href="/privacy" className="hover:underline">
+          {t("privacyPolicy")}
+        </Link>
+        <Link href="/tos" className="hover:underline">
+          {t("termsOfService")}
+        </Link>
       </div>
-
-      <Card>
-        <CardHeader title={shop.name} />
-        {orders.items.length === 0 ? (
-          <EmptyState icon={<Store />} title={t("noOrdersYet")} />
-        ) : (
-          <ul className="flex flex-col divide-y divide-border">
-            {orders.items.map((o) => (
-              <li key={o.id} className="flex items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <p className="font-semibold text-foreground">#{o.orderNo}</p>
-                  <p className="text-xs text-muted">{formatDateTime(o.createdAt)}</p>
-                  <p className="mt-0.5 truncate text-sm text-muted">
-                    {t("orderItemsSummary", {
-                      count: o.items.length,
-                      amount: satangToBaht(o.totalSatang),
-                    })}
-                  </p>
-                </div>
-                <Badge tone={STATUS_TONE[o.status]}>
-                  {tOrder(STATUS_KEY[o.status])}
-                </Badge>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-
-      {reviewsBlock}
     </main>
   );
 }

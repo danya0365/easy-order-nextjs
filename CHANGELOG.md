@@ -6,6 +6,19 @@
 ## [Unreleased]
 
 ### Added
+- **หน้า public ของร้าน `/s/[slug]` เทียบเท่า Easy Stamp (พาริตี้): ข้อมูลร้าน + แผนที่สาขา** —
+  เพิ่ม **`ShopProfile`** (ตาราง `shop_profiles`, migration 0007): เจ้าของกรอก
+  เกี่ยวกับร้าน / เวลาทำการ / เบอร์โทร / LINE / Facebook / Instagram / เว็บไซต์ ในหน้า
+  `/shop/settings` (section "รายละเอียดร้าน") → แสดงบนหน้า public เป็นการ์ด About /
+  เวลาทำการ+ติดต่อ / ที่อยู่ + ปุ่ม **นำทางด้วย Google Maps**. คอมโพเนนต์หน้า public
+  ทำใหม่ให้เทียบเท่าต้นฉบับ: `ShopHero` (ปก+โปรไฟล์+เรตติ้ง), `ShopGallery`, `ShopDetails`
+  (ตัดการ์ดรางวัลแสตมป์ออก), รีวิวแบบ **โหลดเพิ่ม** (`ShopReviewsSection`/`PublicReviewList`/
+  `ReviewItem` + `loadMorePublicReviewsAction`), PWA add-to-home, แจ้งเตือนร้านปิดชั่วคราว
+  และลิงก์ privacy/tos ท้ายหน้า — ประวัติการสั่ง (แทนบัตรแสตมป์) ยังอยู่ครบ
+- **ตัวแก้ตำแหน่งสาขาบนแผนที่ (`BranchLocationEditor`)** — หน้า `/shop/branches` เพิ่มแผนที่
+  maplibre ปักหมุด/ลากหมุด/ใช้ตำแหน่งปัจจุบัน + กรอกที่อยู่ ต่อสาขา (action
+  `updateBranchLocationAction` มีอยู่แล้วแต่ไม่มี UI — ตอนนี้ใช้งานได้) → พิกัดไหลไปขึ้น
+  หมุดบนแผนที่หน้าแรกและปุ่มนำทางบนหน้าร้านอัตโนมัติ
 - **พอร์ต generic ที่ตกหล่น (Phase 7/7): เครื่องมือลีดของแอดมิน (leads CRM) + geocoding** —
   `/admin/leads` (รายการ/สร้าง/รายละเอียด/แผนที่): เก็บร้านที่จะ onboard, ปักหมุด/ค้นหาตำแหน่ง
   (OSM Nominatim/Overpass ผ่าน `/api/geo/*`), บันทึกการเข้าพบ + สถานะ (new→won/lost), อัปรูปสถานที่,

@@ -50,6 +50,13 @@
       "when": 1782607258114,
       "tag": "0006_large_beast",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1782615329034,
+      "tag": "0007_flat_redwing",
+      "breakpoints": true
     }
   ]
 }
