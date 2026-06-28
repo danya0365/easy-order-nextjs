@@ -46,6 +46,30 @@ export interface ShopCategory {
   createdAt: string;
 }
 
+// --- Analytics (read models; order-based) ---
+
+/** One Bangkok-day bucket: order count + revenue (satang) for that day. */
+export interface AnalyticsDailyPoint {
+  day: string; // "YYYY-MM-DD" (Asia/Bangkok)
+  orders: number;
+  revenueSatang: number;
+}
+
+/** Headline totals over a date range. */
+export interface AnalyticsSummary {
+  orders: number;
+  revenueSatang: number;
+  customers: number;
+}
+
+/** A labelled breakdown row (by order status, or per shop on the platform view). */
+export interface AnalyticsBreakdownRow {
+  key: string;
+  name: string;
+  orders: number;
+  revenueSatang: number;
+}
+
 /** A customer's review of a shop (rating + optional comment + owner reply). */
 export interface ShopReview {
   id: string;

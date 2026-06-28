@@ -15,6 +15,7 @@ import {
   MoreHorizontal,
   Settings,
   ShieldAlert,
+  BarChart3,
   ShoppingCart,
   Star,
   Store,
@@ -34,6 +35,7 @@ type NavLabelKey =
   | "navMenu"
   | "navCustomers"
   | "navReviews"
+  | "navAnalytics"
   | "navNotifications"
   | "navBilling"
   | "navBranches"
@@ -68,6 +70,7 @@ const NAVS = {
     // Overflow (periodic → setup → rare)
     { href: "/shop/customers", label: "navCustomers", icon: Users },
     { href: "/shop/reviews", label: "navReviews", icon: Star },
+    { href: "/shop/analytics", label: "navAnalytics", icon: BarChart3 },
     { href: "/shop/billing", label: "navBilling", icon: CreditCard },
     { href: "/shop/branches", label: "navBranches", icon: Building2 },
     { href: "/shop/staff", label: "navStaff", icon: UserCog },
@@ -84,6 +87,7 @@ const NAVS = {
     // Overflow
     { href: "/admin/contacts", label: "navContacts", icon: MessageSquare },
     { href: "/admin/reviews", label: "navReviews", icon: Star },
+    { href: "/admin/analytics", label: "navAnalytics", icon: BarChart3 },
     { href: "/admin/security", label: "navSecurity", icon: ShieldAlert },
   ],
   staff: [

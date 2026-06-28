@@ -731,6 +731,21 @@
     "connectionsSubtitle": "เชื่อม LINE เพื่อรับการแจ้งเตือน และเข้าสู่ระบบด้วยรหัส OTP",
     "changePasswordTitle": "เปลี่ยนรหัสผ่าน"
   },
+  "analytics": {
+    "ordersLabel": "ออเดอร์",
+    "revenueLabel": "ยอดขาย (฿)",
+    "summaryOrders": "ออเดอร์",
+    "summaryRevenue": "ยอดขาย",
+    "summaryCustomers": "ลูกค้า",
+    "summaryShops": "ร้านที่ขายได้",
+    "trendTitle": "แนวโน้มรายวัน",
+    "byStatusTitle": "ตามสถานะออเดอร์",
+    "topCustomersTitle": "ลูกค้าที่ซื้อมากสุด",
+    "byShopTitle": "ร้านขายดี",
+    "breakdownRow": "{orders} ออเดอร์ · ฿{revenue}",
+    "rangeDays": "{days} วัน",
+    "noData": "ยังไม่มีข้อมูลในช่วงนี้"
+  },
   "reviews": {
     "sectionTitle": "รีวิวร้าน",
     "noReviews": "ยังไม่มีรีวิว",
