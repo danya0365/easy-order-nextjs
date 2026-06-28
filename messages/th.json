@@ -578,6 +578,9 @@
     "devicesTitle": "อุปกรณ์ที่เข้าสู่ระบบ",
     "devicesSubtitle": "อุปกรณ์ที่มี session ใช้งานอยู่ — ออกจากระบบรายเครื่อง หรือทุกเครื่องยกเว้นนี้",
     "signOutOthers": "ออกจากระบบบนอุปกรณ์อื่นทั้งหมด",
+    "twoFactorTitle": "การยืนยันตัวตน 2 ชั้น (2FA)",
+    "twoFactorSubtitle": "ป้องกันบัญชีเจ้าของร้านด้วย TOTP — แนะนำให้เปิดใช้งาน",
+    "accountSecurityTitle": "บัญชี & ความปลอดภัยของคุณ",
     "contactAdminTitle": "ติดต่อผู้ดูแลระบบ",
     "contactAdminSubtitle": "มีปัญหาการใช้งานหรือการชำระเงิน ส่งข้อความถึงผู้ดูแลได้ที่นี่",
     "suspendedTitle": "ระบบถูกระงับ — เติมวันเพื่อเปิดใช้งานต่อ",
@@ -732,7 +735,12 @@
     "settingsTitle": "ตั้งค่า",
     "connectionsTitle": "ช่องทางเชื่อมต่อ & ความปลอดภัย",
     "connectionsSubtitle": "เชื่อม LINE เพื่อรับการแจ้งเตือน และเข้าสู่ระบบด้วยรหัส OTP",
-    "changePasswordTitle": "เปลี่ยนรหัสผ่าน"
+    "changePasswordTitle": "เปลี่ยนรหัสผ่าน",
+    "twoFactorTitle": "การยืนยันตัวตน 2 ชั้น (2FA)",
+    "twoFactorSubtitle": "ป้องกันบัญชีพนักงานด้วย TOTP — แนะนำให้เปิดใช้งาน",
+    "devicesTitle": "อุปกรณ์ที่เข้าสู่ระบบ",
+    "devicesSubtitle": "อุปกรณ์ที่มี session ใช้งานอยู่ — ออกจากระบบรายเครื่อง หรือทุกเครื่องยกเว้นนี้",
+    "signOutOthers": "ออกจากระบบบนอุปกรณ์อื่นทั้งหมด"
   },
   "promote": {
     "goal": "เป้าหมายโปรโมท",
