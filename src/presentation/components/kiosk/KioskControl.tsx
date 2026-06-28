@@ -15,7 +15,7 @@ import { FormField } from "@/src/presentation/components/ui/FormField";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 
 export function KioskControl({ hasKioskPin }: { hasKioskPin: boolean }) {
-  const t = useTranslations("shopPages");
+  const t = useTranslations("kiosk");
   const [pinState, pinAction, pinPending] = useActionState<FormState, FormData>(
     setKioskPinAction,
     {},
