@@ -5,6 +5,7 @@ import {
   CreditCard,
   MailCheck,
   MessageSquare,
+  MapPinned,
   Receipt,
   ShieldAlert,
   Star,
@@ -27,6 +28,7 @@ const ICONS: Record<NotificationType, LucideIcon> = {
   contact_resolved: MailCheck,
   new_order: Receipt,
   shop_received_review: Star,
+  lead_follow_up_due: MapPinned,
   security_alert: ShieldAlert,
 };
 

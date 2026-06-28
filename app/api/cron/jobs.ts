@@ -1,5 +1,6 @@
 import { container } from "@/src/infrastructure/di/container";
 import { CleanOrphanedFilesUseCase } from "@/src/application/use-cases/maintenance/CleanOrphanedFilesUseCase";
+import { ListDueFollowUpsUseCase } from "@/src/application/use-cases/lead/ListDueFollowUpsUseCase";
 
 /**
  * A scheduled job. The registry below is run by the single `/api/cron`
@@ -42,6 +43,32 @@ async function runOrphanedFiles(): Promise<{
   ).execute({ extraReferencedKeys: [...menuImageKeys, ...shopImageKeys] });
 }
 
+/**
+ * Notify admins about leads whose follow-up date has passed. Idempotent: each
+ * due lead is announced once (the repo filters out already-notified ones), and
+ * we stamp them only AFTER a successful notify so a failure simply retries next
+ * run (at-least-once) rather than silently dropping the reminder.
+ */
+async function runLeadFollowUps(): Promise<{ processed: number }> {
+  const now = new Date().toISOString();
+  const due = await new ListDueFollowUpsUseCase(container.leadRepository).execute(
+    now,
+  );
+  if (due.length === 0) return { processed: 0 };
+
+  await container.notificationService.notifyAdmins({
+    type: "lead_follow_up_due",
+    title: "ลีดถึงกำหนดติดตาม",
+    body: `มี ${due.length} ลีดถึงกำหนดติดตามแล้ว — เปิดดูเพื่อวางแผนลงพื้นที่`,
+    linkUrl: "/admin/leads",
+  });
+  await container.leadRepository.markFollowUpsNotified(
+    due.map((l) => l.id),
+    now,
+  );
+  return { processed: due.length };
+}
+
 /** Housekeeping: purge expired sessions so the table doesn't grow unbounded. */
 async function runCleanup(): Promise<{ deletedSessions: number }> {
   const deletedSessions = await container.sessionRepository.deleteExpired(
@@ -51,6 +78,12 @@ async function runCleanup(): Promise<{ deletedSessions: number }> {
 }
 
 export const CRON_JOBS: CronJob[] = [
+  {
+    id: "lead-follow-ups",
+    envKey: "CRON_LEAD_FOLLOWUPS",
+    defaultOn: true,
+    run: runLeadFollowUps,
+  },
   {
     id: "cleanup",
     envKey: "CRON_CLEANUP",
