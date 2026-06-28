@@ -13,10 +13,22 @@ export const dynamic = "force-dynamic";
 export default async function ShopDashboardPage() {
   const { shopId } = await requireShopAccess();
   const t = await getTranslations("shopPages");
-  const [shop, { status }] = await Promise.all([
-    container.shopRepository.findById(shopId),
-    getBillingState(shopId),
-  ]);
+  const [shop, { status }, activeOrders, menuItems, customers, branches] =
+    await Promise.all([
+      container.shopRepository.findById(shopId),
+      getBillingState(shopId),
+      container.orderRepository.listActiveByShop(shopId),
+      container.menuItemRepository.listByShop(shopId),
+      container.customerRepository.listByShop(shopId),
+      container.branchRepository.listByShop(shopId),
+    ]);
+
+  const stats = [
+    { href: "/shop/orders", label: t("statActiveOrders"), value: activeOrders.length, accent: true },
+    { href: "/shop/menu", label: t("statMenuItems"), value: menuItems.length },
+    { href: "/shop/customers", label: t("statCustomers"), value: customers.length },
+    { href: "/shop/branches", label: t("statBranches"), value: branches.length },
+  ];
 
   const remaining =
     status.state === "active"
@@ -36,6 +48,25 @@ export default async function ShopDashboardPage() {
       <div>
         <h1 className="text-xl font-bold text-foreground">{shop?.name}</h1>
         <p className="mt-1 text-sm text-muted">{t("dashRemaining", { remaining })}</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {stats.map(({ href, label, value, accent }) => (
+          <Link key={href} href={href}>
+            <Card className="flex flex-col gap-1">
+              <span
+                className={
+                  accent
+                    ? "text-2xl font-bold text-accent-500"
+                    : "text-2xl font-bold text-brand-600"
+                }
+              >
+                {value}
+              </span>
+              <span className="text-sm text-muted">{label}</span>
+            </Card>
+          </Link>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
