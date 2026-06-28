@@ -44,7 +44,9 @@ export async function submitReviewAction(input: {
     });
     if (!guard.allowed) return { ok: false, error: "ลองใหม่ภายหลัง" };
 
-    await new SubmitReviewUseCase(container.shopReviewRepository).execute({
+    const { review, isNewReview } = await new SubmitReviewUseCase(
+      container.shopReviewRepository,
+    ).execute({
       shopId: shop.id,
       customerId: bound.customer.id,
       rating: input.rating,
@@ -52,6 +54,18 @@ export async function submitReviewAction(input: {
     });
     revalidatePath(`/s/${input.slug}`);
     revalidatePath("/shop/reviews");
+
+    // Tell the shop owner about a brand-new review (edits don't re-notify).
+    if (isNewReview) {
+      await container.notificationService.notifyShopOwner(shop.id, {
+        type: "shop_received_review",
+        title: "ได้รับรีวิวใหม่ ⭐",
+        body: `ลูกค้าให้คะแนน ${review.rating} ดาว${
+          review.comment ? ` — "${review.comment.slice(0, 60)}"` : ""
+        }`,
+        linkUrl: "/shop/reviews",
+      });
+    }
     return { ok: true };
   } catch (e) {
     return { ok: false, error: (e as Error).message };

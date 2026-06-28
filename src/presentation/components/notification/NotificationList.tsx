@@ -7,6 +7,7 @@ import {
   MessageSquare,
   Receipt,
   ShieldAlert,
+  Star,
   XCircle,
   type LucideIcon,
 } from "lucide-react";
@@ -25,6 +26,7 @@ const ICONS: Record<NotificationType, LucideIcon> = {
   contact_request: MessageSquare,
   contact_resolved: MailCheck,
   new_order: Receipt,
+  shop_received_review: Star,
   security_alert: ShieldAlert,
 };
 

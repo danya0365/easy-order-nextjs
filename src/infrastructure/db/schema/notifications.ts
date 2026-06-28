@@ -9,6 +9,7 @@ export const NOTIFICATION_TYPES = [
   "contact_request",
   "contact_resolved",
   "new_order",
+  "shop_received_review",
   "security_alert",
 ] as const;
 

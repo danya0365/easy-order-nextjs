@@ -15,6 +15,7 @@ export type NotificationType =
   | "contact_request"
   | "contact_resolved"
   | "new_order"
+  | "shop_received_review"
   | "security_alert";
 export type ContactRequestStatus = "open" | "resolved";
 
