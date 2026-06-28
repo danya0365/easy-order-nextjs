@@ -48,6 +48,7 @@ function toOrder(r: OrderRow, items: OrderItem[]): OrderWithItems {
     customerId: r.customerId,
     customerName: r.customerName,
     customerPhone: r.customerPhone,
+    performedBy: r.performedBy,
     paidAt: r.paidAt,
     readyAt: r.readyAt,
     completedAt: r.completedAt,
@@ -118,6 +119,7 @@ export class DrizzleOrderRepository implements IOrderRepository {
         customerId: input.customerId ?? null,
         customerName: input.customerName ?? null,
         customerPhone: input.customerPhone ?? null,
+        performedBy: input.performedBy ?? null,
       })
       .returning();
 

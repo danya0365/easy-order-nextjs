@@ -261,3 +261,28 @@ test("orders are tenant-isolated", async () => {
     new AdvanceOrderStatusUseCase(orders()).execute(b.shop.id, order.id, "preparing"),
   );
 });
+
+test("performedBy: POS records the operator, kiosk stays null", async () => {
+  const { shop, ownerId } = await seedShop("ord-perfby");
+  const menu = await seedMenu(shop.id);
+
+  // Counter (POS) order carries the operator id.
+  const pos = await new PlaceOrderUseCase(orders(), items(), customers()).execute({
+    shopId: shop.id,
+    paymentMethod: "cash",
+    performedBy: ownerId,
+    cart: [{ menuItemId: menu.espresso.id, quantity: 1 }],
+  });
+  assert.equal(pos.performedBy, ownerId, "POS order stamps the operator");
+  // Re-read from the DB to confirm it persisted.
+  const reloaded = await orders().findById(shop.id, pos.id);
+  assert.equal(reloaded?.performedBy, ownerId);
+
+  // Kiosk self-serve order has no operator.
+  const kiosk = await new PlaceOrderUseCase(orders(), items(), customers()).execute({
+    shopId: shop.id,
+    paymentMethod: "cash",
+    cart: [{ menuItemId: menu.latte.id, quantity: 1 }],
+  });
+  assert.equal(kiosk.performedBy, null, "kiosk order has no operator");
+});

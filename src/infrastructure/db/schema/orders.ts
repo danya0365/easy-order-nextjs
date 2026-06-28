@@ -2,6 +2,7 @@ import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 import { id, createdAt, updatedAt } from "./_shared";
 import { shops } from "./shops";
 import { customers } from "./customers";
+import { users } from "./users";
 
 export const ORDER_STATUSES = [
   "pending",
@@ -39,6 +40,12 @@ export const orders = sqliteTable(
     customerId: text().references(() => customers.id, { onDelete: "set null" }),
     customerName: text(),
     customerPhone: text(),
+    /**
+     * The operator (owner/staff) who placed this order from the counter UI.
+     * Null for kiosk self-serve orders. Set-null on user delete so the order
+     * survives. For staff accountability — also audit-logged at placement.
+     */
+    performedBy: text().references(() => users.id, { onDelete: "set null" }),
     paidAt: text(),
     readyAt: text(),
     completedAt: text(),

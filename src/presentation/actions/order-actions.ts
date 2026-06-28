@@ -203,7 +203,20 @@ export async function placeOrderForCustomerAction(
       note: input.note ?? null,
       customerName: input.customerName ?? null,
       customerPhone: input.customerPhone ?? null,
+      performedBy: actor.id,
       cart: input.cart,
+    });
+
+    // Staff accountability: record who opened this counter order.
+    await container.auditLogger.record({
+      actorUserId: actor.id,
+      actorRole: actor.role,
+      action: AUDIT_ACTIONS.orderPlaced,
+      targetType: "order",
+      targetId: order.id,
+      shopId,
+      ip: await getClientIp(),
+      metadata: { orderNo: order.orderNo },
     });
 
     revalidatePath("/shop/orders");

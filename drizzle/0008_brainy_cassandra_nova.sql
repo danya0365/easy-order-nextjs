@@ -1,0 +1,1 @@
+ALTER TABLE `orders` ADD `performed_by` text REFERENCES users(id);

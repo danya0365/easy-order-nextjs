@@ -31,6 +31,7 @@ export const AUDIT_ACTIONS = {
   kioskActivated: "kiosk_activated",
   kioskExited: "kiosk_exited",
   kioskPinSet: "kiosk_pin_set",
+  orderPlaced: "order_placed",
   orderPaymentConfirmed: "order_payment_confirmed",
   orderCancelled: "order_cancelled",
 } as const;

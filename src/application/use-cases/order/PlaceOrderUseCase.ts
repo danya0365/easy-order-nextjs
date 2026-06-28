@@ -16,6 +16,8 @@ export interface PlaceOrderInput {
   /** Optional walk-in identity. A phone ties the order to a per-shop customer. */
   customerName?: string | null;
   customerPhone?: string | null;
+  /** Operator (owner/staff) placing it from the counter UI; null for kiosk. */
+  performedBy?: string | null;
   cart: CartLine[];
 }
 
@@ -95,6 +97,7 @@ export class PlaceOrderUseCase {
       customerId,
       customerName,
       customerPhone,
+      performedBy: input.performedBy ?? null,
       items: lines,
     });
   }

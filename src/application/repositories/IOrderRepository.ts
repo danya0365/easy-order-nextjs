@@ -20,6 +20,8 @@ export interface CreateOrderInput {
   customerId?: string | null;
   customerName?: string | null;
   customerPhone?: string | null;
+  /** Operator who placed it from the counter UI; null for kiosk self-serve. */
+  performedBy?: string | null;
   items: CreateOrderItemInput[];
 }
 

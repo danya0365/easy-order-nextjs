@@ -302,6 +302,8 @@ export interface Order {
   /** Name/phone snapshotted at order time (shown in the queue even if erased). */
   customerName: string | null;
   customerPhone: string | null;
+  /** Operator who placed it from the counter UI; null for kiosk self-serve. */
+  performedBy: string | null;
   paidAt: string | null;
   readyAt: string | null;
   completedAt: string | null;
