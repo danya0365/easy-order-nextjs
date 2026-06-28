@@ -6,6 +6,20 @@
 ## [Unreleased]
 
 ### Added
+- **ปิดช่องโหว่จาก clone audit (Phase 9): บัญชี/ความปลอดภัยของ owner + staff** — เจ้าของร้าน
+  จัดการบัญชีตัวเองได้แล้วที่ `/shop/security` (เปลี่ยนรหัสผ่าน, เปิด 2FA/TOTP, ดู/ออกจากระบบ
+  อุปกรณ์, ผูก LINE) — แสดงเฉพาะเซสชันเจ้าของจริง (แอดมินที่ impersonate จัดการบัญชีตัวเองที่
+  แดชบอร์ดแอดมิน); พนักงานได้ 2FA + รายการอุปกรณ์เพิ่มที่ `/staff/settings` (คอมโพเนนต์มีอยู่แล้ว
+  แต่ wire ไว้แค่หน้าแอดมิน)
+- **แจ้งเตือนเจ้าของเมื่อมีรีวิวใหม่** — `submitReviewAction` ยิง notification `shop_received_review`
+  (รีวิวใหม่เท่านั้น ไม่ยิงตอนแก้)
+- **Cron ติดตามลีด** — เพิ่มงาน `lead-follow-ups` ใน `/api/cron` (env `CRON_LEAD_FOLLOWUPS`):
+  แจ้งแอดมินถึงลีดที่ถึงกำหนดติดตาม + stamp กันแจ้งซ้ำ (idempotent) + คืน notification type
+  `lead_follow_up_due`
+- **PWA + metadata + loading** — per-shop `site.webmanifest` (ติดตั้งเป็นแอปต่อร้าน scoped `/s/<slug>`),
+  `generateMetadata` (title + manifest) บน `/s/[slug]` และ `/me`, และ loading skeleton ของ
+  `/s/[slug]`, `/me`, `/admin/analytics`, `/admin/reviews`
+- **การ์ดสถิติบนแดชบอร์ดร้าน** `/shop` — ออเดอร์ในคิว / เมนู / ลูกค้า / สาขา (แตะไปหน้านั้นได้)
 - **หน้า public ของร้าน `/s/[slug]` เทียบเท่า Easy Stamp (พาริตี้): ข้อมูลร้าน + แผนที่สาขา** —
   เพิ่ม **`ShopProfile`** (ตาราง `shop_profiles`, migration 0007): เจ้าของกรอก
   เกี่ยวกับร้าน / เวลาทำการ / เบอร์โทร / LINE / Facebook / Instagram / เว็บไซต์ ในหน้า
