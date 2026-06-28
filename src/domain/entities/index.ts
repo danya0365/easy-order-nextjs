@@ -70,6 +70,64 @@ export interface AnalyticsBreakdownRow {
   revenueSatang: number;
 }
 
+// --- Leads (admin shop-acquisition CRM) ---
+
+export type LeadStatus = "new" | "visited" | "interested" | "won" | "lost";
+export type LeadLostReason =
+  | "not_interested"
+  | "too_expensive"
+  | "no_smartphone"
+  | "closed_business"
+  | "competitor"
+  | "other";
+export type LeadVisitReaction = "positive" | "neutral" | "negative" | "no_answer";
+
+export interface Lead {
+  id: string;
+  name: string;
+  categoryId: string | null;
+  address: string | null;
+  phone: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  /** Storage key of the shop photo; served via /api/lead-photos/[leadId]. */
+  photoUrl: string | null;
+  status: LeadStatus;
+  /** Only set when status = "lost". */
+  lostReason: LeadLostReason | null;
+  nextFollowUpAt: string | null;
+  /** When the last follow-up reminder for the current due date was sent. */
+  followUpNotifiedAt: string | null;
+  notes: string | null;
+  /** Set on conversion: the real shop created from this lead. */
+  convertedShopId: string | null;
+  convertedAt: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LeadVisitLog {
+  id: string;
+  leadId: string;
+  reaction: LeadVisitReaction;
+  statusBefore: LeadStatus | null;
+  statusAfter: LeadStatus | null;
+  note: string | null;
+  performedBy: string;
+  createdAt: string;
+}
+
+export interface LeadMapLocation {
+  leadId: string;
+  name: string;
+  status: LeadStatus;
+  latitude: number;
+  longitude: number;
+  address: string | null;
+  phone: string | null;
+}
+
 /** A customer's review of a shop (rating + optional comment + owner reply). */
 export interface ShopReview {
   id: string;

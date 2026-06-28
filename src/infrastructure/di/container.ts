@@ -8,6 +8,8 @@ import { DrizzleShopImageRepository } from "@/src/infrastructure/repositories/dr
 import { DrizzleShopReviewRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleShopReviewRepository";
 import { DrizzleAnalyticsRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleAnalyticsRepository";
 import { DrizzlePlatformAnalyticsRepository } from "@/src/infrastructure/repositories/drizzle/DrizzlePlatformAnalyticsRepository";
+import { DrizzleLeadRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLeadRepository";
+import { DrizzleLeadVisitLogRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLeadVisitLogRepository";
 import { DrizzleBranchRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleBranchRepository";
 import { DrizzleMenuCategoryRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMenuCategoryRepository";
 import { DrizzleMenuItemRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMenuItemRepository";
@@ -23,6 +25,8 @@ import type { IShopImageRepository } from "@/src/application/repositories/IShopI
 import type { IShopReviewRepository } from "@/src/application/repositories/IShopReviewRepository";
 import type { IAnalyticsRepository } from "@/src/application/repositories/IAnalyticsRepository";
 import type { IPlatformAnalyticsRepository } from "@/src/application/repositories/IPlatformAnalyticsRepository";
+import type { ILeadRepository } from "@/src/application/repositories/ILeadRepository";
+import type { ILeadVisitLogRepository } from "@/src/application/repositories/ILeadVisitLogRepository";
 import type { IBranchRepository } from "@/src/application/repositories/IBranchRepository";
 import type { IMenuCategoryRepository } from "@/src/application/repositories/IMenuCategoryRepository";
 import type { IMenuItemRepository } from "@/src/application/repositories/IMenuItemRepository";
@@ -52,6 +56,9 @@ class Container extends GenericContainer {
     new DrizzleAnalyticsRepository();
   readonly platformAnalyticsRepository: IPlatformAnalyticsRepository =
     new DrizzlePlatformAnalyticsRepository();
+  readonly leadRepository: ILeadRepository = new DrizzleLeadRepository();
+  readonly leadVisitLogRepository: ILeadVisitLogRepository =
+    new DrizzleLeadVisitLogRepository();
   readonly branchRepository: IBranchRepository = new DrizzleBranchRepository();
   readonly menuCategoryRepository: IMenuCategoryRepository =
     new DrizzleMenuCategoryRepository();

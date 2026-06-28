@@ -33,5 +33,6 @@ export async function getClientMessages() {
     reviews: messages.reviews,
     analytics: messages.analytics,
     promote: messages.promote,
+    leads: messages.leads,
   };
 }

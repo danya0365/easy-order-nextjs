@@ -19,6 +19,8 @@ export interface CreateShopInput {
   ownerPassword: string;
   pricePerDaySatang?: number;
   promptpayTarget?: string | null;
+  /** Optional shop category (e.g. carried over when converting a lead). */
+  categoryId?: string | null;
 }
 
 /**
@@ -65,6 +67,7 @@ export class CreateShopUseCase {
     const shop = await this.shops.create({
       name: input.name.trim(),
       slug,
+      categoryId: input.categoryId ?? null,
       promptpayTarget: input.promptpayTarget ?? null,
     });
 

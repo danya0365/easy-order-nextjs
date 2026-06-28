@@ -6,6 +6,11 @@
 ## [Unreleased]
 
 ### Added
+- **พอร์ต generic ที่ตกหล่น (Phase 7/7): เครื่องมือลีดของแอดมิน (leads CRM) + geocoding** —
+  `/admin/leads` (รายการ/สร้าง/รายละเอียด/แผนที่): เก็บร้านที่จะ onboard, ปักหมุด/ค้นหาตำแหน่ง
+  (OSM Nominatim/Overpass ผ่าน `/api/geo/*`), บันทึกการเข้าพบ + สถานะ (new→won/lost), อัปรูปสถานที่,
+  และ **แปลงลีดเป็นร้านจริง** (สร้าง shop+owner+สาขา พร้อมพิกัด); ตาราง `leads`+`lead_visit_logs`
+  (migration 0006); geocoder อยู่ใน container.generic อยู่แล้ว (dangling) — ตอนนี้ใช้งานจริง
 - **พอร์ต generic ที่ตกหล่น (Phase 6/7): สตูดิโอโปสเตอร์โปรโมท (promote)** — หน้า `/shop/promote`
   สร้างโปสเตอร์ (เทมเพลต/พรอมต์ AI แบบ copy-to-clipboard/อัปรูปเอง) หลายขนาด แล้ว export PNG;
   **reframe จาก "สะสมแสตมป์→รางวัล" ของเดิมเป็น domain การสั่งอาหาร** — ชูชื่อร้าน + ข้อความโปรอิสระ
