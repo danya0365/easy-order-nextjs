@@ -203,6 +203,12 @@ function OrderCard({ order }: { order: OrderWithItems }) {
         </p>
       )}
 
+      <p className="mt-2 text-xs text-muted">
+        {order.performedByEmail
+          ? `${t("placedByLabel")}: ${order.performedByEmail}`
+          : t("selfServeTag")}
+      </p>
+
       <p className="mt-3 text-right text-lg font-semibold text-foreground">
         {t("total", { amount: satangToBaht(order.totalSatang) })}
       </p>
@@ -264,8 +270,15 @@ function HistorySection({
               getKey={(o) => o.id}
               renderItem={(o) => (
                 <li className="flex items-center justify-between gap-3 py-2.5 text-sm">
-                  <span className="font-medium text-foreground">
-                    {t("orderNo", { no: o.orderNo })}
+                  <span className="flex min-w-0 flex-col">
+                    <span className="font-medium text-foreground">
+                      {t("orderNo", { no: o.orderNo })}
+                    </span>
+                    <span className="truncate text-xs text-muted">
+                      {o.performedByEmail
+                        ? `${t("placedByLabel")}: ${o.performedByEmail}`
+                        : t("selfServeTag")}
+                    </span>
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="text-muted">

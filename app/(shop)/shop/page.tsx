@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ClipboardList, Settings, UtensilsCrossed } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
@@ -8,6 +7,7 @@ import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { FeatureCarousel } from "@/src/presentation/components/shop/FeatureCarousel";
+import { FeatureGrid } from "@/src/presentation/components/shop/FeatureGrid";
 import { OnboardingSuggestions } from "@/src/presentation/components/shop/OnboardingSuggestions";
 
 export const dynamic = "force-dynamic";
@@ -26,10 +26,11 @@ export default async function ShopDashboardPage() {
       container.userRepository.listByShop(shopId),
     ]);
 
-  // Owner-facing onboarding/highlights: shown only to a real shop_owner (an
-  // impersonating admin doesn't need nudges and lineLinked would be theirs).
-  const showOwnerHelpers = !impersonating;
   const hasStaff = users.some((u) => u.role === "branch_staff");
+  // Onboarding's LINE step reflects the real shop OWNER, not the acting admin —
+  // so an impersonating admin sees the shop's true setup state, not their own.
+  const owner = users.find((u) => u.role === "shop_owner");
+  const lineLinked = impersonating ? !!owner?.lineUserId : !!user.lineUserId;
 
   const stats = [
     { href: "/shop/orders", label: t("statActiveOrders"), value: activeOrders.length, accent: true },
@@ -45,12 +46,6 @@ export default async function ShopDashboardPage() {
         ? t("statusSuspended")
         : t("overdueTopup", { days: status.graceDaysLeft });
 
-  const links = [
-    { href: "/shop/orders", label: t("quickOrders"), icon: ClipboardList },
-    { href: "/shop/menu", label: t("quickMenu"), icon: UtensilsCrossed },
-    { href: "/shop/settings", label: t("quickSettings"), icon: Settings },
-  ];
-
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -58,18 +53,14 @@ export default async function ShopDashboardPage() {
         <p className="mt-1 text-sm text-muted">{t("dashRemaining", { remaining })}</p>
       </div>
 
-      {showOwnerHelpers && (
-        <>
-          <FeatureCarousel />
-          <OnboardingSuggestions
-            shopId={shopId}
-            menuReady={menuItems.length > 0}
-            kioskReady={!!shop?.hasKioskPin && !!shop?.promptpayTarget}
-            lineLinked={!!user.lineUserId}
-            hasStaff={hasStaff}
-          />
-        </>
-      )}
+      <FeatureCarousel />
+      <OnboardingSuggestions
+        shopId={shopId}
+        menuReady={menuItems.length > 0}
+        kioskReady={!!shop?.hasKioskPin && !!shop?.promptpayTarget}
+        lineLinked={lineLinked}
+        hasStaff={hasStaff}
+      />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map(({ href, label, value, accent }) => (
@@ -90,18 +81,7 @@ export default async function ShopDashboardPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {links.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-foreground transition hover:bg-muted-surface"
-          >
-            <Icon className="size-5 text-brand-600" />
-            <span className="font-medium">{label}</span>
-          </Link>
-        ))}
-      </div>
+      <FeatureGrid />
 
       <Card>
         <CardHeader title={t("needHelpTitle")} subtitle={t("needHelpSubtitle")} />

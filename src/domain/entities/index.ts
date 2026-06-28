@@ -314,6 +314,11 @@ export interface Order {
 /** An order with its line items (read model). */
 export interface OrderWithItems extends Order {
   items: OrderItem[];
+  /**
+   * Email of the operator (owner/staff) who placed the order, resolved for the
+   * queue/history views. null for kiosk self-serve; undefined when not resolved.
+   */
+  performedByEmail?: string | null;
 }
 
 /**

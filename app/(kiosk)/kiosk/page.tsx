@@ -53,6 +53,7 @@ export default async function KioskPage() {
     <KioskOrdering
       sections={sections}
       hasPromptpay={!!shop?.promptpayTarget}
+      shopName={shop?.name ?? ""}
     />
   );
 }

@@ -68,6 +68,20 @@ function startOfBangkokDayISO(now: Date): string {
   return new Date(Date.UTC(y, m, d, -7, 0, 0)).toISOString();
 }
 
+/** Resolve performedBy user ids → email for the queue/history views (one batched query). */
+async function loadPerformerEmails(
+  ids: (string | null)[],
+): Promise<Map<string, string>> {
+  const unique = [...new Set(ids.filter((x): x is string => !!x))];
+  const map = new Map<string, string>();
+  if (unique.length === 0) return map;
+  const rows = await db.query.users.findMany({
+    where: inArray(schema.users.id, unique),
+  });
+  for (const r of rows) map.set(r.id, r.email);
+  return map;
+}
+
 async function loadItems(orderIds: string[]): Promise<Map<string, OrderItem[]>> {
   const map = new Map<string, OrderItem[]>();
   if (orderIds.length === 0) return map;
@@ -158,8 +172,14 @@ export class DrizzleOrderRepository implements IOrderRepository {
       ),
       orderBy: asc(schema.orders.createdAt),
     });
-    const items = await loadItems(rows.map((r) => r.id));
-    return rows.map((r) => toOrder(r, items.get(r.id) ?? []));
+    const [items, performers] = await Promise.all([
+      loadItems(rows.map((r) => r.id)),
+      loadPerformerEmails(rows.map((r) => r.performedBy)),
+    ]);
+    return rows.map((r) => ({
+      ...toOrder(r, items.get(r.id) ?? []),
+      performedByEmail: r.performedBy ? performers.get(r.performedBy) ?? null : null,
+    }));
   }
 
   async pageHistoryByShop(
@@ -177,10 +197,18 @@ export class DrizzleOrderRepository implements IOrderRepository {
       orderBy: [desc(schema.orders.createdAt), desc(schema.orders.id)],
       limit: limit + 1,
     });
-    const items = await loadItems(rows.map((r) => r.id));
     const page = toPage(rows, limit);
+    const [items, performers] = await Promise.all([
+      loadItems(page.items.map((r) => r.id)),
+      loadPerformerEmails(page.items.map((r) => r.performedBy)),
+    ]);
     return {
-      items: page.items.map((r) => toOrder(r, items.get(r.id) ?? [])),
+      items: page.items.map((r) => ({
+        ...toOrder(r, items.get(r.id) ?? []),
+        performedByEmail: r.performedBy
+          ? performers.get(r.performedBy) ?? null
+          : null,
+      })),
       nextCursor: page.nextCursor,
     };
   }

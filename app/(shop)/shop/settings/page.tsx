@@ -13,6 +13,7 @@ import { ShopImagesManager } from "@/src/presentation/components/shop/ShopImages
 import { KioskControl } from "@/src/presentation/components/kiosk/KioskControl";
 import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopControl";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
+import { SettingsTabs } from "@/src/presentation/components/settings/SettingsTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -51,76 +52,113 @@ export default async function ShopSettingsPage() {
       )
     : 0;
 
+  const tabs = [
+    {
+      id: "shop",
+      label: t("tabShop"),
+      icon: "shop" as const,
+      content: (
+        <>
+          <Card>
+            <CardHeader
+              title={t("shopGeneralTitle")}
+              subtitle={t("shopGeneralSubtitle")}
+            />
+            <SettingsForm
+              name={shop.name}
+              categoryId={shop.categoryId}
+              categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+              promptpayTarget={shop.promptpayTarget ?? ""}
+            />
+            <p className="mt-3 text-xs text-muted">{t("kioskPromptpayHint")}</p>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title={t("pauseShopTitle")}
+              subtitle={t("pauseShopSubtitle")}
+            />
+            <PauseShopControl
+              paused={!!subscription?.pausedAt}
+              daysUntilDue={billing.status.daysUntilDue}
+              frozenDaysSoFar={billing.status.frozenDaysSoFar}
+              pausesUsed={pausesUsed}
+              pauseCap={PAUSE_MAX_PER_30D}
+              cooldownRemainingSec={cooldownRemainingSec}
+            />
+          </Card>
+        </>
+      ),
+    },
+    {
+      id: "details",
+      label: t("tabDetails"),
+      icon: "info" as const,
+      content: (
+        <Card>
+          <CardHeader
+            title={t("shopDetailsTitle")}
+            subtitle={t("shopDetailsSubtitle", { slug: shop.slug })}
+          />
+          <ShopProfileForm profile={profile} />
+        </Card>
+      ),
+    },
+    {
+      id: "images",
+      label: t("tabImages"),
+      icon: "image" as const,
+      content: (
+        <Card>
+          <CardHeader
+            title={t("shopImagesTitle")}
+            subtitle={t("shopImagesSubtitle")}
+          />
+          <ShopImagesManager images={images} />
+        </Card>
+      ),
+    },
+    {
+      id: "kiosk",
+      label: t("tabKiosk"),
+      icon: "kiosk" as const,
+      content: (
+        <Card>
+          <CardHeader title={t("kioskTitle")} subtitle={t("kioskSubtitle")} />
+          <KioskControl hasKioskPin={shop.hasKioskPin} />
+        </Card>
+      ),
+    },
+  ];
+
   return (
-    <div className="flex flex-col gap-4">
-      <Card>
-        <CardHeader
-          title={t("shopGeneralTitle")}
-          subtitle={t("shopGeneralSubtitle")}
-        />
-        <SettingsForm
-          name={shop.name}
-          categoryId={shop.categoryId}
-          categories={categories.map((c) => ({ id: c.id, name: c.name }))}
-          promptpayTarget={shop.promptpayTarget ?? ""}
-        />
-        <p className="mt-3 text-xs text-muted">{t("kioskPromptpayHint")}</p>
-      </Card>
+    <SettingsTabs
+      tabs={tabs}
+      footer={
+        <div className="flex flex-col gap-4">
+          <Card>
+            <CardHeader
+              title={t("securityTitle")}
+              subtitle={t("securitySubtitle")}
+            />
+            <Link
+              href="/shop/security"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
+            >
+              <ArrowRight className="size-4" />
+              {t("openSecurity")}
+            </Link>
+          </Card>
 
-      <Card>
-        <CardHeader
-          title={t("shopDetailsTitle")}
-          subtitle={t("shopDetailsSubtitle", { slug: shop.slug })}
-        />
-        <ShopProfileForm profile={profile} />
-      </Card>
-
-      <Card>
-        <CardHeader
-          title={t("shopImagesTitle")}
-          subtitle={t("shopImagesSubtitle")}
-        />
-        <ShopImagesManager images={images} />
-      </Card>
-
-      <Card>
-        <CardHeader title={t("kioskTitle")} subtitle={t("kioskSubtitle")} />
-        <KioskControl hasKioskPin={shop.hasKioskPin} />
-      </Card>
-
-      <Card>
-        <CardHeader
-          title={t("pauseShopTitle")}
-          subtitle={t("pauseShopSubtitle")}
-        />
-        <PauseShopControl
-          paused={!!subscription?.pausedAt}
-          daysUntilDue={billing.status.daysUntilDue}
-          frozenDaysSoFar={billing.status.frozenDaysSoFar}
-          pausesUsed={pausesUsed}
-          pauseCap={PAUSE_MAX_PER_30D}
-          cooldownRemainingSec={cooldownRemainingSec}
-        />
-      </Card>
-
-      <Card>
-        <CardHeader title={t("securityTitle")} subtitle={t("securitySubtitle")} />
-        <Link
-          href="/shop/security"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
-        >
-          <ArrowRight className="size-4" />
-          {t("openSecurity")}
-        </Link>
-      </Card>
-
-      <Card>
-        <CardHeader
-          title={t("contactAdminTitle")}
-          subtitle={t("contactAdminSubtitle")}
-        />
-        <ContactAdminButton />
-      </Card>
-    </div>
+          <Card>
+            <CardHeader
+              title={t("contactAdminTitle")}
+              subtitle={t("contactAdminSubtitle")}
+            />
+            <ContactAdminButton />
+          </Card>
+        </div>
+      }
+    />
   );
 }

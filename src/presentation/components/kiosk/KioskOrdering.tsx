@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
 
@@ -19,15 +19,24 @@ import { Modal } from "@/src/presentation/components/ui/Modal";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { useToast } from "@/src/presentation/components/ui/Toast";
 import { cn } from "@/src/presentation/components/ui/cn";
+import { AttractScreen } from "@/src/presentation/components/kiosk/AttractScreen";
 
 type Cart = Record<string, number>; // menuItemId -> qty
+type ReceiptLine = { name: string; qty: number; lineSatang: number };
+
+// After this much inactivity (empty cart, no order in flight) the attract screen
+// appears; the finished-order screen auto-clears after this long for the next customer.
+const ATTRACT_IDLE_MS = 60_000;
+const RESULT_RESET_MS = 60_000;
 
 export function KioskOrdering({
   sections,
   hasPromptpay,
+  shopName = "",
 }: {
   sections: KioskMenuSection[];
   hasPromptpay: boolean;
+  shopName?: string;
 }) {
   const t = useTranslations("kiosk");
   const toast = useToast();
@@ -40,6 +49,8 @@ export function KioskOrdering({
     hasPromptpay ? "promptpay_qr" : "cash",
   );
   const [result, setResult] = useState<PlaceOrderResult | null>(null);
+  const [receipt, setReceipt] = useState<ReceiptLine[]>([]);
+  const [idle, setIdle] = useState(false);
   const [pending, start] = useTransition();
 
   const itemsById = useMemo(() => {
@@ -76,6 +87,16 @@ export function KioskOrdering({
         customerPhone: customerPhone.trim() || null,
       });
       if (res.ok) {
+        // Snapshot the cart as a receipt before it's cleared for the next order.
+        const lines: ReceiptLine[] = Object.entries(cart)
+          .map(([id, qty]) => {
+            const it = itemsById.get(id);
+            return it
+              ? { name: it.name, qty, lineSatang: it.priceSatang * qty }
+              : null;
+          })
+          .filter((l): l is ReceiptLine => l !== null);
+        setReceipt(lines);
         setResult(res);
         setCheckoutOpen(false);
       } else {
@@ -84,14 +105,47 @@ export function KioskOrdering({
     });
   }
 
-  function reset() {
+  const reset = useCallback(() => {
     setCart({});
     setNote("");
     setCustomerName("");
     setCustomerPhone("");
     setMethod(hasPromptpay ? "promptpay_qr" : "cash");
     setResult(null);
-  }
+    setReceipt([]);
+    setIdle(false);
+  }, [hasPromptpay]);
+
+  // Auto-clear the finished-order screen so the next customer starts fresh.
+  useEffect(() => {
+    if (!result?.ok) return;
+    const id = setTimeout(reset, RESULT_RESET_MS);
+    return () => clearTimeout(id);
+  }, [result?.ok, reset]);
+
+  // Idle → attract screen, but only when there's nothing in progress to preserve
+  // (empty cart, no open checkout, no finished-order screen). Any interaction rearms.
+  // When something is in progress we simply don't arm the timer; the render is also
+  // gated below so a stale `idle` never shows over a non-empty cart.
+  useEffect(() => {
+    if (count > 0 || checkoutOpen || result?.ok) return;
+    let timer = setTimeout(() => setIdle(true), ATTRACT_IDLE_MS);
+    const bump = () => {
+      setIdle(false);
+      clearTimeout(timer);
+      timer = setTimeout(() => setIdle(true), ATTRACT_IDLE_MS);
+    };
+    const events: (keyof WindowEventMap)[] = [
+      "pointerdown",
+      "keydown",
+      "touchstart",
+    ];
+    events.forEach((e) => window.addEventListener(e, bump));
+    return () => {
+      clearTimeout(timer);
+      events.forEach((e) => window.removeEventListener(e, bump));
+    };
+  }, [count, checkoutOpen, result?.ok]);
 
   // ----- Result screen (next-customer reset) -----
   if (result?.ok) {
@@ -104,6 +158,29 @@ export function KioskOrdering({
             amount: satangToBaht(result.totalSatang ?? 0),
           })}
         </p>
+
+        {receipt.length > 0 && (
+          <div className="w-full rounded-2xl border border-border bg-card p-4 text-left">
+            <p className="mb-2 text-sm font-semibold text-foreground">
+              {t("resultItemsTitle")}
+            </p>
+            <ul className="flex flex-col divide-y divide-border">
+              {receipt.map((line, i) => (
+                <li
+                  key={i}
+                  className="flex items-center justify-between gap-2 py-1.5 text-sm"
+                >
+                  <span className="min-w-0 truncate text-foreground">
+                    {line.name} ×{line.qty}
+                  </span>
+                  <span className="shrink-0 text-muted">
+                    {satangToBaht(line.lineSatang)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {result.paymentMethod === "promptpay_qr" && result.qrDataUrl ? (
           <div className="flex flex-col items-center gap-3">
@@ -157,6 +234,9 @@ export function KioskOrdering({
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pb-28 pt-4">
+      {idle && count === 0 && !checkoutOpen && (
+        <AttractScreen shopName={shopName} onDismiss={() => setIdle(false)} />
+      )}
       <h1 className="mb-3 text-xl font-bold text-foreground">{t("menuTitle")}</h1>
 
       <div className="flex flex-col gap-6">
