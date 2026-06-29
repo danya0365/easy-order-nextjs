@@ -63,6 +63,21 @@ test("setKioskPinAction requires authentication", async () => {
   assert.ok(res.error);
 });
 
+test("setSelfServiceAction toggles the shop flag (owner-only)", async () => {
+  const { shop, ownerId } = await seedShop("kio-self");
+  // Unauthenticated → rejected, flag unchanged.
+  const denied = await actions.setSelfServiceAction(true);
+  assert.ok(denied.error);
+  assert.equal((await container.shopRepository.findById(shop.id))?.selfService, false);
+
+  // Owner turns it on, then off.
+  await loginAs(ownerId);
+  assert.deepEqual(await actions.setSelfServiceAction(true), {});
+  assert.equal((await container.shopRepository.findById(shop.id))?.selfService, true);
+  assert.deepEqual(await actions.setSelfServiceAction(false), {});
+  assert.equal((await container.shopRepository.findById(shop.id))?.selfService, false);
+});
+
 test("owner sets a PIN → shop.hasKioskPin; activation then works (redirect)", async () => {
   const { shop, ownerId } = await seedShop("kio-a");
   await loginAs(ownerId);

@@ -1,4 +1,4 @@
-import { sqliteTable, text, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 import { id, createdAt, updatedAt } from "./_shared";
 import { shopCategories } from "./shop-categories";
 
@@ -24,6 +24,9 @@ export const shops = sqliteTable(
     promptpayTarget: text(),
     // Bcrypt hash of the kiosk PIN — required to enter/exit kiosk mode on a device.
     kioskPinHash: text(),
+    // Self-service mode: customers pay themselves and tap "ชำระเงินแล้ว" on the
+    // kiosk, which marks the order paid + completed (no staff at the counter).
+    selfService: integer({ mode: "boolean" }).notNull().default(false),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

@@ -5,6 +5,21 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-29
+
+### Added
+- **โหมดบริการตัวเอง (Self-service) สำหรับ kiosk** — toggle ต่อร้านในตั้งค่า > หน้าร้าน. เมื่อเปิด: ลูกค้าสั่ง →
+  โชว์ QR/ยอดเงิน + ปุ่ม **"ชำระเงินแล้ว"** → ลูกค้ากดยืนยันเอง → ออเดอร์ถูกมาร์ค **จ่ายแล้ว + เสร็จ
+  อัตโนมัติ** → ขึ้น **เลขคิว + "รับของได้เลย"** → รีเซ็ตเองสำหรับคนถัดไป. เหมาะกับร้านที่ไม่มีพนักงานเฝ้าจอ
+  (เดิมออเดอร์ค้าง `unpaid`/`pending` รอพนักงานกดยืนยันที่ `/shop/orders`). หน้า checkout ในโหมดนี้ยุบ
+  ช่อง "หมายเหตุ/ชื่อ-เบอร์" ไว้หลังปุ่มขยาย ให้ flow walk-in สั้นที่สุด.
+- ร้านที่มีพนักงาน (ไม่เปิดโหมดนี้) ใช้ flow เดิมทุกอย่าง (จ่ายที่เคาน์เตอร์ พนักงานกดยืนยัน/ไล่สถานะ).
+
+### Technical
+- schema: `shops.self_service` (migration `0009`); `SelfServeCompleteOrderUseCase` (markPaid + completed);
+  `selfConfirmOrderAction` (ดึง shop จาก kiosk session, **gate เฉพาะร้าน self-service**, rate-limited);
+  `setSelfServiceAction` (+ audit `shop_self_service_set`). เทส integration ของทั้งสอง action.
+
 ## [0.2.0] - 2026-06-28
 
 ### Security

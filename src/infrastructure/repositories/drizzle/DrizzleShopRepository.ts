@@ -22,6 +22,7 @@ function toShop(r: Row): Shop {
     logoUrl: r.logoUrl,
     promptpayTarget: r.promptpayTarget,
     hasKioskPin: r.kioskPinHash != null,
+    selfService: r.selfService,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
@@ -89,6 +90,15 @@ export class DrizzleShopRepository implements IShopRepository {
     const [r] = await db
       .update(schema.shops)
       .set({ status })
+      .where(eq(schema.shops.id, id))
+      .returning();
+    return toShop(r);
+  }
+
+  async setSelfService(id: string, on: boolean): Promise<Shop> {
+    const [r] = await db
+      .update(schema.shops)
+      .set({ selfService: on })
       .where(eq(schema.shops.id, id))
       .returning();
     return toShop(r);

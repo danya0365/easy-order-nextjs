@@ -24,6 +24,8 @@ export interface IShopRepository {
   list(): Promise<Shop[]>;
   updateSettings(id: string, input: UpdateShopSettingsInput): Promise<Shop>;
   setStatus(id: string, status: ShopStatus): Promise<Shop>;
+  /** Toggle self-service mode (customers self-pay + self-complete on the kiosk). */
+  setSelfService(id: string, on: boolean): Promise<Shop>;
   /** Returns the stored kiosk PIN hash (or null) — infra-only, for verification. */
   getKioskPinHash(id: string): Promise<string | null>;
 }

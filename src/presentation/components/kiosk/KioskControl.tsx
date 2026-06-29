@@ -1,20 +1,28 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { MonitorSmartphone } from "lucide-react";
+import { MonitorSmartphone, HandPlatter } from "lucide-react";
 
 import {
   setKioskPinAction,
   activateKioskAction,
+  setSelfServiceAction,
   type FormState,
 } from "@/src/presentation/actions/kiosk-actions";
 import { Input } from "@/src/presentation/components/ui/Input";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { FormField } from "@/src/presentation/components/ui/FormField";
 import { Badge } from "@/src/presentation/components/ui/Badge";
+import { cn } from "@/src/presentation/components/ui/cn";
 
-export function KioskControl({ hasKioskPin }: { hasKioskPin: boolean }) {
+export function KioskControl({
+  hasKioskPin,
+  selfService,
+}: {
+  hasKioskPin: boolean;
+  selfService: boolean;
+}) {
   const t = useTranslations("kiosk");
   const [pinState, pinAction, pinPending] = useActionState<FormState, FormData>(
     setKioskPinAction,
@@ -24,11 +32,52 @@ export function KioskControl({ hasKioskPin }: { hasKioskPin: boolean }) {
     activateKioskAction,
     {},
   );
+  const [selfOn, setSelfOn] = useState(selfService);
+  const [selfPending, startSelf] = useTransition();
+
+  function toggleSelf() {
+    const next = !selfOn;
+    setSelfOn(next); // optimistic
+    startSelf(async () => {
+      const res = await setSelfServiceAction(next);
+      if (res.error) setSelfOn(!next); // revert on failure
+    });
+  }
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Self-service mode */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <HandPlatter className="size-4" />
+            {t("selfServiceLabel")}
+          </h3>
+          <p className="mt-1 text-sm text-muted">{t("selfServiceHint")}</p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={selfOn}
+          aria-label={t("selfServiceLabel")}
+          onClick={toggleSelf}
+          disabled={selfPending}
+          className={cn(
+            "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition disabled:opacity-50",
+            selfOn ? "bg-brand-500" : "bg-muted-surface",
+          )}
+        >
+          <span
+            className={cn(
+              "inline-block size-5 rounded-full bg-card shadow transition",
+              selfOn ? "translate-x-6" : "translate-x-1",
+            )}
+          />
+        </button>
+      </div>
+
       {/* PIN */}
-      <div>
+      <div className="border-t border-border pt-4">
         <div className="mb-2 flex items-center gap-2">
           <h3 className="text-sm font-semibold text-foreground">
             {t("kioskPinTitle")}

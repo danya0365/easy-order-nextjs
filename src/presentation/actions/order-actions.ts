@@ -12,6 +12,7 @@ import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
 import { PlaceOrderUseCase } from "@/src/application/use-cases/order/PlaceOrderUseCase";
 import { AdvanceOrderStatusUseCase } from "@/src/application/use-cases/order/AdvanceOrderStatusUseCase";
 import { ConfirmOrderPaymentUseCase } from "@/src/application/use-cases/order/ConfirmOrderPaymentUseCase";
+import { SelfServeCompleteOrderUseCase } from "@/src/application/use-cases/order/SelfServeCompleteOrderUseCase";
 import { GenerateBindCodeUseCase } from "@/src/application/use-cases/member/GenerateBindCodeUseCase";
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
 import { getClientIp } from "@/src/presentation/lib/request-ip";
@@ -29,6 +30,9 @@ const ORDER_RATE_WINDOW_MS = 5 * 60_000;
 // Counter staff/owner placing orders: generous hourly cap per operator.
 const STAFF_ORDER_RATE_LIMIT = 200;
 const STAFF_ORDER_RATE_WINDOW_MS = 60 * 60_000;
+// Self-service "I paid" confirmations from a kiosk device — bounded per device+IP.
+const SELF_PAY_RATE_LIMIT = 60;
+const SELF_PAY_RATE_WINDOW_MS = 5 * 60_000;
 
 export interface PlaceOrderResult {
   ok?: true;
@@ -157,6 +161,47 @@ async function buildOrderResult(
     qrDataUrl,
     bindQrDataUrl,
   };
+}
+
+/**
+ * Self-service settlement from the KIOSK: the customer self-paid and tapped
+ * "ชำระเงินแล้ว". Marks the order paid + completed in one step. The shop is
+ * derived from the server-validated kiosk session (never client input), and
+ * this is allowed ONLY when the shop is in self-service mode — so a staffed
+ * shop's orders can never be self-marked-paid from the device. Rate-limited.
+ */
+export async function selfConfirmOrderAction(
+  orderId: string,
+): Promise<{ ok?: true; orderNo?: number; error?: string }> {
+  try {
+    const shopId = await requireKioskShop();
+    const shop = await container.shopRepository.findById(shopId);
+    if (!shop?.selfService) {
+      return { error: "ร้านนี้ไม่ได้เปิดโหมดบริการตัวเอง" };
+    }
+
+    const ip = await getClientIp();
+    const guard = await container.sensitiveActionGuard.check({
+      key: `order_selfpay:${shopId}:${ip}`,
+      limit: SELF_PAY_RATE_LIMIT,
+      windowMs: SELF_PAY_RATE_WINDOW_MS,
+      shopId,
+      ip,
+      alertTitle: "⚠️ มีการกดยืนยันจ่ายเงินถี่ผิดปกติ",
+      alertBody: `อุปกรณ์หนึ่งกดยืนยันจ่ายเงินเกิน ${SELF_PAY_RATE_LIMIT} ครั้งใน 5 นาที`,
+    });
+    if (!guard.allowed) {
+      return { error: "กดยืนยันถี่เกินไป กรุณารอสักครู่แล้วลองใหม่" };
+    }
+
+    const order = await new SelfServeCompleteOrderUseCase(
+      container.orderRepository,
+    ).execute(shopId, orderId);
+    revalidatePath("/shop/orders");
+    return { ok: true, orderNo: order.orderNo };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
 }
 
 /**

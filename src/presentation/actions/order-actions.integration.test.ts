@@ -139,3 +139,46 @@ test("placeOrderForCustomerAction: POS order records the operator (performedBy)"
   assert.equal(active.length, 1);
   assert.equal(active[0].performedBy, ownerId); // counter accountability
 });
+
+test("selfConfirmOrderAction: self-service shop marks the order paid + completed", async () => {
+  const { shop } = await seedShop("ord-act-self");
+  await container.shopRepository.setSelfService(shop.id, true);
+  const item = await menuItem(shop.id, 5000);
+  await activateKiosk(shop.id);
+
+  const placed = await actions.placeOrderAction({
+    cart: [{ menuItemId: item.id, quantity: 1 }],
+    paymentMethod: "cash",
+  });
+  assert.ok(placed.ok && placed.orderId, placed.error);
+
+  const res = await actions.selfConfirmOrderAction(placed.orderId!);
+  assert.ok(res.ok, res.error);
+  assert.equal(res.orderNo, placed.orderNo);
+
+  // The order is now paid + completed (leaves the active queue, no staff needed).
+  const order = await container.orderRepository.findById(shop.id, placed.orderId!);
+  assert.equal(order?.paymentStatus, "paid");
+  assert.equal(order?.status, "completed");
+  assert.equal((await container.orderRepository.listActiveByShop(shop.id)).length, 0);
+});
+
+test("selfConfirmOrderAction: rejected when the shop is NOT in self-service mode", async () => {
+  const { shop } = await seedShop("ord-act-nonself"); // selfService defaults false
+  const item = await menuItem(shop.id);
+  await activateKiosk(shop.id);
+
+  const placed = await actions.placeOrderAction({
+    cart: [{ menuItemId: item.id, quantity: 1 }],
+    paymentMethod: "cash",
+  });
+  assert.ok(placed.ok && placed.orderId, placed.error);
+
+  const res = await actions.selfConfirmOrderAction(placed.orderId!);
+  assert.ok(res.error, "non-self-service shop must reject self-confirm");
+
+  // Order stays pending + unpaid (staff would handle it).
+  const order = await container.orderRepository.findById(shop.id, placed.orderId!);
+  assert.equal(order?.paymentStatus, "unpaid");
+  assert.equal(order?.status, "pending");
+});

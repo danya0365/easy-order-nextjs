@@ -125,7 +125,10 @@ export default async function ShopSettingsPage() {
       content: (
         <Card>
           <CardHeader title={t("kioskTitle")} subtitle={t("kioskSubtitle")} />
-          <KioskControl hasKioskPin={shop.hasKioskPin} />
+          <KioskControl
+            hasKioskPin={shop.hasKioskPin}
+            selfService={shop.selfService}
+          />
         </Card>
       ),
     },

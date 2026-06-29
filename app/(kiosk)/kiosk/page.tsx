@@ -54,6 +54,7 @@ export default async function KioskPage() {
       sections={sections}
       hasPromptpay={!!shop?.promptpayTarget}
       shopName={shop?.name ?? ""}
+      selfService={!!shop?.selfService}
     />
   );
 }

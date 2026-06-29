@@ -21,6 +21,30 @@ export interface FormState {
   success?: string;
 }
 
+/** Owner toggles self-service mode (kiosk customers self-pay + self-complete). */
+export async function setSelfServiceAction(
+  enabled: boolean,
+): Promise<{ error?: string }> {
+  try {
+    const { actor, shopId } = await requireShopWrite();
+    await container.shopRepository.setSelfService(shopId, enabled);
+    await container.auditLogger.record({
+      actorUserId: actor.id,
+      actorRole: actor.role,
+      action: AUDIT_ACTIONS.shopSelfServiceSet,
+      targetType: "shop",
+      targetId: shopId,
+      shopId,
+      ip: await getClientIp(),
+      metadata: { enabled },
+    });
+    revalidatePath("/shop/settings");
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
 /** Owner sets/changes the kiosk PIN (required to exit kiosk mode). */
 export async function setKioskPinAction(
   _prev: FormState,

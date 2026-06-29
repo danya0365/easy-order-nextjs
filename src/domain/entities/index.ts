@@ -191,6 +191,8 @@ export interface Shop {
   promptpayTarget: string | null;
   /** Whether a kiosk PIN has been set (the hash itself never leaves infra). */
   hasKioskPin: boolean;
+  /** Self-service mode: customers self-pay + tap "ชำระเงินแล้ว" → order auto paid+completed. */
+  selfService: boolean;
   createdAt: string;
   updatedAt: string;
 }

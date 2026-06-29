@@ -1,0 +1,1 @@
+ALTER TABLE `shops` ADD `self_service` integer DEFAULT false NOT NULL;
