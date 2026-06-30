@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Delete, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 
 import {
   exitKioskAction,
@@ -10,10 +10,11 @@ import {
 } from "@/src/presentation/actions/kiosk-actions";
 import { Modal } from "@/src/presentation/components/ui/Modal";
 import { Button } from "@/src/presentation/components/ui/Button";
-
-const DIGITS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
-const PIN_MAX = 6;
-const PIN_MIN = 4;
+import {
+  KioskPinPad,
+  KIOSK_PIN_MAX,
+  KIOSK_PIN_MIN,
+} from "@/src/presentation/components/kiosk/KioskPinPad";
 
 export function KioskExitButton() {
   const t = useTranslations("kiosk");
@@ -47,7 +48,7 @@ export function KioskExitButton() {
       setPin(d);
       return;
     }
-    setPin((prev) => (prev.length < PIN_MAX ? prev + d : prev));
+    setPin((prev) => (prev.length < KIOSK_PIN_MAX ? prev + d : prev));
   }
 
   function handleBackspace() {
@@ -74,54 +75,18 @@ export function KioskExitButton() {
         >
           <p className="text-sm text-muted">{t("exitDesc")}</p>
 
-          <div className="flex gap-3">
-            {Array.from({ length: PIN_MAX }, (_, i) => (
-              <div
-                key={i}
-                className={`size-3.5 rounded-full border-2 transition-colors ${
-                  i < pin.length
-                    ? isErrorState
-                      ? "border-error bg-error"
-                      : "border-foreground bg-foreground"
-                    : "border-muted"
-                }`}
-              />
-            ))}
-          </div>
+          <KioskPinPad
+            pin={pin}
+            onDigit={handleDigit}
+            onBackspace={handleBackspace}
+            isError={isErrorState}
+          />
 
           {state.error && (
             <p className="text-sm text-error">{state.error}</p>
           )}
 
           <input type="hidden" name="pin" value={pin} />
-
-          <div className="grid w-full grid-cols-3 gap-2">
-            {DIGITS.map((d) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => handleDigit(d)}
-                className="flex h-16 items-center justify-center rounded-2xl bg-muted-surface text-2xl font-semibold text-foreground transition hover:bg-border active:scale-95"
-              >
-                {d}
-              </button>
-            ))}
-            <div />
-            <button
-              type="button"
-              onClick={() => handleDigit("0")}
-              className="flex h-16 items-center justify-center rounded-2xl bg-muted-surface text-2xl font-semibold text-foreground transition hover:bg-border active:scale-95"
-            >
-              0
-            </button>
-            <button
-              type="button"
-              onClick={handleBackspace}
-              className="flex h-16 items-center justify-center rounded-2xl bg-muted-surface text-muted transition hover:bg-border active:scale-95"
-            >
-              <Delete className="size-6" />
-            </button>
-          </div>
 
           <div className="flex w-full gap-2">
             <Button
@@ -135,7 +100,7 @@ export function KioskExitButton() {
             <Button
               type="submit"
               variant="danger"
-              disabled={pin.length < PIN_MIN || pending}
+              disabled={pin.length < KIOSK_PIN_MIN || pending}
               className="flex-1"
             >
               {pending ? t("exiting") : t("exitConfirm")}

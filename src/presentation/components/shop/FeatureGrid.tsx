@@ -42,7 +42,7 @@ export async function FeatureGrid() {
     { id: "reviews", icon: Star, label: t("featReviewsLabel"), description: t("featReviewsDesc"), href: "/shop/reviews" },
     { id: "branches", icon: Building2, label: t("featBranchesLabel"), description: t("featBranchesDesc"), href: "/shop/branches" },
     { id: "staff", icon: UserCog, label: t("featStaffLabel"), description: t("featStaffDesc"), href: "/shop/staff" },
-    { id: "kiosk", icon: MonitorSmartphone, label: t("featKioskLabel"), description: t("featKioskDesc"), href: "/shop/settings" },
+    { id: "kiosk", icon: MonitorSmartphone, label: t("featKioskLabel"), description: t("featKioskDesc"), href: "/shop/kiosk" },
     { id: "notifications", icon: Bell, label: t("featNotificationsLabel"), description: t("featNotificationsDesc"), href: "/shop/notifications" },
     { id: "billing", icon: CreditCard, label: t("featBillingLabel"), description: t("featBillingDesc"), href: "/shop/billing" },
     { id: "settings", icon: Settings, label: t("featSettingsLabel"), description: t("featSettingsDesc"), href: "/shop/settings" },

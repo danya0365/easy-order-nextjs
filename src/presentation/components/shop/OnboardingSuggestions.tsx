@@ -65,7 +65,7 @@ export function OnboardingSuggestions({
       iconClassName: "bg-brand-100 text-brand-700",
       title: t("obKioskTitle"),
       description: t("obKioskDesc"),
-      href: "/shop/settings",
+      href: "/shop/kiosk",
     });
   }
   if (!lineLinked) {

@@ -10,11 +10,16 @@ import {
   setSelfServiceAction,
   type FormState,
 } from "@/src/presentation/actions/kiosk-actions";
-import { Input } from "@/src/presentation/components/ui/Input";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { FormField } from "@/src/presentation/components/ui/FormField";
+import { Input } from "@/src/presentation/components/ui/Input";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { cn } from "@/src/presentation/components/ui/cn";
+import {
+  KioskPinPad,
+  KIOSK_PIN_MAX,
+  KIOSK_PIN_MIN,
+} from "@/src/presentation/components/kiosk/KioskPinPad";
 
 export function KioskControl({
   hasKioskPin,
@@ -28,12 +33,31 @@ export function KioskControl({
     setKioskPinAction,
     {},
   );
+  const [pin, setPin] = useState("");
+  const [submittedPin, setSubmittedPin] = useState<string | null>(null);
   const [actState, activate, actPending] = useActionState<FormState, FormData>(
     activateKioskAction,
     {},
   );
   const [selfOn, setSelfOn] = useState(selfService);
   const [selfPending, startSelf] = useTransition();
+
+  const isPinErrorState = !!pinState.error && submittedPin !== null && pin === submittedPin;
+  const isPinSuccessState = !!pinState.success && submittedPin !== null && pin === submittedPin;
+
+  function handlePinDigit(d: string) {
+    if (isPinErrorState || isPinSuccessState) {
+      setSubmittedPin(null);
+      setPin(d);
+      return;
+    }
+    setPin((prev) => (prev.length < KIOSK_PIN_MAX ? prev + d : prev));
+  }
+
+  function handlePinBackspace() {
+    setSubmittedPin(null);
+    setPin((prev) => prev.slice(0, -1));
+  }
 
   function toggleSelf() {
     const next = !selfOn;
@@ -78,7 +102,7 @@ export function KioskControl({
 
       {/* PIN */}
       <div className="border-t border-border pt-4">
-        <div className="mb-2 flex items-center gap-2">
+        <div className="mb-1 flex items-center gap-2">
           <h3 className="text-sm font-semibold text-foreground">
             {t("kioskPinTitle")}
           </h3>
@@ -86,28 +110,25 @@ export function KioskControl({
             {hasKioskPin ? t("kioskPinSet") : t("kioskPinNotSet")}
           </Badge>
         </div>
-        <form action={pinAction} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <FormField label={t("kioskPinLabel")} htmlFor="kioskPin" hint={t("kioskPinHint")}>
-            <Input
-              id="kioskPin"
-              name="pin"
-              type="password"
-              inputMode="numeric"
-              autoComplete="off"
-              pattern="\d{4,6}"
-              minLength={4}
-              maxLength={6}
-              required
-            />
-          </FormField>
-          <Button type="submit" disabled={pinPending}>
+        <p className="mb-4 text-sm text-muted">{t("kioskPinHint")}</p>
+        <form
+          action={pinAction}
+          onSubmit={() => setSubmittedPin(pin)}
+          className="flex flex-col items-center gap-4"
+        >
+          <KioskPinPad
+            pin={pin}
+            onDigit={handlePinDigit}
+            onBackspace={handlePinBackspace}
+            isError={isPinErrorState}
+          />
+          <input type="hidden" name="pin" value={pin} />
+          {pinState.error && <p className="text-sm text-error">{pinState.error}</p>}
+          {pinState.success && <p className="text-sm text-success">{pinState.success}</p>}
+          <Button type="submit" disabled={pin.length < KIOSK_PIN_MIN || pinPending} className="w-full">
             {pinPending ? t("kioskPinSaving") : t("kioskPinSave")}
           </Button>
         </form>
-        {pinState.error && <p className="mt-2 text-sm text-error">{pinState.error}</p>}
-        {pinState.success && (
-          <p className="mt-2 text-sm text-success">{pinState.success}</p>
-        )}
       </div>
 
       {/* Activate this device */}

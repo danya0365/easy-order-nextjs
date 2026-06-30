@@ -10,7 +10,6 @@ import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { SettingsForm } from "@/src/presentation/components/shop/SettingsForm";
 import { ShopProfileForm } from "@/src/presentation/components/shop/ShopProfileForm";
 import { ShopImagesManager } from "@/src/presentation/components/shop/ShopImagesManager";
-import { KioskControl } from "@/src/presentation/components/kiosk/KioskControl";
 import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopControl";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { SettingsTabs } from "@/src/presentation/components/settings/SettingsTabs";
@@ -115,20 +114,6 @@ export default async function ShopSettingsPage() {
             subtitle={t("shopImagesSubtitle")}
           />
           <ShopImagesManager images={images} />
-        </Card>
-      ),
-    },
-    {
-      id: "kiosk",
-      label: t("tabKiosk"),
-      icon: "kiosk" as const,
-      content: (
-        <Card>
-          <CardHeader title={t("kioskTitle")} subtitle={t("kioskSubtitle")} />
-          <KioskControl
-            hasKioskPin={shop.hasKioskPin}
-            selfService={shop.selfService}
-          />
         </Card>
       ),
     },

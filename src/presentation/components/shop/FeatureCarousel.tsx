@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Megaphone,
+  MonitorSmartphone,
   PauseCircle,
   Star,
   type LucideIcon,
@@ -35,6 +36,12 @@ export function FeatureCarousel() {
 
   // Curated highlights to promote — not every feature.
   const SLIDES: Slide[] = [
+    {
+      icon: MonitorSmartphone,
+      title: t("carKioskTitle"),
+      description: t("carKioskDesc"),
+      href: "/shop/kiosk",
+    },
     {
       icon: BarChart3,
       title: t("carAnalyticsTitle"),

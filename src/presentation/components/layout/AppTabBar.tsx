@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   LifeBuoy,
   MessageSquare,
+  MonitorSmartphone,
   MoreHorizontal,
   Settings,
   ShieldAlert,
@@ -43,6 +44,7 @@ type NavLabelKey =
   | "navBilling"
   | "navBranches"
   | "navStaff"
+  | "navKiosk"
   | "navSettings"
   | "navSecurity"
   | "navContactAdmin"
@@ -69,6 +71,7 @@ const NAVS = {
     { href: "/shop/orders", label: "navOrders", icon: ClipboardList },
     { href: "/shop/new-order", label: "navNewOrder", icon: ShoppingCart },
     { href: "/shop/menu", label: "navMenu", icon: UtensilsCrossed },
+    { href: "/shop/kiosk", label: "navKiosk", icon: MonitorSmartphone },
     { href: "/shop", label: "navDashboard", icon: LayoutDashboard },
     { href: "/shop/notifications", label: "navNotifications", icon: Bell },
     // Overflow (periodic → setup → rare)
