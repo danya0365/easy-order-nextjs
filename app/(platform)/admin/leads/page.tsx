@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPinned, Map as MapIcon, Plus } from "lucide-react";
+import { ClipboardList, MapPinned, Map as MapIcon, Plus } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
@@ -59,6 +59,12 @@ export default async function AdminLeadsPage({
           {tp("leadsTitle")}
         </h1>
         <div className="flex gap-2">
+          <Link href="/sell">
+            <Button variant="ghost" size="sm">
+              <ClipboardList size={14} />
+              {tp("leadsSellGuide")}
+            </Button>
+          </Link>
           <Link href="/admin/leads/map">
             <Button variant="outline" size="sm">
               <MapIcon size={14} />

@@ -76,10 +76,96 @@
   "adminPages": {
     "settingsTitle": "Platform settings",
     "settingsSubtitle": "Whole-system billing and suspension switches",
-    "billingUiOffNote": "Billing UI is off (shops don't see the billing page) — price submissions still arrive normally"
+    "billingUiOffNote": "Billing UI is off (shops don't see the billing page) — price submissions still arrive normally",
+    "leadsSellGuide": "Sales playbook"
   },
   "layout": {
     "navMore": "More",
     "navPlatformSettings": "Platform settings"
+  },
+  "sell": {
+    "heroTagline": "Put a tablet on the counter and turn it into a self-ordering station — customers tap to order, the shop manages one live queue.",
+    "heroBadge": "Sales playbook · for the sales team",
+    "nav": {
+      "prepare": "Prepare",
+      "open": "Opening script",
+      "pains": "Pains",
+      "demo": "Demo",
+      "faq": "FAQ",
+      "close": "Closing",
+      "links": "Quick links"
+    },
+    "prepare": {
+      "title": "Prepare before the field visit",
+      "subtitle": "Checklist before you walk into the shop",
+      "item1": "Tablet/phone fully charged, kiosk mode or demo ready to open",
+      "item2": "Have /info open to showcase features and /tutorial for a step-by-step demo",
+      "item3": "Demo links ready: home page with the shop map · /info · /tutorial — bookmark them on the device",
+      "item4": "Know the pricing model: prepaid daily service via PromptPay, per the shop's plan — details on /info; never quote a made-up number",
+      "item5": "Log in as admin with /admin/leads open, ready to register the shop on-site",
+      "item6": "Bring a business card / LINE QR so the owner can follow up on the spot"
+    },
+    "open": {
+      "title": "Opening script (30 seconds)",
+      "subtitle": "Start with the shop's daily problem, not with the product",
+      "script1": "\"How long do your queues get on a rush? Some shops we visit have lines reaching the street — customers give up and staff stretch themselves taking orders, billing, and serving.\"",
+      "script2": "\"There's a simple way: a tablet on the counter. Customers tap to order themselves, prices are exact, and the shop sees every order in one live queue. May I show you in 2–3 minutes?\""
+    },
+    "pains": {
+      "title": "Pain → how Easy Order fixes it",
+      "subtitle": "Listen for which pain the shop has, then speak to that one",
+      "pain1": "Long counter queues, too few staff",
+      "fix1": "Customers tap to order on the tablet — it removes the counter bottleneck",
+      "pain2": "Wrong order notes, wrong bills",
+      "fix2": "Customers enter their own order; name/price are snapshotted so later menu edits don't touch old orders",
+      "pain3": "Fear of fake / junk orders",
+      "fix3": "Orders can only come from a device the shop activated — nobody can fire orders from outside",
+      "pain4": "No idea who the regulars are or what sells best",
+      "fix4": "Optional name+phone builds a per-shop customer history, plus best-seller and daily sales stats"
+    },
+    "demo": {
+      "title": "Short demo (2–3 minutes)",
+      "subtitle": "Show both the customer side and the shop side",
+      "step1": "Open kiosk mode",
+      "step1Detail": "Lock the screen on the ordering view; after idle it shows ‘Tap to order’. Exit needs the shop's own PIN.",
+      "step2": "Order something together",
+      "step2Detail": "Let the owner pick the menu into the cart themselves — they feel how easy it is.",
+      "step3": "Pay by PromptPay or cash",
+      "step3Detail": "The QR is generated for the exact amount instantly, or choose cash — the shop confirms payment itself, no gateway fees.",
+      "step4": "Show the live queue",
+      "step4Detail": "The order lands in the queue instantly, moving through accepted → preparing → ready → completed.",
+      "step5": "Show customer history (if time allows)",
+      "step5Detail": "Scan the QR on the kiosk screen and open /me on a phone to view that customer's own order history."
+    },
+    "faq": {
+      "title": "Objections you'll hear + answers",
+      "subtitle": "Answer short, honest, and direct",
+      "q1": "Isn't it expensive?",
+      "a1": "Service is prepaid daily via PromptPay per the shop's plan — a light daily payment, no contract. Details are on /info.",
+      "q2": "Do I have to buy extra hardware?",
+      "a2": "No — it's a website that runs on a tablet/phone the shop already has. No app install.",
+      "q3": "What if the internet goes down?",
+      "a3": "Be honest: the system needs a network for live orders and the queue. If the connection drops temporarily, take orders the old way until it's back — then kiosk just resumes, no re-setup needed.",
+      "q4": "Some customers won't touch a tablet…",
+      "a4": "That's fine — staff can open orders at the counter for them (POS mode), and it's logged who opened the order.",
+      "q5": "How is this different from a regular POS?",
+      "a5": "It's self-order kiosk first, aiming to cut queues; no expensive hardware lock-in, just a tablet on the web, and it's a light daily payment."
+    },
+    "close": {
+      "title": "Closing",
+      "subtitle": "Soft close with a clear next step",
+      "script": "\"No decision needed right now — let me register your shop first, and the system will set up an account with your own menu. We'll run it together from there; if it doesn't work for you, we can talk anytime.\"",
+      "step1": "If the shop is interested — push forward immediately; don't leave it as \"I'll think about it and call you back\".",
+      "step2": "Register at least one lead before leaving (create at /admin/leads/new or view at /admin/leads)",
+      "step3": "Log the visit with the sales status (interested / won) so follow-up is easy"
+    },
+    "links": {
+      "title": "Quick links",
+      "info": "Product feature page (/info)",
+      "tutorial": "Usage guide (/tutorial)",
+      "leads": "Register a lead (/admin/leads)",
+      "login": "Admin login"
+    },
+    "footerNote": "This page is an internal playbook for the {brand} sales team — keep it open on site."
   }
 }

@@ -12,6 +12,7 @@ import {
   CreditCard,
   Receipt,
   BookOpen,
+  ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 
@@ -217,6 +218,13 @@ export default function InfoPage() {
         </Link>
         <Link href="/privacy" className="text-xs text-muted hover:underline">
           นโยบายความเป็นส่วนตัว
+        </Link>
+        <Link
+          href="/sell"
+          className="inline-flex items-center gap-1.5 text-xs text-muted hover:underline"
+        >
+          <ClipboardList className="size-3.5" />
+          สำหรับทีมขาย — คู่มือขายหน้าร้าน
         </Link>
       </footer>
     </main>
