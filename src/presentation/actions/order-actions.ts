@@ -19,7 +19,11 @@ import { getClientIp } from "@/src/presentation/lib/request-ip";
 import { getBaseUrl } from "@/src/presentation/lib/base-url";
 import { renderPromptPayQR } from "@/src/infrastructure/services/promptpay";
 import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
-import type { OrderStatus, OrderPaymentMethod } from "@/src/domain/entities";
+import type {
+  OrderStatus,
+  OrderPaymentMethod,
+  FulfillmentType,
+} from "@/src/domain/entities";
 import type { Page } from "@/src/application/repositories/pagination";
 import type { OrderWithItems } from "@/src/domain/entities";
 
@@ -30,6 +34,9 @@ const ORDER_RATE_WINDOW_MS = 5 * 60_000;
 // Counter staff/owner placing orders: generous hourly cap per operator.
 const STAFF_ORDER_RATE_LIMIT = 200;
 const STAFF_ORDER_RATE_WINDOW_MS = 60 * 60_000;
+// Public web (online) orders: a visitor shouldn't fire dozens of orders in a window.
+const ONLINE_ORDER_RATE_LIMIT = 20;
+const ONLINE_ORDER_RATE_WINDOW_MS = 5 * 60_000;
 // Self-service "I paid" confirmations from a kiosk device — bounded per device+IP.
 const SELF_PAY_RATE_LIMIT = 60;
 const SELF_PAY_RATE_WINDOW_MS = 5 * 60_000;
@@ -163,6 +170,86 @@ async function buildOrderResult(
     qrDataUrl,
     bindQrDataUrl,
   };
+}
+
+export interface PlaceOnlineOrderActionInput extends PlaceOrderActionInput {
+  slug: string;
+  /** pickup or delivery (dine_in is kiosk-only and rejected by the use case). */
+  fulfillmentType: FulfillmentType;
+  deliveryAddress?: string | null;
+}
+
+export interface PlaceOnlineOrderResult extends PlaceOrderResult {
+  /** Shop slug + fulfillment echo for the success screen. */
+  shopSlug?: string;
+  fulfillmentType?: FulfillmentType;
+}
+
+/**
+ * Place an order from the PUBLIC web page (/s/[slug]/order). Price tampering is
+ * neutralized the same way as kiosk: names/fees come from the DB via the use
+ * case. Rate-limited per shop+IP (public surface, unauthenticated).
+ */
+export async function placeOnlineOrderAction(
+  input: PlaceOnlineOrderActionInput,
+): Promise<PlaceOnlineOrderResult> {
+  try {
+    const shop = await container.shopRepository.findBySlug(input.slug);
+    if (!shop) return { error: "ไม่พบร้านค้า" };
+    await assertShopActive(shop.id);
+
+    const ip = await getClientIp();
+    const guard = await container.sensitiveActionGuard.check({
+      key: `order_online:${shop.id}:${ip}`,
+      limit: ONLINE_ORDER_RATE_LIMIT,
+      windowMs: ONLINE_ORDER_RATE_WINDOW_MS,
+      shopId: shop.id,
+      ip,
+      alertTitle: "⚠️ มีการสั่งออนไลน์ถี่ผิดปกติ",
+      alertBody: `ไอพีหนึ่งสั่งออนไลน์เกิน ${ONLINE_ORDER_RATE_LIMIT} ครั้งใน 5 นาที`,
+    });
+    if (!guard.allowed) {
+      return { error: "สั่งออเดอร์ถี่เกินไป กรุณารอสักครู่แล้วลองใหม่" };
+    }
+
+    if (input.paymentMethod === "promptpay_qr" && !shop.promptpayTarget) {
+      return { error: "ร้านยังไม่ได้ตั้งค่า PromptPay กรุณาเลือกจ่ายเงินสด" };
+    }
+
+    const order = await new PlaceOrderUseCase(
+      container.orderRepository,
+      container.menuItemRepository,
+      container.customerRepository,
+      container.shopRepository,
+    ).execute({
+      shopId: shop.id,
+      paymentMethod: input.paymentMethod,
+      note: input.note ?? null,
+      customerName: input.customerName ?? null,
+      customerPhone: input.customerPhone ?? null,
+      channel: "online",
+      performedBy: null,
+      fulfillmentType: input.fulfillmentType,
+      deliveryAddress: input.deliveryAddress ?? null,
+      cart: input.cart,
+    });
+
+    await container.notificationService.notifyShopOwner(shop.id, {
+      type: "new_order",
+      title: `ออเดอร์ออนไลน์ใหม่ #${order.orderNo}`,
+      body: `มีออเดอร์ใหม่ ${order.items.length} รายการ รวม ${(order.totalSatang / 100).toFixed(2)} บาท`,
+      linkUrl: "/shop/orders",
+    });
+
+    const res = await buildOrderResult(shop.id, order, input.customerPhone ?? null);
+    return {
+      ...res,
+      shopSlug: shop.slug,
+      fulfillmentType: input.fulfillmentType,
+    };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
 }
 
 /**

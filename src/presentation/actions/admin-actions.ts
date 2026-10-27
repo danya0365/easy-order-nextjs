@@ -33,6 +33,40 @@ export interface AdminFormState {
   handoff?: ShopHandoff;
 }
 
+/** Platform-wide billing switches (soft-launch gates). Platform admin only. */
+export async function updatePlatformSettingsAction(
+  _prev: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  try {
+    const admin = await requireRole("platform_admin");
+    const thresholdRaw = Number(formData.get("orderThresholdCount") ?? 0);
+    const count = Number.isInteger(thresholdRaw) && thresholdRaw > 0
+      ? thresholdRaw
+      : 1;
+    await container.platformSettingsRepository.update({
+      billingUiEnabled: formData.get("billingUiEnabled") === "on",
+      orderThresholdBillingEnabled:
+        formData.get("orderThresholdBillingEnabled") === "on",
+      orderThresholdCount: count,
+      shopSuspensionEnabled: formData.get("shopSuspensionEnabled") === "on",
+    });
+    await container.auditLogger.record({
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: AUDIT_ACTIONS.platformSettingsUpdated,
+      targetType: "platform_settings",
+      targetId: "default",
+      ip: await getClientIp(),
+      metadata: { settings: "platform" },
+    });
+    revalidatePath("/admin/settings");
+    return { success: "บันทึกการตั้งค่าแพลตฟอร์มแล้ว" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
 /** Next page of the pending-payment review queue (admin "load more"). */
 export async function loadMorePendingPaymentsAction(
   cursor: string,

@@ -20,7 +20,7 @@ export default async function ShopLayout({
 }) {
   const { user, shopId, impersonating } = await requireShopAccess();
   const t = await getTranslations("shopPages");
-  const { status } = await getBillingState(shopId);
+  const { status, billingUiEnabled } = await getBillingState(shopId);
   const pathname = (await headers()).get("x-pathname") ?? "";
   // Impersonating admins have no shop-owner notifications of their own.
   const unread = impersonating
@@ -29,7 +29,14 @@ export default async function ShopLayout({
   const shop = impersonating ? await container.shopRepository.findById(shopId) : null;
 
   // Suspended: block everything except the billing page (so they can pay).
-  if (status.isSuspended && !pathname.startsWith("/shop/billing")) {
+  // When the billing UI is switched off platform-wide, we never dune or block —
+  // the use case already keeps isSuspended false for overdue shops, but a
+  // defensive gate still avoids trapping anyone in a hidden flow.
+  if (
+    status.isSuspended &&
+    billingUiEnabled &&
+    !pathname.startsWith("/shop/billing")
+  ) {
     redirect("/shop/billing");
   }
 
@@ -43,14 +50,18 @@ export default async function ShopLayout({
         userEmail={user.email}
         notifications={{ href: "/shop/notifications", unread }}
       />
-      <SuspensionBanner status={status} />
-      <PreExpiryBanner status={status} />
+      {billingUiEnabled && (
+        <>
+          <SuspensionBanner status={status} />
+          <PreExpiryBanner status={status} />
+        </>
+      )}
       <PausedBanner status={status} resumable />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
         {children}
         <AppVersion />
       </main>
-      <AppTabBar nav="shop" />
+      <AppTabBar nav="shop" hideBillingNav={!billingUiEnabled} />
     </div>
   );
 }

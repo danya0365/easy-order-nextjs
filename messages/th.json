@@ -379,7 +379,16 @@
     "noReviews": "ยังไม่มีรีวิว",
     "detailsHoursContactTitle": "เวลาทำการ & ติดต่อ",
     "detailsAddressTitle": "ที่อยู่ร้าน",
-    "detailsNavigate": "นำทางด้วย Google Maps"
+    "detailsNavigate": "นำทางด้วย Google Maps",
+    "setOnlineOrderingLabel": "เปิดรับสั่งออนไลน์ (จากหน้าร้านบนเว็บ)",
+    "setPickupLabel": "อนุญาตให้ลูกค้ามารับเอง",
+    "setDeliveryLabel": "อนุญาตให้ลูกค้าให้ร้านส่งถึงบ้าน",
+    "setDeliveryFeeLabel": "ค่าจัดส่ง (บาท)",
+    "setDeliveryFeeHint": "หักเพิ่มจากยอดรวมของออเดอร์ที่เลือกส่งถึงบ้าน",
+    "setDeliveryNotesLabel": "หมายเหตุการจัดส่ง",
+    "setDeliveryNotesPlaceholder": "เช่น พื้นที่ให้บริการ, เวลาส่ง (ไม่บังคับ)",
+    "setMinOrderLabel": "ยอดขั้นต่ำของออเดอร์ (บาท)",
+    "setMinOrderHint": "เว้นว่าง = ไม่กำหนดยอดขั้นต่ำ"
   },
   "admin": {
     "auditLoginSucceeded": "เข้าสู่ระบบสำเร็จ",
@@ -468,7 +477,16 @@
     "schCopyAll": "คัดลอกทั้งหมด",
     "schGenerating": "กำลังสร้าง…",
     "schDownloadPng": "ดาวน์โหลด PNG",
-    "schPrint": "พิมพ์"
+    "schPrint": "พิมพ์",
+    "settingsBillingUiLabel": "แสดง UI ค่าบริการรายเดือน",
+    "settingsBillingUiHint": "ปิด = ซ่อนหน้า/แบนเนอร์ค่าบริการทั้งหมดจากร้าน (white-label)",
+    "settingsThresholdLabel": "คิดเงินเมื่อออเดอร์ถึงเกณฑ์",
+    "settingsThresholdHint": "ร้านที่ยังสั่งเกินจำนวนนี้มากกว่านี้จะถูกเรียกเก็บตามปกติ",
+    "settingsThresholdCountLabel": "จำนวนออเดอร์ขั้นต่ำ (ออเดอร์)",
+    "settingsSuspensionLabel": "ระบบระงับร้าน",
+    "settingsSuspensionHint": "ปิด = เตือนอย่างเดียว ร้านยังใช้ได้ · เปิด = ระงับเมื่อค้างชำระเกินกำหนด",
+    "settingsSaving": "กำลังบันทึก…",
+    "settingsSave": "บันทึก"
   },
   "layout": {
     "navDashboard": "แดชบอร์ด",
@@ -501,7 +519,8 @@
     "navAbout": "เกี่ยวกับ",
     "logout": "ออกจากระบบ",
     "notificationsAria": "การแจ้งเตือน",
-    "notificationsAriaUnread": "การแจ้งเตือน ({count} ใหม่)"
+    "notificationsAriaUnread": "การแจ้งเตือน ({count} ใหม่)",
+    "navPlatformSettings": "ตั้งค่าแพลตฟอร์ม"
   },
   "map": {
     "noPinnedShops": "ยังไม่มีร้านค้าที่ปักหมุดตำแหน่ง",
@@ -553,9 +572,7 @@
     "quickSettings": "ตั้งค่าร้าน",
     "openSecurity": "ไปที่ความปลอดภัย",
     "myShopButton": "หน้าร้านของฉัน (แตะรูปเพื่อแก้)",
-    "statBranches": "สาขา",
     "statStaff": "พนักงาน",
-    "statCustomers": "ลูกค้า",
     "needHelpTitle": "ต้องการความช่วยเหลือ?",
     "needHelpSubtitle": "มีปัญหาการใช้งานหรือการชำระเงิน ติดต่อผู้ดูแลได้เลย",
     "howToUse": "วิธีใช้งาน",
@@ -567,16 +584,14 @@
     "noCustomers": "ยังไม่มีลูกค้า",
     "latestFirst": "รายการล่าสุดก่อน",
     "notificationsTitle": "การแจ้งเตือน",
-    "tabDetails": "รายละเอียดร้าน",
-    "tabImages": "ภาพร้าน",
+    "tabDetails": "รายละเอียด",
+    "tabImages": "รูปภาพ",
     "tabSecurity": "บัญชี & ความปลอดภัย",
     "openShopLink": "เปิดหน้าร้าน /s/{slug} ↗",
     "openQrPoster": "เปิดป้าย QR ร้าน (พิมพ์ติดหน้าร้าน)",
     "pauseShopTitle": "ปิดร้านชั่วคราว",
     "pauseShopSubtitle": "หยุดให้บริการชั่วคราวโดยไม่เสียวันใช้งานที่เหลือ",
     "tabShop": "ร้าน",
-    "tabDetails": "รายละเอียด",
-    "tabImages": "รูปภาพ",
     "tabKiosk": "หน้าร้าน",
     "shopGeneralTitle": "ตั้งค่าทั่วไป",
     "shopGeneralSubtitle": "ชื่อร้าน หมวดหมู่ และ PromptPay",
@@ -659,7 +674,9 @@
     "qrTitle": "ป้าย QR ร้าน",
     "addBranchTitle": "เพิ่มสาขา",
     "allBranchesTitle": "สาขาทั้งหมด ({count})",
-    "noBranches": "ยังไม่มีสาขา"
+    "noBranches": "ยังไม่มีสาขา",
+    "billingHiddenTitle": "เรียบร้อย — ไม่มีการเรียกเก็บค่าบริการในช่วงนี้",
+    "billingHiddenSubtitle": "ผู้ดูแลระบบปิดการแสดงหน้าค่าบริการชั่วคราว"
   },
   "adminPages": {
     "overviewTitle": "ภาพรวมระบบ",
@@ -735,7 +752,10 @@
     "leadConvertTitle": "แปลงเป็นร้านจริง",
     "leadsNewTitle": "เพิ่มลีดจากแผนที่",
     "leadsNewPickTitle": "เลือกร้านบนแผนที่",
-    "leadsNewPickSubtitle": "ค้นหาย่าน เลื่อนแผนที่ แล้วแตะหมุดร้าน — ระบบจะดึงชื่อ/หมวดหมู่/เบอร์/ที่อยู่มาให้ เหลือแค่ตรวจและบันทึก"
+    "leadsNewPickSubtitle": "ค้นหาย่าน เลื่อนแผนที่ แล้วแตะหมุดร้าน — ระบบจะดึงชื่อ/หมวดหมู่/เบอร์/ที่อยู่มาให้ เหลือแค่ตรวจและบันทึก",
+    "settingsTitle": "ตั้งค่าแพลตฟอร์ม",
+    "settingsSubtitle": "สวิตช์การคิดเงินและการระงับร้าน (ระดับทั้งระบบ)",
+    "billingUiOffNote": "UI ค่าบริการถูกปิดอยู่ (ร้านไม่เห็นหน้าค่าบริการ) — คำสั่งชำระเงินยังเข้ามาตามปกติ"
   },
   "staffPages": {
     "roleStaff": "พนักงาน",
@@ -882,7 +902,13 @@
     "reopenRest": "ครั้งหน้าแค่สแกน QR ที่ร้านอีกครั้ง — ไม่ต้องติดตั้งอะไร",
     "addToHomeOptional": "หรือเพิ่มลงหน้าจอหลัก (ไม่บังคับ)",
     "bindInvalidTitle": "QR ผูกบัตรหมดอายุหรือถูกใช้แล้ว",
-    "bindInvalidDesc": "แจ้งพนักงานที่ร้านให้ออก QR ผูกบัตรใหม่ แล้วสแกนด้วยกล้องมือถือของคุณ"
+    "bindInvalidDesc": "แจ้งพนักงานที่ร้านให้ออก QR ผูกบัตรใหม่ แล้วสแกนด้วยกล้องมือถือของคุณ",
+    "onlineOrderMetaTitle": "สั่งออนไลน์ · {name}",
+    "onlineOrderOffTitle": "ร้านยังไม่เปิดรับออเดอร์ออนไลน์",
+    "onlineOrderOffDesc": "โปรดติดต่อร้านโดยตรง หรือกลับไปที่หน้าร้านเพื่อดูข้อมูล",
+    "onlineOrderBackToShop": "กลับหน้าร้าน",
+    "onlineOrderClosedTitle": "ร้านปิดรับออเดอร์ชั่วคราว",
+    "onlineOrderClosedDesc": "ร้านยังไม่เปิดให้สั่งออเดอร์ในขณะนี้ โปรดลองใหม่ภายหลัง"
   },
   "menu": {
     "addCategoryTitle": "เพิ่มหมวดเมนู",
@@ -988,7 +1014,23 @@
     "historyTitle": "ประวัติออเดอร์",
     "historyEmpty": "ยังไม่มีประวัติออเดอร์",
     "actionError": "ดำเนินการไม่สำเร็จ ลองอีกครั้ง",
-    "orderNo": "#{no}"
+    "orderNo": "#{no}",
+    "channelKiosk": "kiosk",
+    "channelCounter": "เคาน์เตอร์",
+    "channelOnline": "ออนไลน์",
+    "fulfillPickup": "รับเอง",
+    "fulfillDelivery": "ส่งถึงบ้าน",
+    "fulfillDineIn": "ทานที่ร้าน",
+    "deliveryAddressLabel": "ที่อยู่จัดส่ง",
+    "onlineOrderCta": "สั่งออนไลน์",
+    "onlineContactTitle": "ชื่อและเบอร์โทรศัพท์",
+    "onlineNamePlaceholder": "ชื่อผู้สั่ง",
+    "onlinePhonePlaceholder": "เบอร์โทรศัพท์",
+    "onlineAddressPlaceholder": "ที่อยู่สำหรับจัดส่ง",
+    "onlineCashNote": "โปรดเตรียมเงินสดจ่ายเมื่อรับออเดอร์",
+    "minOrderHint": "ยอดขั้นต่ำ {amount} บาท",
+    "resultHistoryLink": "ดูประวัติการสั่งของฉัน",
+    "resultBackToShop": "กลับหน้าร้าน"
   },
   "kiosk": {
     "kioskPinTitle": "PIN หน้าร้าน",

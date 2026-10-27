@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 import { RefreshCw } from "lucide-react";
 
 import type {
+  OrderChannel,
+  FulfillmentType,
   OrderStatus,
   OrderWithItems,
 } from "@/src/domain/entities";
@@ -37,6 +39,28 @@ const NEXT_LABEL_KEY: Record<string, "toPreparing" | "toReady" | "toCompleted"> 
   preparing: "toReady",
   ready: "toCompleted",
 };
+
+const CHANNEL_KEY: Record<OrderChannel, "channelKiosk" | "channelCounter" | "channelOnline"> = {
+  kiosk: "channelKiosk",
+  counter: "channelCounter",
+  online: "channelOnline",
+};
+
+const FULFILL_KEY: Record<FulfillmentType, "fulfillPickup" | "fulfillDelivery" | "fulfillDineIn"> = {
+  pickup: "fulfillPickup",
+  delivery: "fulfillDelivery",
+  dine_in: "fulfillDineIn",
+};
+
+function OrderBadges({ order }: { order: OrderWithItems }) {
+  const t = useTranslations("order");
+  return (
+    <span className="flex flex-wrap justify-end gap-1">
+      <Badge tone="neutral">{t(CHANNEL_KEY[order.channel])}</Badge>
+      <Badge tone="neutral">{t(FULFILL_KEY[order.fulfillmentType])}</Badge>
+    </span>
+  );
+}
 
 const AUTO_REFRESH_MS = 15_000;
 
@@ -163,6 +187,7 @@ function OrderCard({ order }: { order: OrderWithItems }) {
           <p className="text-xs text-muted">{formatTime(order.createdAt)}</p>
         </div>
         <span className="flex shrink-0 flex-col items-end gap-1">
+          <OrderBadges order={order} />
           <Badge tone={paid ? "success" : "neutral"}>
             {paid ? t("paid") : t("unpaid")} ·{" "}
             {order.paymentMethod === "promptpay_qr"
@@ -200,6 +225,12 @@ function OrderCard({ order }: { order: OrderWithItems }) {
           {[order.customerName, order.customerPhone]
             .filter(Boolean)
             .join(" · ")}
+        </p>
+      )}
+
+      {order.deliveryAddress && (
+        <p className="mt-2 rounded-lg bg-muted-surface px-3 py-2 text-sm text-foreground">
+          {t("deliveryAddressLabel")}: {order.deliveryAddress}
         </p>
       )}
 
@@ -277,13 +308,16 @@ function HistorySection({
                     <span className="truncate text-xs text-muted">
                       {o.performedByEmail
                         ? `${t("placedByLabel")}: ${o.performedByEmail}`
-                        : t("selfServeTag")}
+                        : o.channel === "online"
+                          ? t("channelOnline")
+                          : t("selfServeTag")}
                     </span>
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="text-muted">
                       {satangToBaht(o.totalSatang)}
                     </span>
+                    <OrderBadges order={o} />
                     <Badge tone={o.status === "completed" ? "success" : "neutral"}>
                       {t(`status${cap(o.status)}` as StatusKey)}
                     </Badge>

@@ -68,6 +68,12 @@ export default async function ShopSettingsPage() {
               categoryId={shop.categoryId}
               categories={categories.map((c) => ({ id: c.id, name: c.name }))}
               promptpayTarget={shop.promptpayTarget ?? ""}
+              onlineOrderingEnabled={shop.onlineOrderingEnabled}
+              pickupEnabled={shop.pickupEnabled}
+              deliveryEnabled={shop.deliveryEnabled}
+              deliveryFeeSatang={shop.deliveryFeeSatang}
+              deliveryNotes={shop.deliveryNotes}
+              minOrderSatang={shop.minOrderSatang}
             />
             <p className="mt-3 text-xs text-muted">{t("kioskPromptpayHint")}</p>
           </Card>

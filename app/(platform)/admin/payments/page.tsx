@@ -25,6 +25,11 @@ export default async function AdminPaymentsPage() {
   return (
     <Card>
       <CardHeader title={t("paymentsQueueTitle")} />
+      {!(await container.platformSettingsRepository.get()).billingUiEnabled && (
+        <p className="mb-3 rounded-lg bg-warning-surface px-3 py-2 text-xs text-warning">
+          {t("billingUiOffNote")}
+        </p>
+      )}
       {isPromoActive() && (
         <p className="mb-3 rounded-lg bg-accent-100 px-3 py-2 text-xs text-accent-600">
           {t("promoNote", {

@@ -36,6 +36,7 @@ export const AUDIT_ACTIONS = {
   orderCancelled: "order_cancelled",
   customerErased: "customer_erased",
   shopSelfServiceSet: "shop_self_service_set",
+  platformSettingsUpdated: "platform_settings_updated",
 } as const;
 
 /**

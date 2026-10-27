@@ -16,8 +16,11 @@ export default async function StaffLayout({
 }) {
   const user = await requireRole("branch_staff");
   const t = await getTranslations("staffPages");
-  const { status } = await getBillingState(user.shopId!);
+  const { status, billingUiEnabled } = await getBillingState(user.shopId!);
   const unread = await container.notificationRepository.countUnread(user.id);
+
+  const blocked =
+    status.isPaused || (status.isSuspended && billingUiEnabled);
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -26,15 +29,19 @@ export default async function StaffLayout({
         userEmail={user.email}
         notifications={{ href: "/staff/notifications", unread }}
       />
-      <SuspensionBanner status={status} />
-      <PreExpiryBanner status={status} />
+      {billingUiEnabled && (
+        <>
+          <SuspensionBanner status={status} />
+          <PreExpiryBanner status={status} />
+        </>
+      )}
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
         {status.isPaused ? (
           <div className="rounded-2xl bg-amber-50 p-6 text-center">
             <p className="text-lg font-semibold text-amber-800">{t("shopPausedTitle")}</p>
             <p className="mt-1 text-sm text-muted">{t("shopPausedBody")}</p>
           </div>
-        ) : status.isSuspended ? (
+        ) : blocked ? (
           <div className="rounded-2xl bg-error-surface p-6 text-center">
             <p className="text-lg font-semibold text-error">{t("shopSuspendedTitle")}</p>
             <p className="mt-1 text-sm text-muted">{t("shopSuspendedBody")}</p>
