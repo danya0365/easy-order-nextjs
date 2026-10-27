@@ -292,6 +292,8 @@ export interface MenuItem {
   priceSatang: number;
   imageUrl: string | null;
   isAvailable: boolean;
+  /** Owner-marked for the public recommended section. */
+  isRecommended: boolean;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;

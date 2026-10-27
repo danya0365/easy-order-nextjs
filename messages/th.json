@@ -920,7 +920,8 @@
     "onlineOrderClosedTitle": "ร้านปิดรับออเดอร์ชั่วคราว",
     "onlineOrderClosedDesc": "ร้านยังไม่เปิดให้สั่งออเดอร์ในขณะนี้ โปรดลองใหม่ภายหลัง",
     "onlineOrderNeedQrTitle": "ต้องสแกน QR ที่ร้าน",
-    "onlineOrderNeedQrDesc": "เพื่อสั่งออนไลน์ กรุณาสแกนคิวอาร์ของร้านนี้ที่หน้าร้านเท่านั้น"
+    "onlineOrderNeedQrDesc": "เพื่อสั่งออนไลน์ กรุณาสแกนคิวอาร์ของร้านนี้ที่หน้าร้านเท่านั้น",
+    "recommendedMenuTitle": "เมนูแนะนำ"
   },
   "menu": {
     "addCategoryTitle": "เพิ่มหมวดเมนู",
@@ -966,7 +967,9 @@
     "changeImage": "เปลี่ยนรูป",
     "removeImage": "ลบรูป",
     "removingImage": "กำลังลบ…",
-    "baht": "฿{amount}"
+    "baht": "฿{amount}",
+    "recommended": "แนะนำ",
+    "notRecommended": "ไม่แนะนำ"
   },
   "order": {
     "queueTitle": "คิวออเดอร์",

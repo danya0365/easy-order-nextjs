@@ -29,6 +29,7 @@ function makeItem(over: Partial<MenuItem> = {}): MenuItem {
     priceSatang: 5000,
     imageUrl: null,
     isAvailable: true,
+    isRecommended: false,
     sortOrder: 0,
     createdAt: "2026-06-27T00:00:00.000Z",
     updatedAt: "2026-06-27T00:00:00.000Z",

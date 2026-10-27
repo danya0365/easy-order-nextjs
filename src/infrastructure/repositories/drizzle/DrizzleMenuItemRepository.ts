@@ -21,6 +21,7 @@ function toItem(r: Row): MenuItem {
     priceSatang: r.priceSatang,
     imageUrl: r.imageUrl,
     isAvailable: r.isAvailable,
+    isRecommended: r.isRecommended,
     sortOrder: r.sortOrder,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
@@ -93,6 +94,9 @@ export class DrizzleMenuItemRepository implements IMenuItemRepository {
         ...(input.imageUrl !== undefined ? { imageUrl: input.imageUrl } : {}),
         ...(input.isAvailable !== undefined
           ? { isAvailable: input.isAvailable }
+          : {}),
+        ...(input.isRecommended !== undefined
+          ? { isRecommended: input.isRecommended }
           : {}),
         ...(input.sortOrder !== undefined
           ? { sortOrder: input.sortOrder }

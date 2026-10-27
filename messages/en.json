@@ -40,7 +40,8 @@
     "onlineOrderClosedTitle": "Shop is temporarily closed",
     "onlineOrderClosedDesc": "Orders are not being accepted right now — please try later",
     "onlineOrderNeedQrTitle": "Scan this shop's QR first",
-    "onlineOrderNeedQrDesc": "To order online, please scan this shop's QR code in store only"
+    "onlineOrderNeedQrDesc": "To order online, please scan this shop's QR code in store only",
+    "recommendedMenuTitle": "Recommended menu"
   },
   "shop": {
     "setOnlineOrderingLabel": "Accept online orders (from the web shop page)",
@@ -231,5 +232,9 @@
     "redeemAtCounter": "Ask staff at the counter to redeem",
     "settingsTitle": "Customer loyalty",
     "settingsSubtitle": "Stamp card and/or spend points"
+  },
+  "menu": {
+    "recommended": "Recommended",
+    "notRecommended": "Not recommended"
   }
 }

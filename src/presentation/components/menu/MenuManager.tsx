@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Star, Trash2 } from "lucide-react";
 
 import type { MenuCategory, MenuItem } from "@/src/domain/entities";
 import {
@@ -14,6 +14,7 @@ import {
   createItemAction,
   updateItemAction,
   toggleItemAvailableAction,
+  toggleItemRecommendedAction,
   deleteItemAction,
   removeItemImageAction,
   type FormState,
@@ -261,6 +262,17 @@ function ItemRow({ item }: { item: MenuItem }) {
     });
   }
 
+  function toggleRecommend() {
+    start(async () => {
+      const res = await toggleItemRecommendedAction(
+        item.id,
+        !item.isRecommended,
+      );
+      if (res.error) toast.error(res.error);
+      else router.refresh();
+    });
+  }
+
   function remove() {
     start(async () => {
       const ok = await confirm({
@@ -299,6 +311,24 @@ function ItemRow({ item }: { item: MenuItem }) {
         </div>
       </div>
       <span className="flex shrink-0 items-center gap-1">
+        <button
+          type="button"
+          onClick={toggleRecommend}
+          disabled={pending}
+          aria-label={item.isRecommended ? t("recommended") : t("notRecommended")}
+          aria-pressed={item.isRecommended}
+          title={item.isRecommended ? t("recommended") : t("notRecommended")}
+          className={
+            item.isRecommended
+              ? "inline-flex size-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600 ring-1 ring-brand-100 transition hover:bg-brand-100 disabled:opacity-50"
+              : "inline-flex size-8 items-center justify-center rounded-lg text-muted transition hover:bg-muted-surface hover:text-foreground disabled:opacity-50"
+          }
+        >
+          <Star
+            className="size-4"
+            fill={item.isRecommended ? "currentColor" : "none"}
+          />
+        </button>
         <Button
           variant={item.isAvailable ? "ghost" : "outline"}
           size="sm"
