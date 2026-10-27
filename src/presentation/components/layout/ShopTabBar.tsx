@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { History, ShoppingBag, Store, type LucideIcon } from "lucide-react";
+import { Gift, History, ShoppingBag, Store, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { cn } from "@/src/presentation/components/ui/cn";
 
 interface Tab {
   href: string;
-  label: "navShopHome" | "navShopOrder" | "navShopOrders";
+  label: "navShopHome" | "navShopOrder" | "navShopOrders" | "navLoyalty";
   icon: LucideIcon;
   active: (pathname: string) => boolean;
 }
@@ -17,8 +17,15 @@ interface Tab {
 /**
  * Bottom navigation for a single shop's customer PWA (`/s/[slug]/*`).
  * Scoped to one slug — no platform discovery tabs (map / shops / tutorial / about).
+ * Loyalty tab appears only when the shop has the loyalty module effective.
  */
-export function ShopTabBar({ slug }: { slug: string }) {
+export function ShopTabBar({
+  slug,
+  showLoyalty = false,
+}: {
+  slug: string;
+  showLoyalty?: boolean;
+}) {
   const t = useTranslations("layout");
   const pathname = usePathname();
   const base = `/s/${slug}`;
@@ -45,6 +52,15 @@ export function ShopTabBar({ slug }: { slug: string }) {
       active: (p) => p === `${base}/orders` || p.startsWith(`${base}/orders/`),
     },
   ];
+
+  if (showLoyalty) {
+    tabs.push({
+      href: `${base}/loyalty`,
+      label: "navLoyalty",
+      icon: Gift,
+      active: (p) => p === `${base}/loyalty` || p.startsWith(`${base}/loyalty/`),
+    });
+  }
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur print:hidden">

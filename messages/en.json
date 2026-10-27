@@ -230,6 +230,8 @@
     "pointsUnit": "pts",
     "redeemAtCounter": "Ask staff at the counter to redeem",
     "settingsTitle": "Customer loyalty",
-    "settingsSubtitle": "Stamp card and/or spend points"
+    "settingsSubtitle": "Stamp card and/or spend points",
+    "orderCta": "Order to earn",
+    "bindCtaButton": "How to bind this device"
   }
 }

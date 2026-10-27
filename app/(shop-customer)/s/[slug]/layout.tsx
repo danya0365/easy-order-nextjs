@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { container } from "@/src/infrastructure/di/container";
+import { isLoyaltyEffective } from "@/src/domain/services/loyalty-gates";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 import { ShopShellHeader } from "@/src/presentation/components/layout/ShopShellHeader";
 import { ShopTabBar } from "@/src/presentation/components/layout/ShopTabBar";
@@ -33,7 +34,7 @@ export default async function ShopCustomerLayout({
       />
       <div className="flex-1">{children}</div>
       <AppVersion />
-      <ShopTabBar slug={slug} />
+      <ShopTabBar slug={slug} showLoyalty={isLoyaltyEffective(shop)} />
     </div>
   );
 }
