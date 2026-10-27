@@ -93,12 +93,14 @@ export async function placeOrderAction(
       container.orderRepository,
       container.menuItemRepository,
       container.customerRepository,
+      container.shopRepository,
     ).execute({
       shopId,
       paymentMethod: input.paymentMethod,
       note: input.note ?? null,
       customerName: input.customerName ?? null,
       customerPhone: input.customerPhone ?? null,
+      channel: "kiosk",
       cart: input.cart,
     });
 
@@ -242,6 +244,7 @@ export async function placeOrderForCustomerAction(
       container.orderRepository,
       container.menuItemRepository,
       container.customerRepository,
+      container.shopRepository,
     ).execute({
       shopId,
       paymentMethod: input.paymentMethod,
@@ -249,6 +252,7 @@ export async function placeOrderForCustomerAction(
       customerName: input.customerName ?? null,
       customerPhone: input.customerPhone ?? null,
       performedBy: actor.id,
+      channel: "counter",
       cart: input.cart,
     });
 

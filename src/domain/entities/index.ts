@@ -193,6 +193,16 @@ export interface Shop {
   hasKioskPin: boolean;
   /** Self-service mode: customers self-pay + tap "ชำระเงินแล้ว" → order auto paid+completed. */
   selfService: boolean;
+  /** Online ordering channel (customers order from the web outside the kiosk). */
+  onlineOrderingEnabled: boolean;
+  pickupEnabled: boolean;
+  deliveryEnabled: boolean;
+  /** Delivery charge in satang added to online delivery orders. */
+  deliveryFeeSatang: number;
+  /** Free-form delivery instructions shown on the online order form. */
+  deliveryNotes: string | null;
+  /** Minimum subtotal (satang) for an online order; null = no minimum. */
+  minOrderSatang: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -249,6 +259,10 @@ export type OrderStatus =
   | "cancelled";
 export type OrderPaymentMethod = "promptpay_qr" | "cash";
 export type OrderPaymentStatus = "unpaid" | "paid";
+/** Where the order originated: kiosk self-serve, counter staff, or online web. */
+export type OrderChannel = "kiosk" | "counter" | "online";
+/** How the order reaches the customer. */
+export type FulfillmentType = "pickup" | "delivery" | "dine_in";
 
 export interface MenuCategory {
   id: string;
@@ -298,6 +312,11 @@ export interface Order {
   paymentStatus: OrderPaymentStatus;
   subtotalSatang: number;
   totalSatang: number;
+  /** Origin of the order (kiosk/counter/online). */
+  channel: OrderChannel;
+  fulfillmentType: FulfillmentType;
+  /** Drop-off address for delivery orders; null otherwise. */
+  deliveryAddress: string | null;
   note: string | null;
   /** Optional customer who placed the order (null for anonymous walk-ins). */
   customerId: string | null;
@@ -339,6 +358,17 @@ export interface Customer {
 }
 
 // --- Billing ---
+
+/** Platform-wide singleton settings (soft-launch billing switches). */
+export interface PlatformSettings {
+  id: string;
+  billingUiEnabled: boolean;
+  orderThresholdBillingEnabled: boolean;
+  orderThresholdCount: number;
+  /** Off = overdue shops keep working (warn-only); admin suspension still applies. */
+  shopSuspensionEnabled: boolean;
+  updatedAt: string;
+}
 
 export interface Subscription {
   id: string;

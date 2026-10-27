@@ -1,6 +1,8 @@
 import type {
   OrderStatus,
   OrderPaymentMethod,
+  OrderChannel,
+  FulfillmentType,
   OrderWithItems,
 } from "@/src/domain/entities";
 import type { Page, PageOpts } from "./pagination";
@@ -22,6 +24,14 @@ export interface CreateOrderInput {
   customerPhone?: string | null;
   /** Operator who placed it from the counter UI; null for kiosk self-serve. */
   performedBy?: string | null;
+  /** Origin of the order (defaults to kiosk). */
+  channel?: OrderChannel;
+  /** How it reaches the customer (defaults to pickup). */
+  fulfillmentType?: FulfillmentType;
+  /** Drop-off address for delivery orders; null otherwise. */
+  deliveryAddress?: string | null;
+  /** Delivery charge (satang) the repo adds to the total. */
+  deliveryFeeSatang?: number;
   items: CreateOrderItemInput[];
 }
 
@@ -53,4 +63,6 @@ export interface IOrderRepository {
   ): Promise<OrderWithItems>;
   /** Mark the order paid (stamps paidAt). */
   markPaid(shopId: string, id: string): Promise<OrderWithItems>;
+  /** Total orders ever placed at the shop (all statuses) — for billing thresholds. */
+  countByShop(shopId: string): Promise<number>;
 }

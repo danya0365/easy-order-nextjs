@@ -15,6 +15,13 @@ export interface UpdateShopSettingsInput {
   promptpayTarget?: string | null;
   /** Bcrypt hash of the kiosk PIN; pass null to clear it. */
   kioskPinHash?: string | null;
+  /** Online-order settings (toggles + delivery charge/notes/minimum). */
+  onlineOrderingEnabled?: boolean;
+  pickupEnabled?: boolean;
+  deliveryEnabled?: boolean;
+  deliveryFeeSatang?: number;
+  deliveryNotes?: string | null;
+  minOrderSatang?: number | null;
 }
 
 export interface IShopRepository {

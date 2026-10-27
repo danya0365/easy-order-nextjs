@@ -23,6 +23,12 @@ function toShop(r: Row): Shop {
     promptpayTarget: r.promptpayTarget,
     hasKioskPin: r.kioskPinHash != null,
     selfService: r.selfService,
+    onlineOrderingEnabled: r.onlineOrderingEnabled,
+    pickupEnabled: r.pickupEnabled,
+    deliveryEnabled: r.deliveryEnabled,
+    deliveryFeeSatang: r.deliveryFeeSatang,
+    deliveryNotes: r.deliveryNotes,
+    minOrderSatang: r.minOrderSatang,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
@@ -79,6 +85,24 @@ export class DrizzleShopRepository implements IShopRepository {
           : {}),
         ...(input.kioskPinHash !== undefined
           ? { kioskPinHash: input.kioskPinHash }
+          : {}),
+        ...(input.onlineOrderingEnabled !== undefined
+          ? { onlineOrderingEnabled: input.onlineOrderingEnabled }
+          : {}),
+        ...(input.pickupEnabled !== undefined
+          ? { pickupEnabled: input.pickupEnabled }
+          : {}),
+        ...(input.deliveryEnabled !== undefined
+          ? { deliveryEnabled: input.deliveryEnabled }
+          : {}),
+        ...(input.deliveryFeeSatang !== undefined
+          ? { deliveryFeeSatang: input.deliveryFeeSatang }
+          : {}),
+        ...(input.deliveryNotes !== undefined
+          ? { deliveryNotes: input.deliveryNotes }
+          : {}),
+        ...(input.minOrderSatang !== undefined
+          ? { minOrderSatang: input.minOrderSatang }
           : {}),
       })
       .where(eq(schema.shops.id, id))
