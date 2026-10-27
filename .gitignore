@@ -52,3 +52,6 @@ local.db*
 /test-results
 /playwright-report
 /playwright/.cache
+/dist/
+.vinext/
+.cloudflare/
