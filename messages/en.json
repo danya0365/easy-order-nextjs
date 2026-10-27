@@ -38,7 +38,9 @@
     "onlineOrderOffDesc": "Please contact the shop directly, or return to the shop page",
     "onlineOrderBackToShop": "Back to shop",
     "onlineOrderClosedTitle": "Shop is temporarily closed",
-    "onlineOrderClosedDesc": "Orders are not being accepted right now — please try later"
+    "onlineOrderClosedDesc": "Orders are not being accepted right now — please try later",
+    "onlineOrderNeedQrTitle": "Scan this shop's QR first",
+    "onlineOrderNeedQrDesc": "To order online, please scan this shop's QR code in store only"
   },
   "shop": {
     "setOnlineOrderingLabel": "Accept online orders (from the web shop page)",
@@ -53,7 +55,12 @@
   },
   "shopPages": {
     "billingHiddenTitle": "As configured — billing is currently hidden",
-    "billingHiddenSubtitle": "The platform administrator has disabled the billing UI"
+    "billingHiddenSubtitle": "The platform administrator has disabled the billing UI",
+    "orderAccessQrTitle": "Online ordering QR",
+    "orderAccessQrSubtitle": "Customers scan this to order online from their phone",
+    "orderAccessQrDesc": "Customers scan this to order online from their phone",
+    "orderAccessQrPrint": "Print QR",
+    "orderAccessQrAlt": "Shop's online ordering QR"
   },
   "admin": {
     "settingsBillingUiLabel": "Show monthly billing UI",

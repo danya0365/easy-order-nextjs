@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
 import { getMemberToken } from "@/src/infrastructure/auth/member";
+import { getOrderAccess } from "@/src/infrastructure/auth/order-access";
 import { getSession } from "@/src/infrastructure/auth/session";
 import { GetCustomerOrderHistoryUseCase } from "@/src/application/use-cases/member/GetCustomerOrderHistoryUseCase";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
@@ -118,9 +119,13 @@ export default async function CustomerShopPage({
   const isOwner =
     sessionUser?.role === "shop_owner" && sessionUser.shopId === shop.id;
 
+  // Shop QR gate: the "สั่งออนไลน์" CTA appears only after scanning the shop's
+  // order QR (the claim cookie enables direct ordering).
+  const hasOrderAccess = !!(await getOrderAccess(slug));
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-8">
-      {shop.onlineOrderingEnabled && (
+      {shop.onlineOrderingEnabled && hasOrderAccess && (
         <Link
           href={`/s/${slug}/order`}
           className="flex items-center justify-center gap-2 rounded-2xl bg-brand-500 px-4 py-3.5 text-base font-bold text-on-brand shadow-sm transition hover:bg-brand-600"

@@ -12,7 +12,11 @@ import { ShopProfileForm } from "@/src/presentation/components/shop/ShopProfileF
 import { ShopImagesManager } from "@/src/presentation/components/shop/ShopImagesManager";
 import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopControl";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
+import { OrderAccessQrCard } from "@/src/presentation/components/shop/OrderAccessQrCard";
 import { SettingsTabs } from "@/src/presentation/components/settings/SettingsTabs";
+import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
+import { getBaseUrl } from "@/src/presentation/lib/base-url";
+import { mintClaimToken } from "@/src/infrastructure/auth/order-access";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +55,16 @@ export default async function ShopSettingsPage() {
       )
     : 0;
 
+  // Shop QR gate: claim QR for the online-order page. Regenerated on every
+  // render so the token stays fresh; only the signed claim URL is embedded.
+  const orderAccessQr = await (async () => {
+    if (!shop.onlineOrderingEnabled) return null;
+    const token = mintClaimToken(shop.slug, shop.id);
+    if (!token) return null;
+    const url = `${await getBaseUrl()}/s/${shop.slug}/enter?t=${token}`;
+    return renderQrDataUrl(url);
+  })();
+
   const tabs = [
     {
       id: "shop",
@@ -77,6 +91,19 @@ export default async function ShopSettingsPage() {
             />
             <p className="mt-3 text-xs text-muted">{t("kioskPromptpayHint")}</p>
           </Card>
+
+          {orderAccessQr && (
+            <Card>
+              <CardHeader
+                title={t("orderAccessQrTitle")}
+                subtitle={t("orderAccessQrSubtitle")}
+              />
+              <OrderAccessQrCard
+                qrDataUrl={orderAccessQr}
+                shopName={shop.name}
+              />
+            </Card>
+          )}
 
           <Card>
             <CardHeader

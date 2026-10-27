@@ -9,6 +9,7 @@ import {
 } from "@/src/infrastructure/auth/session";
 import { requireKioskShop } from "@/src/infrastructure/auth/kiosk";
 import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
+import { requireOrderAccess } from "@/src/infrastructure/auth/order-access";
 import { PlaceOrderUseCase } from "@/src/application/use-cases/order/PlaceOrderUseCase";
 import { AdvanceOrderStatusUseCase } from "@/src/application/use-cases/order/AdvanceOrderStatusUseCase";
 import { ConfirmOrderPaymentUseCase } from "@/src/application/use-cases/order/ConfirmOrderPaymentUseCase";
@@ -197,6 +198,10 @@ export async function placeOnlineOrderAction(
     const shop = await container.shopRepository.findBySlug(input.slug);
     if (!shop) return { error: "ไม่พบร้านค้า" };
     await assertShopActive(shop.id);
+
+    // Shop QR gate (server-side, mirrors the page UI): no valid order-access
+    // cookie for THIS shop → reject, even if the UI was bypassed.
+    await requireOrderAccess(input.slug, shop.id);
 
     const ip = await getClientIp();
     const guard = await container.sensitiveActionGuard.check({

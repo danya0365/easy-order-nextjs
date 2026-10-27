@@ -562,6 +562,11 @@
     "kioskTitle": "โหมดหน้าร้าน (Kiosk)",
     "kioskSubtitle": "เปลี่ยนแท็บเล็ตเครื่องนี้ให้ลูกค้ากดสั่งเองที่เคาน์เตอร์",
     "kioskPromptpayHint": "QR ชำระเงินของลูกค้าใช้ PromptPay ที่ตั้งไว้ด้านบน",
+    "orderAccessQrTitle": "QR สั่งออนไลน์",
+    "orderAccessQrSubtitle": "ให้ลูกค้าสแกนเพื่อสั่งออนไลน์ผ่านมือถือได้",
+    "orderAccessQrDesc": "ลูกค้าสแกนแล้วสั่งออนไลน์ได้บนมือถือ",
+    "orderAccessQrPrint": "พิมพ์ QR",
+    "orderAccessQrAlt": "คิวอาร์สั่งออนไลน์ของร้าน",
     "dashRemaining": "วันใช้งานคงเหลือ: {remaining}",
     "statActiveOrders": "ออเดอร์ในคิว",
     "statMenuItems": "เมนู",
@@ -908,7 +913,9 @@
     "onlineOrderOffDesc": "โปรดติดต่อร้านโดยตรง หรือกลับไปที่หน้าร้านเพื่อดูข้อมูล",
     "onlineOrderBackToShop": "กลับหน้าร้าน",
     "onlineOrderClosedTitle": "ร้านปิดรับออเดอร์ชั่วคราว",
-    "onlineOrderClosedDesc": "ร้านยังไม่เปิดให้สั่งออเดอร์ในขณะนี้ โปรดลองใหม่ภายหลัง"
+    "onlineOrderClosedDesc": "ร้านยังไม่เปิดให้สั่งออเดอร์ในขณะนี้ โปรดลองใหม่ภายหลัง",
+    "onlineOrderNeedQrTitle": "ต้องสแกน QR ที่ร้าน",
+    "onlineOrderNeedQrDesc": "เพื่อสั่งออนไลน์ กรุณาสแกนคิวอาร์ของร้านนี้ที่หน้าร้านเท่านั้น"
   },
   "menu": {
     "addCategoryTitle": "เพิ่มหมวดเมนู",

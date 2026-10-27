@@ -7,13 +7,21 @@ import { container } from "@/src/infrastructure/di/container";
 // --- Mock the Next request-context modules the order actions import. ---------
 let sessionToken: string | null = null; // es_session (operator / POS)
 let kioskToken: string | null = null; // eo_kiosk (kiosk device)
+// Shop QR gate: cookies written by setOrderAccessCookie (test helper sets them).
+const accessCookies = new Map<string, string>();
 const cookieStore = {
   get: (name: string) => {
     if (name === "es_session" && sessionToken) return { value: sessionToken };
     if (name === "eo_kiosk" && kioskToken) return { value: kioskToken };
+    if (name.startsWith("eo_order_")) {
+      const v = accessCookies.get(name);
+      return v ? { value: v } : undefined;
+    }
     return undefined;
   },
-  set: () => {},
+  set: (name: string, value: string) => {
+    if (name.startsWith("eo_order_")) accessCookies.set(name, value);
+  },
   delete: () => {},
 };
 const headerStore = new Map<string, string>([["x-forwarded-for", "203.0.113.8"]]);
@@ -65,13 +73,24 @@ async function menuItem(shopId: string, priceSatang = 6000) {
   });
 }
 
+/** Simulate this device having scanned the shop's order QR (claim cookie). */
+async function grantOnlineAccess(slug: string, shopId: string): Promise<void> {
+  const { setOrderAccessCookie } = await import(
+    "@/src/infrastructure/auth/order-access"
+  );
+  await setOrderAccessCookie(slug, shopId);
+}
+
 before(async () => {
   await migrateTestDb();
+  // Shop QR gate signing secret (read at call time by the auth helper).
+  process.env.ORDER_ACCESS_SECRET = "test-order-access-secret";
   actions = await import("./order-actions");
 });
 beforeEach(() => {
   sessionToken = null;
   kioskToken = null;
+  accessCookies.clear();
   // Neutralize outbound fetch (LINE/email new-order notify) — fail-soft.
   global.fetch = (async () => new Response("", { status: 200 })) as typeof fetch;
 });
@@ -181,4 +200,59 @@ test("selfConfirmOrderAction: rejected when the shop is NOT in self-service mode
   const order = await container.orderRepository.findById(shop.id, placed.orderId!);
   assert.equal(order?.paymentStatus, "unpaid");
   assert.equal(order?.status, "pending");
+});
+
+test("placeOnlineOrderAction: no order-access cookie → rejected (QR gate)", async () => {
+  const { shop } = await seedShop("ord-act-online-a");
+  const item = await menuItem(shop.id);
+  accessCookies.clear(); // never scanned the QR
+
+  const res = await actions.placeOnlineOrderAction({
+    slug: shop.slug,
+    cart: [{ menuItemId: item.id, quantity: 1 }],
+    paymentMethod: "cash",
+    fulfillmentType: "pickup",
+  });
+  assert.ok(res.error, "must be rejected without the QR claim cookie");
+  assert.ok(res.error!.includes("ต้องสแกน QR"));
+  assert.equal((await container.orderRepository.listActiveByShop(shop.id)).length, 0);
+});
+
+test("placeOnlineOrderAction: valid order-access cookie for this shop → passes the gate", async () => {
+  const { shop } = await seedShop("ord-act-online-b");
+  await container.shopRepository.updateSettings(shop.id, {
+    onlineOrderingEnabled: true,
+    pickupEnabled: true,
+  });
+  const item = await menuItem(shop.id);
+  // The claim route would set this cookie after verifying the QR token.
+  await grantOnlineAccess(shop.slug, shop.id);
+
+  const res = await actions.placeOnlineOrderAction({
+    slug: shop.slug,
+    cart: [{ menuItemId: item.id, quantity: 1 }],
+    paymentMethod: "cash",
+    fulfillmentType: "pickup",
+    customerName: "ทดสอบ",
+    customerPhone: "0812345678",
+  });
+  assert.ok(res.ok, res.error);
+  assert.equal((await container.orderRepository.listActiveByShop(shop.id)).length, 1);
+});
+
+test("placeOnlineOrderAction: cookie minted for ANOTHER shop → rejected", async () => {
+  const a = await seedShop("ord-act-online-c");
+  const b = await seedShop("ord-act-online-d");
+  const itemA = await menuItem(a.shop.id);
+  // Device scanned shop B's QR, then tries to order from shop A.
+  await grantOnlineAccess(b.shop.slug, b.shop.id);
+
+  const res = await actions.placeOnlineOrderAction({
+    slug: a.shop.slug,
+    cart: [{ menuItemId: itemA.id, quantity: 1 }],
+    paymentMethod: "cash",
+    fulfillmentType: "pickup",
+  });
+  assert.ok(res.error, "cross-shop order-access cookie must be rejected");
+  assert.equal((await container.orderRepository.listActiveByShop(a.shop.id)).length, 0);
 });

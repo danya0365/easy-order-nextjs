@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ShoppingBag } from "lucide-react";
+import { QrCode, ShoppingBag } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
 import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
+import { getOrderAccess } from "@/src/infrastructure/auth/order-access";
 import { GetKioskMenuUseCase } from "@/src/application/use-cases/menu/GetKioskMenuUseCase";
 import { Card } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
@@ -84,6 +85,29 @@ export default async function OnlineOrderPage({
           icon={<ShoppingBag className="size-10 text-muted" />}
           title={t("onlineOrderOffTitle")}
           description={t("onlineOrderOffDesc")}
+        />
+        <Card>
+          <Link
+            href={`/s/${slug}`}
+            className="block rounded-xl bg-brand-500 px-4 py-3 text-center text-sm font-semibold text-on-brand transition hover:bg-brand-600"
+          >
+            {t("onlineOrderBackToShop")}
+          </Link>
+        </Card>
+      </main>
+    );
+  }
+
+  // Shop QR gate: ordering online requires having scanned THIS shop's order QR
+  // (server-side check — the action re-verifies the cookie independently).
+  const orderAccess = await getOrderAccess(slug);
+  if (!orderAccess || orderAccess.shopId !== shop.id) {
+    return (
+      <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 px-4 py-10">
+        <EmptyState
+          icon={<QrCode className="size-10 text-muted" />}
+          title={t("onlineOrderNeedQrTitle")}
+          description={t("onlineOrderNeedQrDesc")}
         />
         <Card>
           <Link
