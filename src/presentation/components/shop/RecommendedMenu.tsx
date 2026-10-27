@@ -24,7 +24,8 @@ export async function RecommendedMenu({
   const linkToOrder = onlineOrderingEnabled && hasOrderAccess;
 
   return (
-    <Card data-testid="recommended-menu" id="recommended-menu">
+    <div data-testid="recommended-menu" id="recommended-menu">
+    <Card>
       <CardHeader
         title={
           <span className="inline-flex items-center gap-2">
@@ -78,5 +79,6 @@ export async function RecommendedMenu({
         })}
       </ul>
     </Card>
+    </div>
   );
 }
