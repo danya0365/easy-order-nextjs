@@ -18,6 +18,12 @@ import {
 } from "@/src/presentation/components/shop/ShopImageEditor";
 import { ShopDetails } from "@/src/presentation/components/shop/ShopDetails";
 import { ShopReviewsSection } from "@/src/presentation/components/reviews/ShopReviewsSection";
+import { CustomerLoyaltyPanel } from "@/src/presentation/components/loyalty/CustomerLoyaltyPanel";
+import {
+  isSpendPointsOn,
+  isStampCardOn,
+} from "@/src/domain/services/loyalty-gates";
+import { GetCustomerStampCardUseCase } from "@/src/application/use-cases/loyalty/GetCustomerStampCardUseCase";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +106,39 @@ export default async function CustomerShopPage({
   // Shop QR gate: the "สั่งออนไลน์" CTA appears only after scanning the shop's
   // order QR (the claim cookie enables direct ordering).
   const hasOrderAccess = !!(await getOrderAccess(slug));
+
+  const showStamp = isStampCardOn(shop);
+  const showPoints = isSpendPointsOn(shop);
+  let stampView: Awaited<
+    ReturnType<GetCustomerStampCardUseCase["byCustomerId"]>
+  > = null;
+  let pointsBalance: Awaited<
+    ReturnType<typeof container.loyaltyPointsBalanceRepository.findByCustomer>
+  > = null;
+  let pointsRewards: Awaited<
+    ReturnType<typeof container.loyaltyPointsRewardRepository.listByShop>
+  > = [];
+  if ((showStamp || showPoints) && history) {
+    if (showStamp) {
+      stampView = await new GetCustomerStampCardUseCase(
+        container.shopRepository,
+        container.customerRepository,
+        container.loyaltyStampTypeRepository,
+        container.loyaltyStampCardRepository,
+        container.loyaltyStampBalanceRepository,
+      ).byCustomerId(shop.id, history.customer.id);
+    }
+    if (showPoints) {
+      pointsBalance = await container.loyaltyPointsBalanceRepository.findByCustomer(
+        shop.id,
+        history.customer.id,
+      );
+      pointsRewards = await container.loyaltyPointsRewardRepository.listByShop(
+        shop.id,
+        { activeOnly: true },
+      );
+    }
+  }
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-8">
@@ -185,6 +224,19 @@ export default async function CustomerShopPage({
             {t("viewOrders")}
           </Link>
         </Card>
+      )}
+
+
+      {(showStamp || showPoints) && (
+        <CustomerLoyaltyPanel
+          slug={slug}
+          bound={!!history}
+          stampView={stampView}
+          pointsBalance={pointsBalance}
+          pointsRewards={pointsRewards}
+          showStamp={showStamp}
+          showPoints={showPoints}
+        />
       )}
 
       <ShopDetails profile={profile} branch={primaryBranch} />

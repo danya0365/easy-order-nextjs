@@ -25,6 +25,7 @@ import {
   UserCog,
   Users,
   UtensilsCrossed,
+  Gift,
   type LucideIcon,
 } from "lucide-react";
 
@@ -45,6 +46,7 @@ type NavLabelKey =
   | "navBranches"
   | "navStaff"
   | "navKiosk"
+  | "navLoyalty"
   | "navSettings"
   | "navSecurity"
   | "navContactAdmin"
@@ -73,6 +75,7 @@ const NAVS = {
     { href: "/shop/new-order", label: "navNewOrder", icon: ShoppingCart },
     { href: "/shop/menu", label: "navMenu", icon: UtensilsCrossed },
     { href: "/shop/kiosk", label: "navKiosk", icon: MonitorSmartphone },
+    { href: "/shop/loyalty", label: "navLoyalty", icon: Gift },
     { href: "/shop", label: "navDashboard", icon: LayoutDashboard },
     { href: "/shop/notifications", label: "navNotifications", icon: Bell },
     // Overflow (periodic → setup → rare)
@@ -103,6 +106,7 @@ const NAVS = {
   ],
   staff: [
     { href: "/staff", label: "navNewOrder", icon: ShoppingCart },
+    { href: "/staff/loyalty", label: "navLoyalty", icon: Gift },
     { href: "/staff/notifications", label: "navNotifications", icon: Bell },
     { href: "/staff/settings", label: "navSettings", icon: Settings },
   ],

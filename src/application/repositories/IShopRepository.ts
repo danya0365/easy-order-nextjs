@@ -22,6 +22,9 @@ export interface UpdateShopSettingsInput {
   deliveryFeeSatang?: number;
   deliveryNotes?: string | null;
   minOrderSatang?: number | null;
+  loyaltyEnabled?: boolean;
+  stampCardEnabled?: boolean;
+  spendPointsEnabled?: boolean;
 }
 
 export interface IShopRepository {
@@ -33,6 +36,8 @@ export interface IShopRepository {
   setStatus(id: string, status: ShopStatus): Promise<Shop>;
   /** Toggle self-service mode (customers self-pay + self-complete on the kiosk). */
   setSelfService(id: string, on: boolean): Promise<Shop>;
+  /** Platform admin allow/deny the loyalty module for a shop. */
+  setLoyaltyAllowedByAdmin(id: string, on: boolean): Promise<Shop>;
   /** Returns the stored kiosk PIN hash (or null) — infra-only, for verification. */
   getKioskPinHash(id: string): Promise<string | null>;
 }

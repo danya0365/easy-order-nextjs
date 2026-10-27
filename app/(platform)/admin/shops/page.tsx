@@ -14,6 +14,7 @@ import { Badge } from "@/src/presentation/components/ui/Badge";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { CreateShopForm } from "@/src/presentation/components/admin/CreateShopForm";
 import { ShopStatusToggle } from "@/src/presentation/components/admin/ShopStatusToggle";
+import { LoyaltyAllowToggle } from "@/src/presentation/components/loyalty/LoyaltyAllowToggle";
 import { PauseShopToggle } from "@/src/presentation/components/admin/PauseShopToggle";
 import { ShopHandoffButton } from "@/src/presentation/components/admin/ShopHandoffButton";
 import { ConfirmSubmitButton } from "@/src/presentation/components/ui/ConfirmDialog";
@@ -93,6 +94,10 @@ export default async function AdminShopsPage() {
                         paused={status.isPaused}
                       />
                     )}
+                    <LoyaltyAllowToggle
+                      shopId={shop.id}
+                      allowed={shop.loyaltyAllowedByAdmin}
+                    />
                     <ShopStatusToggle
                       shopId={shop.id}
                       adminSuspended={adminSuspended}

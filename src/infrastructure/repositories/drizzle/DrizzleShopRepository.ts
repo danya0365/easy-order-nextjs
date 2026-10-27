@@ -29,6 +29,10 @@ function toShop(r: Row): Shop {
     deliveryFeeSatang: r.deliveryFeeSatang,
     deliveryNotes: r.deliveryNotes,
     minOrderSatang: r.minOrderSatang,
+    loyaltyAllowedByAdmin: r.loyaltyAllowedByAdmin,
+    loyaltyEnabled: r.loyaltyEnabled,
+    stampCardEnabled: r.stampCardEnabled,
+    spendPointsEnabled: r.spendPointsEnabled,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
@@ -104,6 +108,15 @@ export class DrizzleShopRepository implements IShopRepository {
         ...(input.minOrderSatang !== undefined
           ? { minOrderSatang: input.minOrderSatang }
           : {}),
+        ...(input.loyaltyEnabled !== undefined
+          ? { loyaltyEnabled: input.loyaltyEnabled }
+          : {}),
+        ...(input.stampCardEnabled !== undefined
+          ? { stampCardEnabled: input.stampCardEnabled }
+          : {}),
+        ...(input.spendPointsEnabled !== undefined
+          ? { spendPointsEnabled: input.spendPointsEnabled }
+          : {}),
       })
       .where(eq(schema.shops.id, id))
       .returning();
@@ -123,6 +136,15 @@ export class DrizzleShopRepository implements IShopRepository {
     const [r] = await db
       .update(schema.shops)
       .set({ selfService: on })
+      .where(eq(schema.shops.id, id))
+      .returning();
+    return toShop(r);
+  }
+
+  async setLoyaltyAllowedByAdmin(id: string, on: boolean): Promise<Shop> {
+    const [r] = await db
+      .update(schema.shops)
+      .set({ loyaltyAllowedByAdmin: on })
       .where(eq(schema.shops.id, id))
       .returning();
     return toShop(r);

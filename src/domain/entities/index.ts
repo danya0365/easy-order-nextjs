@@ -203,6 +203,14 @@ export interface Shop {
   deliveryNotes: string | null;
   /** Minimum subtotal (satang) for an online order; null = no minimum. */
   minOrderSatang: number | null;
+  /** Platform admin allow-list for the loyalty module. */
+  loyaltyAllowedByAdmin: boolean;
+  /** Shop toggle for loyalty. Effective = allowed && enabled. */
+  loyaltyEnabled: boolean;
+  /** Stamp-card kind toggle (requires effective module). */
+  stampCardEnabled: boolean;
+  /** Spend-points kind toggle (requires effective module). */
+  spendPointsEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -464,4 +472,136 @@ export interface ContactRequest {
 export interface KnownAccount {
   email: string;
   role: Role;
+}
+
+
+// --- Loyalty (stamp card + spend points) ---
+
+export interface LoyaltyStampType {
+  id: string;
+  shopId: string;
+  name: string;
+  threshold: number;
+  rewardText: string;
+  priceSatang: number | null;
+  isActive: boolean;
+  isDefault: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Identity anchor only — balances live per stamp type. */
+export interface LoyaltyStampCard {
+  id: string;
+  shopId: string;
+  customerId: string;
+  updatedAt: string;
+}
+
+export interface LoyaltyStampBalance {
+  id: string;
+  cardId: string;
+  stampTypeId: string;
+  currentStamps: number;
+  lifetimeStamps: number;
+  rewardsEarned: number;
+  updatedAt: string;
+}
+
+export type LoyaltyStampTxType = "earn" | "redeem_adjust";
+
+export interface LoyaltyStampTransaction {
+  id: string;
+  shopId: string;
+  branchId: string | null;
+  customerId: string;
+  cardId: string;
+  stampTypeId: string | null;
+  type: LoyaltyStampTxType;
+  quantity: number;
+  performedBy: string;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface LoyaltyStampRedemption {
+  id: string;
+  shopId: string;
+  branchId: string | null;
+  customerId: string;
+  cardId: string;
+  stampTypeId: string | null;
+  rewardTextSnapshot: string;
+  stampsSpent: number;
+  performedBy: string;
+  createdAt: string;
+}
+
+export interface StampTypeProgress {
+  type: LoyaltyStampType;
+  currentStamps: number;
+  lifetimeStamps: number;
+  rewardsEarned: number;
+  eligibleToRedeem: boolean;
+  remaining: number;
+}
+
+export interface CustomerStampCardView {
+  customer: Customer;
+  types: StampTypeProgress[];
+}
+
+export interface LoyaltyPointsSettings {
+  id: string;
+  shopId: string;
+  /** Satang of spend = 1 point (e.g. 10000 → ฿100 = 1 pt). */
+  satangPerPoint: number;
+  minRedeemPoints: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LoyaltyPointsBalance {
+  id: string;
+  shopId: string;
+  customerId: string;
+  currentPoints: number;
+  lifetimeEarned: number;
+  lifetimeRedeemed: number;
+  updatedAt: string;
+}
+
+export type LoyaltyPointsTxType = "earn" | "redeem";
+
+export interface LoyaltyPointsTransaction {
+  id: string;
+  shopId: string;
+  customerId: string;
+  type: LoyaltyPointsTxType;
+  quantity: number;
+  performedBy: string | null;
+  orderId: string | null;
+  rewardId: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface LoyaltyPointsReward {
+  id: string;
+  shopId: string;
+  name: string;
+  pointsCost: number;
+  description: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomerPointsView {
+  customer: Customer;
+  balance: LoyaltyPointsBalance;
+  settings: LoyaltyPointsSettings;
+  rewards: LoyaltyPointsReward[];
 }

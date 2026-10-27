@@ -13,6 +13,7 @@ import { ShopImagesManager } from "@/src/presentation/components/shop/ShopImages
 import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopControl";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { OrderAccessQrCard } from "@/src/presentation/components/shop/OrderAccessQrCard";
+import { LoyaltyModuleForm } from "@/src/presentation/components/loyalty/LoyaltyModuleForm";
 import { SettingsTabs } from "@/src/presentation/components/settings/SettingsTabs";
 import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
 import { getBaseUrl } from "@/src/presentation/lib/base-url";
@@ -23,6 +24,7 @@ export const dynamic = "force-dynamic";
 export default async function ShopSettingsPage() {
   const { shopId } = await requireShopAccess();
   const t = await getTranslations("shopPages");
+  const tLoyalty = await getTranslations("loyalty");
   const shop = await container.shopRepository.findById(shopId);
   if (!shop) return null;
   const [
@@ -101,6 +103,20 @@ export default async function ShopSettingsPage() {
               <OrderAccessQrCard
                 qrDataUrl={orderAccessQr}
                 shopName={shop.name}
+              />
+            </Card>
+          )}
+
+          {shop.loyaltyAllowedByAdmin && (
+            <Card>
+              <CardHeader
+                title={tLoyalty("settingsTitle")}
+                subtitle={tLoyalty("settingsSubtitle")}
+              />
+              <LoyaltyModuleForm
+                loyaltyEnabled={shop.loyaltyEnabled}
+                stampCardEnabled={shop.stampCardEnabled}
+                spendPointsEnabled={shop.spendPointsEnabled}
               />
             </Card>
           )}

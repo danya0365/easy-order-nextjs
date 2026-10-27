@@ -35,5 +35,6 @@ export async function getClientMessages() {
     analytics: messages.analytics,
     promote: messages.promote,
     leads: messages.leads,
+    loyalty: messages.loyalty,
   };
 }

@@ -38,6 +38,13 @@ export const shops = sqliteTable(
     deliveryNotes: text(),
     // Minimum subtotal (satang) for an online order; null = no minimum.
     minOrderSatang: integer(),
+    // Platform admin must allow loyalty before the shop can enable the module.
+    loyaltyAllowedByAdmin: integer({ mode: "boolean" }).notNull().default(false),
+    // Shop-level module toggle. Effective = loyaltyAllowedByAdmin && loyaltyEnabled.
+    loyaltyEnabled: integer({ mode: "boolean" }).notNull().default(false),
+    // Per-kind toggles (only meaningful when the module is effective).
+    stampCardEnabled: integer({ mode: "boolean" }).notNull().default(false),
+    spendPointsEnabled: integer({ mode: "boolean" }).notNull().default(false),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

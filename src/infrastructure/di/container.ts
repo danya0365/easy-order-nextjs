@@ -20,6 +20,15 @@ import { DrizzleCustomerDeviceRepository } from "@/src/infrastructure/repositori
 import { DrizzleBindCodeRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleBindCodeRepository";
 import { DrizzleKioskSessionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleKioskSessionRepository";
 import { DrizzlePlatformSettingsRepository } from "@/src/infrastructure/repositories/drizzle/DrizzlePlatformSettingsRepository";
+import { DrizzleLoyaltyStampTypeRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyStampTypeRepository";
+import { DrizzleLoyaltyStampCardRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyStampCardRepository";
+import { DrizzleLoyaltyStampBalanceRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyStampBalanceRepository";
+import { DrizzleLoyaltyStampTransactionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyStampTransactionRepository";
+import { DrizzleLoyaltyStampRedemptionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyStampRedemptionRepository";
+import { DrizzleLoyaltyPointsSettingsRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyPointsSettingsRepository";
+import { DrizzleLoyaltyPointsBalanceRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyPointsBalanceRepository";
+import { DrizzleLoyaltyPointsTransactionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyPointsTransactionRepository";
+import { DrizzleLoyaltyPointsRewardRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyPointsRewardRepository";
 
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import type { IShopCategoryRepository } from "@/src/application/repositories/IShopCategoryRepository";
@@ -39,6 +48,15 @@ import type { ICustomerDeviceRepository } from "@/src/application/repositories/I
 import type { IBindCodeRepository } from "@/src/application/repositories/IBindCodeRepository";
 import type { IKioskSessionRepository } from "@/src/application/repositories/IKioskSessionRepository";
 import type { IPlatformSettingsRepository } from "@/src/application/repositories/IPlatformSettingsRepository";
+import type { ILoyaltyStampTypeRepository } from "@/src/application/repositories/ILoyaltyStampTypeRepository";
+import type { ILoyaltyStampCardRepository } from "@/src/application/repositories/ILoyaltyStampCardRepository";
+import type { ILoyaltyStampBalanceRepository } from "@/src/application/repositories/ILoyaltyStampBalanceRepository";
+import type { ILoyaltyStampTransactionRepository } from "@/src/application/repositories/ILoyaltyStampTransactionRepository";
+import type { ILoyaltyStampRedemptionRepository } from "@/src/application/repositories/ILoyaltyStampRedemptionRepository";
+import type { ILoyaltyPointsSettingsRepository } from "@/src/application/repositories/ILoyaltyPointsSettingsRepository";
+import type { ILoyaltyPointsBalanceRepository } from "@/src/application/repositories/ILoyaltyPointsBalanceRepository";
+import type { ILoyaltyPointsTransactionRepository } from "@/src/application/repositories/ILoyaltyPointsTransactionRepository";
+import type { ILoyaltyPointsRewardRepository } from "@/src/application/repositories/ILoyaltyPointsRewardRepository";
 
 /**
  * Server-side composition root. The 🟢 generic core (account/auth, billing,
@@ -81,6 +99,24 @@ class Container extends GenericContainer {
     new DrizzleKioskSessionRepository();
   readonly platformSettingsRepository: IPlatformSettingsRepository =
     new DrizzlePlatformSettingsRepository();
+  readonly loyaltyStampTypeRepository: ILoyaltyStampTypeRepository =
+    new DrizzleLoyaltyStampTypeRepository();
+  readonly loyaltyStampCardRepository: ILoyaltyStampCardRepository =
+    new DrizzleLoyaltyStampCardRepository();
+  readonly loyaltyStampBalanceRepository: ILoyaltyStampBalanceRepository =
+    new DrizzleLoyaltyStampBalanceRepository();
+  readonly loyaltyStampTransactionRepository: ILoyaltyStampTransactionRepository =
+    new DrizzleLoyaltyStampTransactionRepository();
+  readonly loyaltyStampRedemptionRepository: ILoyaltyStampRedemptionRepository =
+    new DrizzleLoyaltyStampRedemptionRepository();
+  readonly loyaltyPointsSettingsRepository: ILoyaltyPointsSettingsRepository =
+    new DrizzleLoyaltyPointsSettingsRepository();
+  readonly loyaltyPointsBalanceRepository: ILoyaltyPointsBalanceRepository =
+    new DrizzleLoyaltyPointsBalanceRepository();
+  readonly loyaltyPointsTransactionRepository: ILoyaltyPointsTransactionRepository =
+    new DrizzleLoyaltyPointsTransactionRepository();
+  readonly loyaltyPointsRewardRepository: ILoyaltyPointsRewardRepository =
+    new DrizzleLoyaltyPointsRewardRepository();
 }
 
 const globalForContainer = globalThis as unknown as {

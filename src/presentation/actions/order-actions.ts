@@ -14,6 +14,7 @@ import { PlaceOrderUseCase } from "@/src/application/use-cases/order/PlaceOrderU
 import { AdvanceOrderStatusUseCase } from "@/src/application/use-cases/order/AdvanceOrderStatusUseCase";
 import { ConfirmOrderPaymentUseCase } from "@/src/application/use-cases/order/ConfirmOrderPaymentUseCase";
 import { SelfServeCompleteOrderUseCase } from "@/src/application/use-cases/order/SelfServeCompleteOrderUseCase";
+import { EarnPointsFromOrderUseCase } from "@/src/application/use-cases/loyalty/EarnPointsFromOrderUseCase";
 import { GenerateBindCodeUseCase } from "@/src/application/use-cases/member/GenerateBindCodeUseCase";
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
 import { getClientIp } from "@/src/presentation/lib/request-ip";
@@ -290,6 +291,12 @@ export async function selfConfirmOrderAction(
 
     const order = await new SelfServeCompleteOrderUseCase(
       container.orderRepository,
+      new EarnPointsFromOrderUseCase(
+        container.shopRepository,
+        container.loyaltyPointsSettingsRepository,
+        container.loyaltyPointsBalanceRepository,
+        container.loyaltyPointsTransactionRepository,
+      ),
     ).execute(shopId, orderId);
     revalidatePath("/shop/orders");
     return { ok: true, orderNo: order.orderNo };
@@ -418,7 +425,15 @@ export async function confirmOrderPaymentAction(
 ): Promise<{ error?: string }> {
   try {
     const { actor, shopId } = await requireShopWrite();
-    await new ConfirmOrderPaymentUseCase(container.orderRepository).execute(
+    await new ConfirmOrderPaymentUseCase(
+      container.orderRepository,
+      new EarnPointsFromOrderUseCase(
+        container.shopRepository,
+        container.loyaltyPointsSettingsRepository,
+        container.loyaltyPointsBalanceRepository,
+        container.loyaltyPointsTransactionRepository,
+      ),
+    ).execute(
       shopId,
       orderId,
     );
