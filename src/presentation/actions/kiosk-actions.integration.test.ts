@@ -2,6 +2,7 @@ import { before, beforeEach, mock, test } from "node:test";
 import assert from "node:assert/strict";
 
 import { migrateTestDb, seedShop } from "@/src/test/helpers";
+import { ensurePathAliases } from "@/src/test/ensure-path-aliases";
 import { container } from "@/src/infrastructure/di/container";
 
 let sessionToken: string | null = null; // es_session (owner)
@@ -29,6 +30,8 @@ mock.module("next/cache", { namedExports: { revalidatePath: () => {} } });
 mock.module("next/navigation", {
   namedExports: { redirect: () => { throw new Error("REDIRECT"); } },
 });
+ensurePathAliases();
+
 
 type Actions = typeof import("./kiosk-actions");
 let actions: Actions;

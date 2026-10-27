@@ -2,6 +2,7 @@ import { before, mock, test } from "node:test";
 import assert from "node:assert/strict";
 
 import { migrateTestDb } from "@/src/test/helpers";
+import { ensurePathAliases } from "@/src/test/ensure-path-aliases";
 
 // getClientIp() reads next/headers headers(); drive the IP per test so each gets
 // its own rate-limit bucket (the in-memory limiter persists across the file).
@@ -15,6 +16,8 @@ mock.module("next/headers", {
       ]),
   },
 });
+ensurePathAliases();
+
 
 let POST: typeof import("./route").POST;
 

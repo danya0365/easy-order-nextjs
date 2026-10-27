@@ -2,6 +2,7 @@ import { before, beforeEach, mock, test } from "node:test";
 import assert from "node:assert/strict";
 
 import { migrateTestDb, seedShop } from "@/src/test/helpers";
+import { ensurePathAliases } from "@/src/test/ensure-path-aliases";
 import { container } from "@/src/infrastructure/di/container";
 
 // --- Mock the Next request-context modules the action graph imports. ---------
@@ -35,6 +36,8 @@ mock.module("next/navigation", {
     },
   },
 });
+ensurePathAliases();
+
 
 let anonymizeCustomerAction: typeof import("./customer-actions").anonymizeCustomerAction;
 

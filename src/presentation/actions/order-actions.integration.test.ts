@@ -2,6 +2,7 @@ import { before, beforeEach, mock, test } from "node:test";
 import assert from "node:assert/strict";
 
 import { migrateTestDb, seedShop } from "@/src/test/helpers";
+import { ensurePathAliases } from "@/src/test/ensure-path-aliases";
 import { container } from "@/src/infrastructure/di/container";
 
 // --- Mock the Next request-context modules the order actions import. ---------
@@ -40,6 +41,8 @@ mock.module("next/navigation", {
     },
   },
 });
+ensurePathAliases();
+
 
 type Actions = typeof import("./order-actions");
 let actions: Actions;

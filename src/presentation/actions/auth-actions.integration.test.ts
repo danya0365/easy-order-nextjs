@@ -2,6 +2,7 @@ import { afterEach, before, beforeEach, mock, test } from "node:test";
 import assert from "node:assert/strict";
 
 import { migrateTestDb } from "@/src/test/helpers";
+import { ensurePathAliases } from "@/src/test/ensure-path-aliases";
 import { container } from "@/src/infrastructure/di/container";
 import { totpAt } from "@/src/infrastructure/services/CryptoTotpService";
 
@@ -33,6 +34,8 @@ mock.module("next/navigation", {
     },
   },
 });
+ensurePathAliases();
+
 
 type A = typeof import("./auth-actions");
 let actions: A;
