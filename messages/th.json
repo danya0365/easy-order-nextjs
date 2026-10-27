@@ -520,7 +520,10 @@
     "logout": "ออกจากระบบ",
     "notificationsAria": "การแจ้งเตือน",
     "notificationsAriaUnread": "การแจ้งเตือน ({count} ใหม่)",
-    "navPlatformSettings": "ตั้งค่าแพลตฟอร์ม"
+    "navPlatformSettings": "ตั้งค่าแพลตฟอร์ม",
+    "navShopHome": "หน้าแรก",
+    "navShopOrder": "สั่งอาหาร",
+    "navShopOrders": "ออเดอร์ของฉัน"
   },
   "map": {
     "noPinnedShops": "ยังไม่มีร้านค้าที่ปักหมุดตำแหน่ง",

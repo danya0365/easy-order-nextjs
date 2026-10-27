@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PauseCircle, Pencil, ShoppingBag, Smartphone, Store, TriangleAlert } from "lucide-react";
+import { History, PauseCircle, Pencil, ShoppingBag, Smartphone } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -9,10 +9,7 @@ import { getMemberToken } from "@/src/infrastructure/auth/member";
 import { getOrderAccess } from "@/src/infrastructure/auth/order-access";
 import { getSession } from "@/src/infrastructure/auth/session";
 import { GetCustomerOrderHistoryUseCase } from "@/src/application/use-cases/member/GetCustomerOrderHistoryUseCase";
-import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
-import { Badge } from "@/src/presentation/components/ui/Badge";
-import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
-import { InstallHint } from "@/src/presentation/components/pwa/InstallHint";
+import { Card } from "@/src/presentation/components/ui/Card";
 import { ShopHero } from "@/src/presentation/components/shop/ShopHero";
 import { ShopGallery } from "@/src/presentation/components/shop/ShopGallery";
 import {
@@ -21,9 +18,6 @@ import {
 } from "@/src/presentation/components/shop/ShopImageEditor";
 import { ShopDetails } from "@/src/presentation/components/shop/ShopDetails";
 import { ShopReviewsSection } from "@/src/presentation/components/reviews/ShopReviewsSection";
-import { satangToBaht } from "@/src/presentation/lib/money";
-import { formatDateTime } from "@/src/presentation/lib/format-date";
-import type { OrderStatus } from "@/src/domain/entities";
 
 export const dynamic = "force-dynamic";
 
@@ -43,22 +37,6 @@ export async function generateMetadata({
     manifest: shop ? `/s/${slug}/site.webmanifest` : undefined,
   };
 }
-
-const STATUS_TONE: Record<OrderStatus, "neutral" | "warning" | "success"> = {
-  pending: "warning",
-  preparing: "warning",
-  ready: "success",
-  completed: "neutral",
-  cancelled: "neutral",
-};
-
-const STATUS_KEY = {
-  pending: "statusPending",
-  preparing: "statusPreparing",
-  ready: "statusReady",
-  completed: "statusCompleted",
-  cancelled: "statusCancelled",
-} as const;
 
 export default async function CustomerShopPage({
   params,
@@ -174,63 +152,24 @@ export default async function CustomerShopPage({
       )}
 
       {history ? (
-        <>
-          <div>
-            <h2 className="text-lg font-bold text-foreground">
-              {t("myOrdersTitle")}
-            </h2>
-            <p className="text-sm text-muted">
-              {t("myOrdersSubtitle", { shop: shop.name })} ·{" "}
-              {history.customer.displayName || history.customer.phone}
-            </p>
-          </div>
-          <Card>
-            <CardHeader title={shop.name} />
-            {history.orders.items.length === 0 ? (
-              <EmptyState icon={<Store />} title={t("noOrdersYet")} />
-            ) : (
-              <ul className="flex flex-col divide-y divide-border">
-                {history.orders.items.map((o) => (
-                  <li
-                    key={o.id}
-                    className="flex items-center justify-between gap-3 py-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-semibold text-foreground">#{o.orderNo}</p>
-                      <p className="text-xs text-muted">
-                        {formatDateTime(o.createdAt)}
-                      </p>
-                      <p className="mt-0.5 truncate text-sm text-muted">
-                        {t("orderItemsSummary", {
-                          count: o.items.length,
-                          amount: satangToBaht(o.totalSatang),
-                        })}
-                      </p>
-                    </div>
-                    <Badge tone={STATUS_TONE[o.status]}>
-                      {tOrder(STATUS_KEY[o.status])}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-
-          <details className="text-center">
-            <summary className="cursor-pointer text-xs text-muted">
-              {t("addToHomeOptional")}
-            </summary>
-            <div className="mt-2">
-              <InstallHint />
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-semibold text-foreground">{t("myOrdersTitle")}</p>
+              <p className="text-sm text-muted">
+                {t("myOrdersSubtitle", { shop: shop.name })} ·{" "}
+                {history.customer.displayName || history.customer.phone}
+              </p>
             </div>
-          </details>
-        </>
-      ) : bind === "invalid" ? (
-        <EmptyState
-          icon={<TriangleAlert />}
-          title={t("bindInvalidTitle")}
-          description={t("bindInvalidDesc")}
-        />
+            <History className="size-5 shrink-0 text-brand-600" />
+          </div>
+          <Link
+            href={`/s/${slug}/orders`}
+            className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-on-brand transition hover:bg-brand-600"
+          >
+            {t("viewOrders")}
+          </Link>
+        </Card>
       ) : (
         <Card className="bg-brand-50 ring-brand-100">
           <p className="flex items-center gap-2 text-sm text-brand-700">
@@ -239,6 +178,12 @@ export default async function CustomerShopPage({
               <strong>{t("notBoundTitle")}</strong> {t("notBoundDesc")}
             </span>
           </p>
+          <Link
+            href={`/s/${slug}/orders${bind === "invalid" ? "?bind=invalid" : ""}`}
+            className="mt-3 inline-flex text-sm font-medium text-brand-700 underline-offset-2 hover:underline"
+          >
+            {t("viewOrders")}
+          </Link>
         </Card>
       )}
 

@@ -81,7 +81,10 @@
   },
   "layout": {
     "navMore": "More",
-    "navPlatformSettings": "Platform settings"
+    "navPlatformSettings": "Platform settings",
+    "navShopHome": "Home",
+    "navShopOrder": "Order",
+    "navShopOrders": "My orders"
   },
   "sell": {
     "heroTagline": "Put a tablet on the counter and turn it into a self-ordering station — customers tap to order, the shop manages one live queue.",

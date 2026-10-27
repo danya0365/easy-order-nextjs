@@ -2,9 +2,10 @@ import { CustomerTabBar } from "@/src/presentation/components/layout/CustomerTab
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 
 /**
- * Customer-facing shell: every public page (map, my cards, a shop card, info,
- * privacy) gets the bottom tab bar. The padding-bottom reserves space so the
- * fixed bar never covers page content (incl. the iOS safe-area inset).
+ * Platform customer shell (map, shops directory, my history, tutorial, about).
+ * Per-shop PWAs live under `(shop-customer)/s/[slug]` with their own ShopTabBar.
+ * Padding-bottom reserves space so the fixed bar never covers page content
+ * (incl. the iOS safe-area inset).
  */
 export default function PublicLayout({
   children,

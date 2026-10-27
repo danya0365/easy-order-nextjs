@@ -35,7 +35,7 @@ const TABS: Tab[] = [
     href: "/me",
     label: "navMyCards",
     icon: History,
-    active: (p) => p === "/me" || p.startsWith("/me/") || p.startsWith("/s/"),
+    active: (p) => p === "/me" || p.startsWith("/me/"),
   },
   {
     href: "/tutorial",

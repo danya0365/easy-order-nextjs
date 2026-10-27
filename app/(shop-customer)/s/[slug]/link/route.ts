@@ -5,7 +5,7 @@ import { setMemberCookie } from "@/src/infrastructure/auth/member";
 import { ClaimBindCodeUseCase } from "@/src/application/use-cases/member/ClaimBindCodeUseCase";
 
 // Customer scans the kiosk's one-time bind QR → this exchanges the code for a
-// device token, sets the httpOnly member cookie, and redirects to their history.
+// device token, sets the httpOnly member cookie, and redirects to their orders tab.
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ slug: string }> },
@@ -20,9 +20,9 @@ export async function GET(
   ).execute(slug, code);
 
   if (!result) {
-    return NextResponse.redirect(new URL(`/s/${slug}?bind=invalid`, request.url));
+    return NextResponse.redirect(new URL(`/s/${slug}/orders?bind=invalid`, request.url));
   }
 
   await setMemberCookie(slug, result.token);
-  return NextResponse.redirect(new URL(`/s/${slug}`, request.url));
+  return NextResponse.redirect(new URL(`/s/${slug}/orders`, request.url));
 }
