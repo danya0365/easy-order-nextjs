@@ -1,0 +1,54 @@
+
+  vinext check
+
+  Scanning project...
+
+
+  vinext compatibility report
+  ========================================
+
+  Imports: 8/8 fully supported
+    ✓  next/font/google (2 files) — self-hosted with fallback metrics; falls back to the Google Fonts CDN when font options aren't statically analyzable or the network fetch fails
+    ✓  next/link (33 files)
+    ✓  next/navigation (15 files)
+    ✓  next/server (2 files) — NextRequest, NextResponse, NextFetchEvent, userAgent, userAgentFromString, after, connection
+    ✓  next/headers (6 files)
+    ✓  server-only (55 files)
+    ✓  next/cache (13 files) — revalidateTag, revalidatePath, updateTag, refresh, unstable_cache, unstable_noStore, io, cacheLife, cacheTag
+    ✓  next/dynamic (5 files)
+
+  Config: 4/4 options supported
+    ✓  headers
+    ✓  env
+    ✓  allowedDevOrigins — dev server cross-origin allowlist
+    ✓  experimental.serverActions — bodySizeLimit and allowedOrigins are enforced
+
+  Libraries: 5/5 compatible
+    ✓  next-intl — createNextIntlPlugin is only optional with the request config at (src/)i18n/request.*; its experimental messages, precompile and extract options don't work (they need webpack/Turbopack loaders)
+    ✓  tailwindcss
+    ✓  lucide-react
+    ✓  zod
+    ✓  react-hook-form
+
+  Project structure:
+    ✓  App Router (app/)
+    ✓  41 page(s)
+    ✓  6 layout(s)
+    ✓  15 route handler(s)
+    ✓  24 loading boundary(ies)
+    ✓  1 error boundary(ies)
+    ✓  1 not-found page(s)
+    ✓  proxy.ts (Next.js 16)
+
+  ----------------------------------------
+  Overall: 100% compatible (25 supported, 0 partial, 0 issues)
+
+  Recommended next steps:
+    Run vinext init to set up your project automatically
+
+  Or manually:
+    1. Add "type": "module" to package.json
+    2. Install: npm install -D vinext vite @vitejs/plugin-react @vitejs/plugin-rsc react-server-dom-webpack
+    3. Create vite.config.ts with plugins: [vinext()]
+    4. Run: npx vite dev
+

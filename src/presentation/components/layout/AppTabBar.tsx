@@ -52,7 +52,8 @@ type NavLabelKey =
   | "navLeads"
   | "navShops"
   | "navPayments"
-  | "navContacts";
+  | "navContacts"
+  | "navPlatformSettings";
 
 interface NavItem {
   href: string;
@@ -98,6 +99,7 @@ const NAVS = {
     { href: "/admin/analytics", label: "navAnalytics", icon: BarChart3 },
     { href: "/admin/leads", label: "navLeads", icon: MapPinned },
     { href: "/admin/security", label: "navSecurity", icon: ShieldAlert },
+    { href: "/admin/settings", label: "navPlatformSettings", icon: Settings },
   ],
   staff: [
     { href: "/staff", label: "navNewOrder", icon: ShoppingCart },
@@ -132,9 +134,24 @@ function matchActiveHref(pathname: string, links: NavItem[]): string | null {
  * screen size — mirrors the customer-facing CustomerTabBar. Shows the first few
  * links as tabs; any extras collapse into a slide-up "more" sheet.
  */
-export function AppTabBar({ nav }: { nav: keyof typeof NAVS }) {
+export function AppTabBar({
+  nav,
+  hideBillingNav = false,
+  hideAdminNav = false,
+}: {
+  nav: keyof typeof NAVS;
+  /** Hide the navBilling link (platform billing-UI switch → pure white-label). */
+  hideBillingNav?: boolean;
+  /** Hide the platform-admin settings link (kept for symmetry / future hinges). */
+  hideAdminNav?: boolean;
+}) {
   const t = useTranslations("layout");
-  const links: NavItem[] = NAVS[nav];
+  let links: NavItem[] = NAVS[nav];
+  // Hidden chrome vs hidden route: the /shop/billing page itself still shows a
+  // notice when the toggle is off, so a stale link is harmless — but the entry
+  // shouldn't be discoverable.
+  if (hideBillingNav) links = links.filter((l) => l.href !== "/shop/billing");
+  if (hideAdminNav) links = links.filter((l) => l.href !== "/admin/settings");
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
 

@@ -28,6 +28,8 @@ export default async function AdminShopsPage() {
   const billing = new GetBillingStateUseCase(
     container.shopRepository,
     container.subscriptionRepository,
+    container.platformSettingsRepository,
+    container.orderRepository,
   );
   const [states, owners] = await Promise.all([
     Promise.all(shops.map((s) => billing.execute(s.id))),

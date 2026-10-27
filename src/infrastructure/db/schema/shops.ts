@@ -27,6 +27,17 @@ export const shops = sqliteTable(
     // Self-service mode: customers pay themselves and tap "ชำระเงินแล้ว" on the
     // kiosk, which marks the order paid + completed (no staff at the counter).
     selfService: integer({ mode: "boolean" }).notNull().default(false),
+    // Online ordering: customers order by themselves from the web (outside the kiosk).
+    onlineOrderingEnabled: integer({ mode: "boolean" }).notNull().default(false),
+    // Fulfillment toggles for online orders (kiosk always offers pickup/dine-in).
+    pickupEnabled: integer({ mode: "boolean" }).notNull().default(true),
+    deliveryEnabled: integer({ mode: "boolean" }).notNull().default(false),
+    // Delivery charge in satang added to the order total when delivered.
+    deliveryFeeSatang: integer().notNull().default(0),
+    // Free-form delivery instructions shown to the customer on the order form.
+    deliveryNotes: text(),
+    // Minimum subtotal (satang) for an online order; null = no minimum.
+    minOrderSatang: integer(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

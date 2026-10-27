@@ -18,9 +18,33 @@ export const dynamic = "force-dynamic";
 export default async function ShopBillingPage() {
   const { shopId } = await requireShopAccess();
   const t = await getTranslations("shopPages");
-  const { subscription, status } = await getBillingState(shopId);
+  const { subscription, status, billingUiEnabled } = await getBillingState(shopId);
   const paymentsPage = await container.paymentRepository.pageByShop(shopId);
   const topupsPage = await container.topupTransactionRepository.pageByShop(shopId);
+
+  // Billing UI gated off platform-wide: show a plain notice instead of the
+  // dunning/ Topup chrome (existing data/history stays viewable below).
+  if (!billingUiEnabled) {
+    return (
+      <div className="flex flex-col gap-4">
+        <Card>
+          <CardHeader title={t("billingHiddenTitle")} subtitle={t("billingHiddenSubtitle")} />
+          <ContactAdminButton />
+        </Card>
+        <Card>
+          <CardHeader title={t("paymentHistoryTitle")} />
+          {paymentsPage.items.length === 0 ? (
+            <EmptyState icon={<Receipt />} title={t("noPaymentHistory")} />
+          ) : (
+            <PaymentHistoryList
+              initialItems={paymentsPage.items}
+              initialCursor={paymentsPage.nextCursor}
+            />
+          )}
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">

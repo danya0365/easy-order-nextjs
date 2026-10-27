@@ -18,6 +18,7 @@ import { UpdateShopProfileUseCase } from "@/src/application/use-cases/shop/Updat
 import { SaveShopImageUseCase } from "@/src/application/use-cases/shop/SaveShopImageUseCase";
 import { DeleteShopImageUseCase } from "@/src/application/use-cases/shop/DeleteShopImageUseCase";
 import type { ShopImageKind } from "@/src/domain/entities";
+import { bahtToSatang } from "@/src/presentation/lib/money";
 import { CreateBranchUseCase } from "@/src/application/use-cases/shop/CreateBranchUseCase";
 import { UpdateBranchLocationUseCase } from "@/src/application/use-cases/shop/UpdateBranchLocationUseCase";
 import { CreateStaffUseCase } from "@/src/application/use-cases/shop/CreateStaffUseCase";
@@ -146,10 +147,27 @@ export async function updateSettingsAction(
 ): Promise<FormState> {
   try {
     const shopId = await ownerShopId();
+    const minOrderRaw = String(formData.get("minOrderBaht") ?? "").trim();
+    const deliveryFeeRaw = String(formData.get("deliveryFeeBaht") ?? "").trim();
+    const numOrNull = (v: string): number | null => {
+      if (v === "") return null;
+      const n = Number(v);
+      if (Number.isNaN(n)) return null;
+      return n;
+    };
     await new UpdateShopSettingsUseCase(container.shopRepository).execute(shopId, {
       name: String(formData.get("name") ?? ""),
       categoryId: String(formData.get("categoryId") ?? ""),
       promptpayTarget: String(formData.get("promptpayTarget") ?? ""),
+      onlineOrderingEnabled: formData.get("onlineOrderingEnabled") === "on",
+      pickupEnabled: formData.get("pickupEnabled") === "on",
+      deliveryEnabled: formData.get("deliveryEnabled") === "on",
+      deliveryFeeSatang: bahtToSatang(numOrNull(deliveryFeeRaw) ?? 0),
+      deliveryNotes: String(formData.get("deliveryNotes") ?? ""),
+      minOrderSatang:
+        numOrNull(minOrderRaw) === null
+          ? null
+          : bahtToSatang(numOrNull(minOrderRaw)!),
     });
     revalidatePath("/shop/settings");
     return { success: "บันทึกการตั้งค่าแล้ว" };

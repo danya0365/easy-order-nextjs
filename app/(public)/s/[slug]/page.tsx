@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PauseCircle, Pencil, Smartphone, Store, TriangleAlert } from "lucide-react";
+import { PauseCircle, Pencil, ShoppingBag, Smartphone, Store, TriangleAlert } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
 import { getMemberToken } from "@/src/infrastructure/auth/member";
+import { getOrderAccess } from "@/src/infrastructure/auth/order-access";
 import { getSession } from "@/src/infrastructure/auth/session";
 import { GetCustomerOrderHistoryUseCase } from "@/src/application/use-cases/member/GetCustomerOrderHistoryUseCase";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
@@ -118,8 +119,22 @@ export default async function CustomerShopPage({
   const isOwner =
     sessionUser?.role === "shop_owner" && sessionUser.shopId === shop.id;
 
+  // Shop QR gate: the "สั่งออนไลน์" CTA appears only after scanning the shop's
+  // order QR (the claim cookie enables direct ordering).
+  const hasOrderAccess = !!(await getOrderAccess(slug));
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-8">
+      {shop.onlineOrderingEnabled && hasOrderAccess && (
+        <Link
+          href={`/s/${slug}/order`}
+          className="flex items-center justify-center gap-2 rounded-2xl bg-brand-500 px-4 py-3.5 text-base font-bold text-on-brand shadow-sm transition hover:bg-brand-600"
+        >
+          <ShoppingBag className="size-5" />
+          {tOrder("onlineOrderCta")}
+        </Link>
+      )}
+
       {isPaused && (
         <p className="rounded-xl bg-warning-surface px-4 py-3 text-center text-sm text-warning">
           <PauseCircle className="mr-1 inline size-4 align-text-bottom" />

@@ -5,9 +5,16 @@ export interface UpdateSettingsInput {
   name?: string;
   categoryId?: string | null;
   promptpayTarget?: string | null;
+  /** Online-order settings (toggles + delivery charge/notes/minimum). */
+  onlineOrderingEnabled?: boolean;
+  pickupEnabled?: boolean;
+  deliveryEnabled?: boolean;
+  deliveryFeeSatang?: number;
+  deliveryNotes?: string | null;
+  minOrderSatang?: number | null;
 }
 
-/** Update the shop's display name, category, and PromptPay target (order QR). */
+/** Update the shop's display name, category, PromptPay target (order QR) and online-order settings. */
 export class UpdateShopSettingsUseCase {
   constructor(private readonly shops: IShopRepository) {}
 
@@ -16,6 +23,12 @@ export class UpdateShopSettingsUseCase {
       name?: string;
       categoryId?: string | null;
       promptpayTarget?: string | null;
+      onlineOrderingEnabled?: boolean;
+      pickupEnabled?: boolean;
+      deliveryEnabled?: boolean;
+      deliveryFeeSatang?: number;
+      deliveryNotes?: string | null;
+      minOrderSatang?: number | null;
     } = {};
 
     if (input.categoryId !== undefined) {
@@ -43,6 +56,37 @@ export class UpdateShopSettingsUseCase {
         }
         patch.promptpayTarget = digits;
       }
+    }
+
+    if (input.onlineOrderingEnabled !== undefined) {
+      patch.onlineOrderingEnabled = input.onlineOrderingEnabled;
+    }
+    if (input.pickupEnabled !== undefined) {
+      patch.pickupEnabled = input.pickupEnabled;
+    }
+    if (input.deliveryEnabled !== undefined) {
+      patch.deliveryEnabled = input.deliveryEnabled;
+    }
+    if (input.deliveryFeeSatang !== undefined) {
+      const fee = input.deliveryFeeSatang;
+      if (!Number.isInteger(fee) || fee < 0) {
+        throw new Error("ค่าจัดส่งต้องเป็นตัวเลขที่ไม่ติดลบ");
+      }
+      patch.deliveryFeeSatang = fee;
+    }
+    if (input.deliveryNotes !== undefined) {
+      // Empty string from the form means "no notes".
+      const notes = (input.deliveryNotes ?? "").trim();
+      if (notes.length > 200) throw new Error("หมายเหตุการจัดส่งยาวเกินไป");
+      patch.deliveryNotes = notes || null;
+    }
+    if (input.minOrderSatang !== undefined) {
+      // Empty/undefined stays null = no minimum.
+      const min = input.minOrderSatang;
+      if (min !== null && (!Number.isInteger(min) || min < 0)) {
+        throw new Error("ยอดขั้นต่ำต้องเป็นตัวเลขที่ไม่ติดลบ");
+      }
+      patch.minOrderSatang = min;
     }
 
     return this.shops.updateSettings(shopId, patch);

@@ -13,5 +13,73 @@
     "title": "Page not found",
     "description": "The page you're looking for may have moved, been deleted, or never existed.",
     "home": "Back to home"
+  },
+  "order": {
+    "channelKiosk": "Kiosk",
+    "channelCounter": "Counter",
+    "channelOnline": "Online",
+    "fulfillPickup": "Pickup",
+    "fulfillDelivery": "Delivery",
+    "fulfillDineIn": "Dine-in",
+    "deliveryAddressLabel": "Delivery address",
+    "onlineOrderCta": "Order online",
+    "onlineContactTitle": "Name and phone number",
+    "onlineNamePlaceholder": "Customer name",
+    "onlinePhonePlaceholder": "Phone number",
+    "onlineAddressPlaceholder": "Delivery address",
+    "onlineCashNote": "Please prepare cash to pay when you receive the order",
+    "minOrderHint": "Minimum order {amount} baht",
+    "resultHistoryLink": "View my order history",
+    "resultBackToShop": "Back to shop"
+  },
+  "publicPages": {
+    "onlineOrderMetaTitle": "Order online · {name}",
+    "onlineOrderOffTitle": "Online ordering is not enabled",
+    "onlineOrderOffDesc": "Please contact the shop directly, or return to the shop page",
+    "onlineOrderBackToShop": "Back to shop",
+    "onlineOrderClosedTitle": "Shop is temporarily closed",
+    "onlineOrderClosedDesc": "Orders are not being accepted right now — please try later",
+    "onlineOrderNeedQrTitle": "Scan this shop's QR first",
+    "onlineOrderNeedQrDesc": "To order online, please scan this shop's QR code in store only"
+  },
+  "shop": {
+    "setOnlineOrderingLabel": "Accept online orders (from the web shop page)",
+    "setPickupLabel": "Allow customers to pick up",
+    "setDeliveryLabel": "Allow delivery ordering",
+    "setDeliveryFeeLabel": "Delivery fee (baht)",
+    "setDeliveryFeeHint": "Added to the total of online orders choosing delivery",
+    "setDeliveryNotesLabel": "Delivery notes",
+    "setDeliveryNotesPlaceholder": "e.g. served areas, delivery hours (optional)",
+    "setMinOrderLabel": "Minimum order (baht)",
+    "setMinOrderHint": "Leave empty = no minimum"
+  },
+  "shopPages": {
+    "billingHiddenTitle": "As configured — billing is currently hidden",
+    "billingHiddenSubtitle": "The platform administrator has disabled the billing UI",
+    "orderAccessQrTitle": "Online ordering QR",
+    "orderAccessQrSubtitle": "Customers scan this to order online from their phone",
+    "orderAccessQrDesc": "Customers scan this to order online from their phone",
+    "orderAccessQrPrint": "Print QR",
+    "orderAccessQrAlt": "Shop's online ordering QR"
+  },
+  "admin": {
+    "settingsBillingUiLabel": "Show monthly billing UI",
+    "settingsBillingUiHint": "Off = hide the billing page and banners from shops (white-label)",
+    "settingsThresholdLabel": "Charge once order volume passes the threshold",
+    "settingsThresholdHint": "Shops beyond this many orders are billed normally",
+    "settingsThresholdCountLabel": "Minimum order count (orders)",
+    "settingsSuspensionLabel": "Shop suspension system",
+    "settingsSuspensionHint": "Off = warning only, shops keep working · On = suspend overdue shops",
+    "settingsSaving": "Saving…",
+    "settingsSave": "Save"
+  },
+  "adminPages": {
+    "settingsTitle": "Platform settings",
+    "settingsSubtitle": "Whole-system billing and suspension switches",
+    "billingUiOffNote": "Billing UI is off (shops don't see the billing page) — price submissions still arrive normally"
+  },
+  "layout": {
+    "navMore": "More",
+    "navPlatformSettings": "Platform settings"
   }
 }

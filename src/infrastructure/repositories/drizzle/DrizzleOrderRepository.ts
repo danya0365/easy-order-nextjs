@@ -44,6 +44,9 @@ function toOrder(r: OrderRow, items: OrderItem[]): OrderWithItems {
     paymentStatus: r.paymentStatus,
     subtotalSatang: r.subtotalSatang,
     totalSatang: r.totalSatang,
+    channel: r.channel,
+    fulfillmentType: r.fulfillmentType,
+    deliveryAddress: r.deliveryAddress,
     note: r.note,
     customerId: r.customerId,
     customerName: r.customerName,
@@ -107,7 +110,7 @@ export class DrizzleOrderRepository implements IOrderRepository {
       lineTotalSatang: i.unitPriceSatang * i.quantity,
     }));
     const subtotalSatang = lines.reduce((s, l) => s + l.lineTotalSatang, 0);
-    const totalSatang = subtotalSatang;
+    const totalSatang = subtotalSatang + (input.deliveryFeeSatang ?? 0);
 
     // Next per-shop daily order number (low-concurrency kiosk; good enough).
     const [c] = await db
@@ -134,6 +137,9 @@ export class DrizzleOrderRepository implements IOrderRepository {
         customerName: input.customerName ?? null,
         customerPhone: input.customerPhone ?? null,
         performedBy: input.performedBy ?? null,
+        channel: input.channel ?? "kiosk",
+        fulfillmentType: input.fulfillmentType ?? "pickup",
+        deliveryAddress: input.deliveryAddress ?? null,
       })
       .returning();
 
@@ -266,5 +272,13 @@ export class DrizzleOrderRepository implements IOrderRepository {
     if (!r) throw new Error("ไม่พบออเดอร์ในร้านนี้");
     const items = await loadItems([r.id]);
     return toOrder(r, items.get(r.id) ?? []);
+  }
+
+  async countByShop(shopId: string): Promise<number> {
+    const [c] = await db
+      .select({ value: count() })
+      .from(schema.orders)
+      .where(eq(schema.orders.shopId, shopId));
+    return c?.value ?? 0;
   }
 }

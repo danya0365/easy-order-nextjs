@@ -19,6 +19,7 @@ import { DrizzleCustomerRepository } from "@/src/infrastructure/repositories/dri
 import { DrizzleCustomerDeviceRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleCustomerDeviceRepository";
 import { DrizzleBindCodeRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleBindCodeRepository";
 import { DrizzleKioskSessionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleKioskSessionRepository";
+import { DrizzlePlatformSettingsRepository } from "@/src/infrastructure/repositories/drizzle/DrizzlePlatformSettingsRepository";
 
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import type { IShopCategoryRepository } from "@/src/application/repositories/IShopCategoryRepository";
@@ -37,6 +38,7 @@ import type { ICustomerRepository } from "@/src/application/repositories/ICustom
 import type { ICustomerDeviceRepository } from "@/src/application/repositories/ICustomerDeviceRepository";
 import type { IBindCodeRepository } from "@/src/application/repositories/IBindCodeRepository";
 import type { IKioskSessionRepository } from "@/src/application/repositories/IKioskSessionRepository";
+import type { IPlatformSettingsRepository } from "@/src/application/repositories/IPlatformSettingsRepository";
 
 /**
  * Server-side composition root. The 🟢 generic core (account/auth, billing,
@@ -77,6 +79,8 @@ class Container extends GenericContainer {
     new DrizzleBindCodeRepository();
   readonly kioskSessionRepository: IKioskSessionRepository =
     new DrizzleKioskSessionRepository();
+  readonly platformSettingsRepository: IPlatformSettingsRepository =
+    new DrizzlePlatformSettingsRepository();
 }
 
 const globalForContainer = globalThis as unknown as {

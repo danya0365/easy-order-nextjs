@@ -10,6 +10,8 @@ export function getBillingState(shopId: string): Promise<BillingState> {
   return new GetBillingStateUseCase(
     container.shopRepository,
     container.subscriptionRepository,
+    container.platformSettingsRepository,
+    container.orderRepository,
   ).execute(shopId);
 }
 

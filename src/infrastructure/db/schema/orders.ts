@@ -13,8 +13,14 @@ export const ORDER_STATUSES = [
 ] as const;
 export const ORDER_PAYMENT_METHODS = ["promptpay_qr", "cash"] as const;
 export const ORDER_PAYMENT_STATUSES = ["unpaid", "paid"] as const;
+/** Where the order originated: kiosk self-serve, counter staff, or online web. */
+export const ORDER_CHANNELS = ["kiosk", "counter", "online"] as const;
+export type OrderChannel = (typeof ORDER_CHANNELS)[number];
+/** How the order reaches the customer. */
+export const ORDER_FULFILLMENT_TYPES = ["pickup", "delivery", "dine_in"] as const;
+export type FulfillmentType = (typeof ORDER_FULFILLMENT_TYPES)[number];
 
-/** A customer order placed at a shop's kiosk. */
+/** A customer order placed at a shop's kiosk, counter, or online. */
 export const orders = sqliteTable(
   "orders",
   {
@@ -29,6 +35,14 @@ export const orders = sqliteTable(
     paymentStatus: text({ enum: ORDER_PAYMENT_STATUSES })
       .notNull()
       .default("unpaid"),
+    /** Origin of the order — drives which guards set it (kiosk/counter/online). */
+    channel: text({ enum: ORDER_CHANNELS }).notNull().default("kiosk"),
+    /** Pickup / delivery / dine-in. */
+    fulfillmentType: text({ enum: ORDER_FULFILLMENT_TYPES })
+      .notNull()
+      .default("pickup"),
+    /** Drop-off address for delivery orders; null otherwise. */
+    deliveryAddress: text(),
     subtotalSatang: integer().notNull(),
     totalSatang: integer().notNull(),
     note: text(),
