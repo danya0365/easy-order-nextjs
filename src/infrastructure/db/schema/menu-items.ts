@@ -19,6 +19,7 @@ export const menuItems = sqliteTable(
     priceSatang: integer().notNull(),
     imageUrl: text(),
     isAvailable: integer({ mode: "boolean" }).notNull().default(true),
+    isRecommended: integer({ mode: "boolean" }).notNull().default(false),
     sortOrder: integer().notNull().default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

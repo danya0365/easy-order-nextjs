@@ -92,6 +92,13 @@
       "when": 1793145245914,
       "tag": "0012_shop_promotions",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1793113421637,
+      "tag": "0013_menu_item_is_recommended",
+      "breakpoints": true
     }
   ]
 }

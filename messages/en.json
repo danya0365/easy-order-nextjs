@@ -40,7 +40,8 @@
     "onlineOrderClosedTitle": "Shop is temporarily closed",
     "onlineOrderClosedDesc": "Orders are not being accepted right now — please try later",
     "onlineOrderNeedQrTitle": "Scan this shop's QR first",
-    "onlineOrderNeedQrDesc": "To order online, please scan this shop's QR code in store only"
+    "onlineOrderNeedQrDesc": "To order online, please scan this shop's QR code in store only",
+    "recommendedMenuTitle": "Recommended menu"
   },
   "shop": {
     "setOnlineOrderingLabel": "Accept online orders (from the web shop page)",
@@ -264,5 +265,9 @@
     "notAllowed": "The admin has not granted this shop the promotions module",
     "moduleOffHint": "The promotions module is still turned off — enable it in Settings first.",
     "goSettings": "Go to settings"
+  },
+  "menu": {
+    "recommended": "Recommended",
+    "notRecommended": "Not recommended"
   }
 }

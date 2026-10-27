@@ -192,6 +192,24 @@ export async function toggleItemAvailableAction(
   }
 }
 
+
+export async function toggleItemRecommendedAction(
+  itemId: string,
+  isRecommended: boolean,
+): Promise<{ error?: string }> {
+  try {
+    const shopId = await ownerShopId();
+    await new UpdateMenuItemUseCase(
+      container.menuItemRepository,
+      container.menuCategoryRepository,
+    ).execute(shopId, itemId, { isRecommended });
+    revalidatePath("/shop/menu");
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
 export async function deleteItemAction(
   itemId: string,
 ): Promise<{ error?: string }> {
