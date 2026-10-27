@@ -22,20 +22,24 @@ export const isDevLoginEnabled =
   process.env.NODE_ENV !== "production" && !process.env.VERCEL;
 
 /**
- * DEV-ONLY 2FA bypass — skips the mandatory-2FA gate and the login TOTP
- * challenge so local testing isn't blocked by an authenticator code.
+ * 2FA bypass for local/dev AND (explicitly) bot-operated Workers.
  *
- * Triple-gated and OPT-IN (off unless explicitly set):
- *   - NODE_ENV !== "production"      → excludes local prod builds
- *   - !process.env.VERCEL           → excludes ALL Vercel deployments
- *   - DEV_DISABLE_2FA === "true"     → must be set on purpose in .env.local
+ * Local (unchanged): NODE_ENV !== production && !VERCEL && DEV_DISABLE_2FA=true
  *
- * NEVER weakens 2FA in any hosted environment, even if the var leaks.
+ * Hosted Workers / CF: also when BOTH are set on purpose:
+ *   DEV_DISABLE_2FA=true AND ALLOW_HOSTED_2FA_BYPASS=true
+ * Staging/bot-admin only — never rely on DEV_DISABLE_2FA alone in production.
  */
-export const is2faBypassed =
+const local2faBypass =
   process.env.NODE_ENV !== "production" &&
   !process.env.VERCEL &&
   process.env.DEV_DISABLE_2FA === "true";
+
+const hosted2faBypass =
+  process.env.DEV_DISABLE_2FA === "true" &&
+  process.env.ALLOW_HOSTED_2FA_BYPASS === "true";
+
+export const is2faBypassed = local2faBypass || hosted2faBypass;
 
 /**
  * Boot-time environment check (called from instrumentation.ts at server start —
