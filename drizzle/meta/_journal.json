@@ -85,6 +85,13 @@
       "when": 1793110118822,
       "tag": "0011_loyalty_stamp_and_points",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1793145245914,
+      "tag": "0012_shop_promotions",
+      "breakpoints": true
     }
   ]
 }

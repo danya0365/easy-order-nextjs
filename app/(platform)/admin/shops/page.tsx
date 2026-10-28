@@ -15,6 +15,7 @@ import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { CreateShopForm } from "@/src/presentation/components/admin/CreateShopForm";
 import { ShopStatusToggle } from "@/src/presentation/components/admin/ShopStatusToggle";
 import { LoyaltyAllowToggle } from "@/src/presentation/components/loyalty/LoyaltyAllowToggle";
+import { PromotionsAllowToggle } from "@/src/presentation/components/promotions/PromotionsAllowToggle";
 import { PauseShopToggle } from "@/src/presentation/components/admin/PauseShopToggle";
 import { ShopHandoffButton } from "@/src/presentation/components/admin/ShopHandoffButton";
 import { ConfirmSubmitButton } from "@/src/presentation/components/ui/ConfirmDialog";
@@ -97,6 +98,10 @@ export default async function AdminShopsPage() {
                     <LoyaltyAllowToggle
                       shopId={shop.id}
                       allowed={shop.loyaltyAllowedByAdmin}
+                    />
+                    <PromotionsAllowToggle
+                      shopId={shop.id}
+                      allowed={shop.promotionsAllowedByAdmin}
                     />
                     <ShopStatusToggle
                       shopId={shop.id}

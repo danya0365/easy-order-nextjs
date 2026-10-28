@@ -85,7 +85,9 @@
     "navShopHome": "Home",
     "navShopOrder": "Order",
     "navShopOrders": "My orders",
-    "navLoyalty": "Loyalty"
+    "navLoyalty": "Loyalty",
+    "navPromotions": "Promotions",
+    "moreMenuAria": "More menu"
   },
   "sell": {
     "heroTagline": "Put a tablet on the counter and turn it into a self-ordering station — customers tap to order, the shop manages one live queue.",
@@ -233,5 +235,34 @@
     "settingsSubtitle": "Stamp card and/or spend points",
     "orderCta": "Order to earn",
     "bindCtaButton": "How to bind this device"
+  },
+  "promotions": {
+    "customerTitle": "Promotions",
+    "settingsTitle": "Shop promotions",
+    "settingsSubtitle": "Promotion banners customers see on the shop page",
+    "manageHint": "Cards shown to customers on the promotions tab. Leave the date fields empty for an always-on promotion.",
+    "manage": "Manage promotions",
+    "moduleEnabled": "Enable promotions module for this shop",
+    "save": "Save",
+    "create": "Add promotion",
+    "title": "Title",
+    "description": "Description",
+    "imageUrl": "Image URL (https, optional)",
+    "startsAt": "Starts at (optional)",
+    "endsAt": "Ends at (optional)",
+    "sortOrder": "Sort order",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this promotion?",
+    "active": "Active",
+    "inactive": "Inactive",
+    "empty": "No promotions yet",
+    "orderCta": "Order now",
+    "adminAllow": "Allow promotions",
+    "adminRevoke": "Revoke promotions",
+    "notAllowed": "The admin has not granted this shop the promotions module",
+    "moduleOffHint": "The promotions module is still turned off — enable it in Settings first.",
+    "goSettings": "Go to settings"
   }
 }

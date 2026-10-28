@@ -29,6 +29,7 @@ import { DrizzleLoyaltyPointsSettingsRepository } from "@/src/infrastructure/rep
 import { DrizzleLoyaltyPointsBalanceRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyPointsBalanceRepository";
 import { DrizzleLoyaltyPointsTransactionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyPointsTransactionRepository";
 import { DrizzleLoyaltyPointsRewardRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyPointsRewardRepository";
+import { DrizzleShopPromotionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleShopPromotionRepository";
 
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import type { IShopCategoryRepository } from "@/src/application/repositories/IShopCategoryRepository";
@@ -57,6 +58,7 @@ import type { ILoyaltyPointsSettingsRepository } from "@/src/application/reposit
 import type { ILoyaltyPointsBalanceRepository } from "@/src/application/repositories/ILoyaltyPointsBalanceRepository";
 import type { ILoyaltyPointsTransactionRepository } from "@/src/application/repositories/ILoyaltyPointsTransactionRepository";
 import type { ILoyaltyPointsRewardRepository } from "@/src/application/repositories/ILoyaltyPointsRewardRepository";
+import type { IShopPromotionRepository } from "@/src/application/repositories/IShopPromotionRepository";
 
 /**
  * Server-side composition root. The 🟢 generic core (account/auth, billing,
@@ -117,6 +119,8 @@ class Container extends GenericContainer {
     new DrizzleLoyaltyPointsTransactionRepository();
   readonly loyaltyPointsRewardRepository: ILoyaltyPointsRewardRepository =
     new DrizzleLoyaltyPointsRewardRepository();
+  readonly shopPromotionRepository: IShopPromotionRepository =
+    new DrizzleShopPromotionRepository();
 }
 
 const globalForContainer = globalThis as unknown as {

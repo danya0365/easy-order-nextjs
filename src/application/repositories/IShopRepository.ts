@@ -25,6 +25,8 @@ export interface UpdateShopSettingsInput {
   loyaltyEnabled?: boolean;
   stampCardEnabled?: boolean;
   spendPointsEnabled?: boolean;
+  /** Promotions module (mirrors loyalty gates). */
+  promotionsEnabled?: boolean;
 }
 
 export interface IShopRepository {
@@ -38,6 +40,8 @@ export interface IShopRepository {
   setSelfService(id: string, on: boolean): Promise<Shop>;
   /** Platform admin allow/deny the loyalty module for a shop. */
   setLoyaltyAllowedByAdmin(id: string, on: boolean): Promise<Shop>;
+  /** Platform admin allow/deny the promotions module for a shop. */
+  setPromotionsAllowedByAdmin(id: string, on: boolean): Promise<Shop>;
   /** Returns the stored kiosk PIN hash (or null) — infra-only, for verification. */
   getKioskPinHash(id: string): Promise<string | null>;
 }

@@ -31,6 +31,8 @@ function toShop(r: Row): Shop {
     minOrderSatang: r.minOrderSatang,
     loyaltyAllowedByAdmin: r.loyaltyAllowedByAdmin,
     loyaltyEnabled: r.loyaltyEnabled,
+    promotionsAllowedByAdmin: r.promotionsAllowedByAdmin,
+    promotionsEnabled: r.promotionsEnabled,
     stampCardEnabled: r.stampCardEnabled,
     spendPointsEnabled: r.spendPointsEnabled,
     createdAt: r.createdAt,
@@ -111,6 +113,9 @@ export class DrizzleShopRepository implements IShopRepository {
         ...(input.loyaltyEnabled !== undefined
           ? { loyaltyEnabled: input.loyaltyEnabled }
           : {}),
+        ...(input.promotionsEnabled !== undefined
+          ? { promotionsEnabled: input.promotionsEnabled }
+          : {}),
         ...(input.stampCardEnabled !== undefined
           ? { stampCardEnabled: input.stampCardEnabled }
           : {}),
@@ -145,6 +150,15 @@ export class DrizzleShopRepository implements IShopRepository {
     const [r] = await db
       .update(schema.shops)
       .set({ loyaltyAllowedByAdmin: on })
+      .where(eq(schema.shops.id, id))
+      .returning();
+    return toShop(r);
+  }
+
+  async setPromotionsAllowedByAdmin(id: string, on: boolean): Promise<Shop> {
+    const [r] = await db
+      .update(schema.shops)
+      .set({ promotionsAllowedByAdmin: on })
       .where(eq(schema.shops.id, id))
       .returning();
     return toShop(r);

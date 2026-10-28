@@ -42,6 +42,9 @@ export const shops = sqliteTable(
     loyaltyAllowedByAdmin: integer({ mode: "boolean" }).notNull().default(false),
     // Shop-level module toggle. Effective = loyaltyAllowedByAdmin && loyaltyEnabled.
     loyaltyEnabled: integer({ mode: "boolean" }).notNull().default(false),
+    // Promotions module gates (mirror loyalty). Effective = allowed && enabled.
+    promotionsAllowedByAdmin: integer({ mode: "boolean" }).notNull().default(false),
+    promotionsEnabled: integer({ mode: "boolean" }).notNull().default(false),
     // Per-kind toggles (only meaningful when the module is effective).
     stampCardEnabled: integer({ mode: "boolean" }).notNull().default(false),
     spendPointsEnabled: integer({ mode: "boolean" }).notNull().default(false),

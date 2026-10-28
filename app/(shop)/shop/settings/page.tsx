@@ -14,6 +14,7 @@ import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopCo
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { OrderAccessQrCard } from "@/src/presentation/components/shop/OrderAccessQrCard";
 import { LoyaltyModuleForm } from "@/src/presentation/components/loyalty/LoyaltyModuleForm";
+import { PromotionsModuleForm } from "@/src/presentation/components/promotions/PromotionsModuleForm";
 import { SettingsTabs } from "@/src/presentation/components/settings/SettingsTabs";
 import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
 import { getBaseUrl } from "@/src/presentation/lib/base-url";
@@ -25,6 +26,7 @@ export default async function ShopSettingsPage() {
   const { shopId } = await requireShopAccess();
   const t = await getTranslations("shopPages");
   const tLoyalty = await getTranslations("loyalty");
+  const tPromo = await getTranslations("promotions");
   const shop = await container.shopRepository.findById(shopId);
   if (!shop) return null;
   const [
@@ -118,6 +120,16 @@ export default async function ShopSettingsPage() {
                 stampCardEnabled={shop.stampCardEnabled}
                 spendPointsEnabled={shop.spendPointsEnabled}
               />
+            </Card>
+          )}
+
+          {shop.promotionsAllowedByAdmin && (
+            <Card>
+              <CardHeader
+                title={tPromo("settingsTitle")}
+                subtitle={tPromo("settingsSubtitle")}
+              />
+              <PromotionsModuleForm promotionsEnabled={shop.promotionsEnabled} />
             </Card>
           )}
 

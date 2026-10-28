@@ -207,6 +207,10 @@ export interface Shop {
   loyaltyAllowedByAdmin: boolean;
   /** Shop toggle for loyalty. Effective = allowed && enabled. */
   loyaltyEnabled: boolean;
+  /** Platform admin allow-list for the promotions module. */
+  promotionsAllowedByAdmin: boolean;
+  /** Shop toggle for promotions. Effective = allowed && enabled. */
+  promotionsEnabled: boolean;
   /** Stamp-card kind toggle (requires effective module). */
   stampCardEnabled: boolean;
   /** Spend-points kind toggle (requires effective module). */
@@ -474,6 +478,24 @@ export interface KnownAccount {
   role: Role;
 }
 
+
+// --- Shop promotions (customer-facing promo cards) ---
+
+export interface ShopPromotion {
+  id: string;
+  shopId: string;
+  title: string;
+  description: string | null;
+  /** Optional image URL (https). */
+  imageUrl: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  /** ISO 8601 show-window; null = open-ended on that side. */
+  startsAt: string | null;
+  endsAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 // --- Loyalty (stamp card + spend points) ---
 
