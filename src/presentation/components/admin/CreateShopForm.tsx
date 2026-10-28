@@ -71,6 +71,9 @@ export function CreateShopForm() {
         </FormField>
       </div>
       <p className="text-xs text-muted">{t("csHint")}</p>
+      <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
+        {t("halalOnlyCreateHint")}
+      </p>
 
       {state.error && <p className="text-sm text-error">{state.error}</p>}
       {state.success && <p className="text-sm text-success">{state.success}</p>}

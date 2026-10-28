@@ -61,7 +61,9 @@
     "orderAccessQrSubtitle": "Customers scan this to order online from their phone",
     "orderAccessQrDesc": "Customers scan this to order online from their phone",
     "orderAccessQrPrint": "Print QR",
-    "orderAccessQrAlt": "Shop's online ordering QR"
+    "orderAccessQrAlt": "Shop's online ordering QR",
+    "menuSubtitle": "Add categories and items · Halal menu only",
+    "halalOnlyNotice": "This platform accepts Halal shops and menus only — no pork, ham, bacon, or alcohol"
   },
   "admin": {
     "settingsBillingUiLabel": "Show monthly billing UI",
@@ -72,7 +74,8 @@
     "settingsSuspensionLabel": "Shop suspension system",
     "settingsSuspensionHint": "Off = warning only, shops keep working · On = suspend overdue shops",
     "settingsSaving": "Saving…",
-    "settingsSave": "Save"
+    "settingsSave": "Save",
+    "halalOnlyCreateHint": "Easy Order accepts Halal restaurants only — menus must be Halal"
   },
   "adminPages": {
     "settingsTitle": "Platform settings",
@@ -268,6 +271,7 @@
   },
   "menu": {
     "recommended": "Recommended",
-    "notRecommended": "Not recommended"
+    "notRecommended": "Not recommended",
+    "halalOnlyHint": "This platform accepts Halal shops and menus only — no pork, ham, bacon, or alcohol"
   }
 }

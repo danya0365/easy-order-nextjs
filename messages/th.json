@@ -486,7 +486,8 @@
     "settingsSuspensionLabel": "ระบบระงับร้าน",
     "settingsSuspensionHint": "ปิด = เตือนอย่างเดียว ร้านยังใช้ได้ · เปิด = ระงับเมื่อค้างชำระเกินกำหนด",
     "settingsSaving": "กำลังบันทึก…",
-    "settingsSave": "บันทึก"
+    "settingsSave": "บันทึก",
+    "halalOnlyCreateHint": "Easy Order รับเฉพาะร้านอาหารฮาลาล — เมนูต้องเป็นฮาลาลเท่านั้น"
   },
   "layout": {
     "navDashboard": "แดชบอร์ด",
@@ -563,7 +564,7 @@
   },
   "shopPages": {
     "menuTitle": "จัดการเมนู",
-    "menuSubtitle": "เพิ่มหมวดและเมนู เปิด/ปิดการขายได้ทันที",
+    "menuSubtitle": "เพิ่มหมวดและเมนู เปิด/ปิดการขายได้ทันที · รับเฉพาะเมนูฮาลาล",
     "kioskTitle": "โหมดหน้าร้าน (Kiosk)",
     "kioskSubtitle": "เปลี่ยนแท็บเล็ตเครื่องนี้ให้ลูกค้ากดสั่งเองที่เคาน์เตอร์",
     "kioskPromptpayHint": "QR ชำระเงินของลูกค้าใช้ PromptPay ที่ตั้งไว้ด้านบน",
@@ -686,7 +687,8 @@
     "allBranchesTitle": "สาขาทั้งหมด ({count})",
     "noBranches": "ยังไม่มีสาขา",
     "billingHiddenTitle": "เรียบร้อย — ไม่มีการเรียกเก็บค่าบริการในช่วงนี้",
-    "billingHiddenSubtitle": "ผู้ดูแลระบบปิดการแสดงหน้าค่าบริการชั่วคราว"
+    "billingHiddenSubtitle": "ผู้ดูแลระบบปิดการแสดงหน้าค่าบริการชั่วคราว",
+    "halalOnlyNotice": "แพลตฟอร์มนี้รับเฉพาะร้านและเมนูฮาลาล — ห้ามใส่หมู แฮม เบคอน หรือเครื่องดื่มแอลกอฮอล์"
   },
   "adminPages": {
     "overviewTitle": "ภาพรวมระบบ",
@@ -970,7 +972,8 @@
     "removingImage": "กำลังลบ…",
     "baht": "฿{amount}",
     "recommended": "แนะนำ",
-    "notRecommended": "ไม่แนะนำ"
+    "notRecommended": "ไม่แนะนำ",
+    "halalOnlyHint": "แพลตฟอร์มนี้รับเฉพาะร้านและเมนูฮาลาล — ห้ามใส่หมู แฮม เบคอน หรือเครื่องดื่มแอลกอฮอล์"
   },
   "order": {
     "queueTitle": "คิวออเดอร์",
