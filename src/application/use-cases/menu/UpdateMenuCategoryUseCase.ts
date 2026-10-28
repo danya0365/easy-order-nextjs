@@ -3,6 +3,7 @@ import type {
   IMenuCategoryRepository,
   UpdateMenuCategoryInput,
 } from "@/src/application/repositories/IMenuCategoryRepository";
+import { assertHalalMenuContent } from "@/src/domain/services/halal-menu";
 
 /** Rename / reorder / toggle a category — scoped to the owning shop. */
 export class UpdateMenuCategoryUseCase {
@@ -20,6 +21,7 @@ export class UpdateMenuCategoryUseCase {
       if (name.length < 1 || name.length > 60) {
         throw new Error("ชื่อหมวดหมู่ต้องยาว 1–60 ตัวอักษร");
       }
+      assertHalalMenuContent(name);
       input = { ...input, name };
     }
     return this.categories.update(categoryId, input);
