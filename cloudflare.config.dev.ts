@@ -16,6 +16,7 @@ export default defineConfig({
     },
     env: {
       ASSETS: bindings.assets(),
+      SLIP_BUCKET: bindings.r2({ name: "easy-order-dev" }),
     },
   }),
 });

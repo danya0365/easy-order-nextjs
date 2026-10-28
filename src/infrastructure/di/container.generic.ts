@@ -25,6 +25,10 @@ import {
   r2ConfigFromEnv,
 } from "@/src/infrastructure/services/R2SlipStorage";
 import {
+  R2BindingSlipStorage,
+  r2BindingFromEnv,
+} from "@/src/infrastructure/services/R2BindingSlipStorage";
+import {
   LineMessagingPusher,
   NullMessagePusher,
   lineConfigFromEnv,
@@ -56,10 +60,13 @@ import type { IEmailSender } from "@/src/application/services/IEmailSender";
 import type { ILogger } from "@/src/application/services/ILogger";
 import { logger } from "@/src/infrastructure/observability/logger";
 
-/** R2 in any environment that configures it (prod/Vercel); local disk otherwise. */
+/** R2 via S3 credentials, else Workers R2 binding, else local disk. */
 function createSlipStorage(): ISlipStorage {
   const r2 = r2ConfigFromEnv();
-  return r2 ? new R2SlipStorage(r2) : new LocalSlipStorage();
+  if (r2) return new R2SlipStorage(r2);
+  const bound = r2BindingFromEnv();
+  if (bound) return new R2BindingSlipStorage(bound);
+  return new LocalSlipStorage();
 }
 
 /** LINE pusher when credentials are configured; a no-op pusher otherwise. */

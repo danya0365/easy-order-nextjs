@@ -20,6 +20,11 @@ export default defineConfig((ctx) => {
       },
       env: {
         ASSETS: bindings.assets(),
+        // Private object store for slips / shop / menu images.
+        // Staging → easy-order-dev; prod → easy-order-prod.
+        SLIP_BUCKET: bindings.r2({
+          name: isDevMode ? "easy-order-dev" : "easy-order-prod",
+        }),
       },
     }),
   };
