@@ -69,5 +69,7 @@ export const orders = sqliteTable(
   (t) => [
     index("orders_shop_created_idx").on(t.shopId, t.createdAt),
     index("orders_shop_status_idx").on(t.shopId, t.status),
+    // Per-customer CRM aggregates / history.
+    index("orders_shop_customer_idx").on(t.shopId, t.customerId, t.createdAt),
   ],
 );

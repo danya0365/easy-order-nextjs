@@ -16,7 +16,16 @@ type Row = typeof schema.customers.$inferSelect;
 
 const STATUSES = new Set(["none", "pending", "approved", "rejected", "expired"]);
 
-function toCustomer(r: Row): Customer {
+export function parseTags(raw: string | null | undefined): string[] {
+  try {
+    const v = JSON.parse(raw ?? "[]");
+    return Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+export function toCustomer(r: Row): Customer {
   const status = STATUSES.has(r.onlineOrderStatus)
     ? (r.onlineOrderStatus as Customer["onlineOrderStatus"])
     : "none";
@@ -31,6 +40,11 @@ function toCustomer(r: Row): Customer {
     onlineOrderReviewedAt: r.onlineOrderReviewedAt ?? null,
     onlineOrderReviewedBy: r.onlineOrderReviewedBy ?? null,
     onlineOrderRejectedAt: r.onlineOrderRejectedAt ?? null,
+    note: r.note ?? null,
+    tags: parseTags(r.tags),
+    blockedAt: r.blockedAt ?? null,
+    blockedBy: r.blockedBy ?? null,
+    newMemberClearedAt: r.newMemberClearedAt ?? null,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };

@@ -16,6 +16,8 @@ import { DrizzleMenuCategoryRepository } from "@/src/infrastructure/repositories
 import { DrizzleMenuItemRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMenuItemRepository";
 import { DrizzleOrderRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleOrderRepository";
 import { DrizzleCustomerRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleCustomerRepository";
+import { DrizzleCustomerCrmRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleCustomerCrmRepository";
+import type { ICustomerCrmRepository } from "@/src/application/repositories/ICustomerCrmRepository";
 import { DrizzleCustomerDeviceRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleCustomerDeviceRepository";
 import { DrizzleBindCodeRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleBindCodeRepository";
 import { DrizzleKioskSessionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleKioskSessionRepository";
@@ -97,6 +99,8 @@ class Container extends GenericContainer {
   readonly orderRepository: IOrderRepository = new DrizzleOrderRepository();
   readonly customerRepository: ICustomerRepository =
     new DrizzleCustomerRepository();
+  readonly customerCrmRepository: ICustomerCrmRepository =
+    new DrizzleCustomerCrmRepository();
   readonly customerDeviceRepository: ICustomerDeviceRepository =
     new DrizzleCustomerDeviceRepository();
   readonly bindCodeRepository: IBindCodeRepository =

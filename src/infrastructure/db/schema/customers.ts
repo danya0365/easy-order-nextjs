@@ -29,6 +29,15 @@ export const customers = sqliteTable(
     onlineOrderReviewedBy: text(),
     // Last time the shop rejected this phone (kept across re-requests; 30-day cooldown).
     onlineOrderRejectedAt: text(),
+    // CRM (shop-internal, never shown to the customer).
+    note: text(),
+    // JSON array of lowercase tags; "vip" drives the VIP tab.
+    tags: text().notNull().default("[]"),
+    // Shop block: no ordering / re-signup while set.
+    blockedAt: text(),
+    blockedBy: text(),
+    // Shop lifted the new-member order cap early.
+    newMemberClearedAt: text(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

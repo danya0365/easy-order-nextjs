@@ -95,6 +95,17 @@ export class DrizzleMemberSignupGuardRepository
     return !!r;
   }
 
+  async unblockPhone(shopId: string, phone: string): Promise<void> {
+    await db
+      .delete(schema.shopBlockedPhones)
+      .where(
+        and(
+          eq(schema.shopBlockedPhones.shopId, shopId),
+          eq(schema.shopBlockedPhones.phone, phone),
+        ),
+      );
+  }
+
   async blockPhone(
     shopId: string,
     phone: string,
