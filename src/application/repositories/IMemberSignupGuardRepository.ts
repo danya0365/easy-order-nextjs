@@ -27,4 +27,5 @@ export interface IMemberSignupGuardRepository {
   listByCustomers(shopId: string, customerIds: string[]): Promise<SignupAttempt[]>;
   isPhoneBlocked(shopId: string, phone: string): Promise<boolean>;
   blockPhone(shopId: string, phone: string, createdBy: string): Promise<void>;
+  unblockPhone(shopId: string, phone: string): Promise<void>;
 }
