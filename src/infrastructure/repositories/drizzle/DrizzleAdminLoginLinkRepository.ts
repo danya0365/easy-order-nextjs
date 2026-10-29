@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, eq, gt, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNotNull, isNull, or } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type {
   AdminLoginLink,
@@ -47,6 +47,16 @@ export class DrizzleAdminLoginLinkRepository implements IAdminLoginLinkRepositor
       .from(t)
       .where(and(isNull(t.usedAt), isNull(t.revokedAt), gt(t.expiresAt, nowIso)))
       .orderBy(asc(t.expiresAt));
+    return rows.map(toLink);
+  }
+
+  async listRecentClosed(limit: number): Promise<AdminLoginLink[]> {
+    const rows = await db
+      .select()
+      .from(t)
+      .where(or(isNotNull(t.usedAt), isNotNull(t.revokedAt)))
+      .orderBy(desc(t.createdAt))
+      .limit(limit);
     return rows.map(toLink);
   }
 

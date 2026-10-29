@@ -23,3 +23,11 @@ inserts a `kind='admin'` row (shop_id null, target = that platform admin) using 
 Opening it shows a confirm button (no account list); confirming consumes it atomically and
 redirects to `/admin`. The /admin layout still enforces mandatory 2FA unless the hosted bypass
 vars are set.
+
+## Admin UI (`/admin/login-links`)
+
+Platform admins can issue admin-kind links (target: any active platform admin, default self;
+TTL 15m/1h/24h) after re-auth (current password, or a 2FA code when 2FA is on), rate-limited to
+10/hour per admin (`IssueAdminLoginLinkUseCase` → `CreateAdminSelfLoginLinkUseCase`, same row shape
+as the CLI). The page lists all active links (admin + shop) with revoke, and the 30 most recent
+used/revoked links. Shop-link creation now posts `shopId` as a form field (no bound args).

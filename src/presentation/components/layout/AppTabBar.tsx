@@ -26,8 +26,7 @@ import {
   Users,
   UtensilsCrossed,
   Gift,
-  type LucideIcon,
-} from "lucide-react";
+  type LucideIcon, KeyRound } from "lucide-react";
 
 import { cn } from "@/src/presentation/components/ui/cn";
 
@@ -49,6 +48,7 @@ type NavLabelKey =
   | "navLoyalty"
   | "navSettings"
   | "navSecurity"
+  | "navLoginLinks"
   | "navContactAdmin"
   | "navOverview"
   | "navLeads"
@@ -102,6 +102,7 @@ const NAVS = {
     { href: "/admin/analytics", label: "navAnalytics", icon: BarChart3 },
     { href: "/admin/leads", label: "navLeads", icon: MapPinned },
     { href: "/admin/security", label: "navSecurity", icon: ShieldAlert },
+    { href: "/admin/login-links", label: "navLoginLinks", icon: KeyRound },
     { href: "/admin/settings", label: "navPlatformSettings", icon: Settings },
   ],
   staff: [

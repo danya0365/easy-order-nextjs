@@ -8,6 +8,7 @@ import {
   CreateOneTimeLoginLinkUseCase,
   ResolveOneTimeLoginLinkUseCase,
   CreateAdminSelfLoginLinkUseCase,
+  IssueAdminLoginLinkUseCase,
 } from "./OneTimeLoginUseCases";
 import {
   hashOneTimeLoginToken,
@@ -132,5 +133,65 @@ describe("admin one-time login links", () => {
     const past = new Date(Date.now() - 20 * 60_000);
     const old = await mk().execute({ adminUserId: adminId, expiry: "15m", now: past });
     assert.equal((await resolve().execute(old.token)).kind, "invalid");
+  });
+
+  it("admin UI issue: password re-auth required, non-admin rejected, 1h TTL saved", async () => {
+    const hash = await container.passwordHasher.hash("CorrectHorse9!");
+    const actor = await container.userRepository.create({
+      email: "otl-ui-admin@test.local",
+      passwordHash: hash,
+      role: "platform_admin",
+    });
+    const { ownerId } = await seedShop("otl-i");
+    const issue = () =>
+      new IssueAdminLoginLinkUseCase(
+        container.adminLoginLinkRepository,
+        container.userRepository,
+        {
+          verifyPassword: async (id, pw) => {
+            const u = await container.userRepository.findByIdWithSecret(id);
+            return !!u && container.passwordHasher.compare(pw, u.passwordHash);
+          },
+          verifyTwoFactor: async () => false,
+        },
+      );
+    await assert.rejects(() => issue().execute({ actorId: actor.id, expiry: "15m" }));
+    await assert.rejects(() =>
+      issue().execute({ actorId: actor.id, expiry: "15m", password: "wrong" }),
+    );
+    await assert.rejects(() =>
+      issue().execute({ actorId: actor.id, expiry: "15m", code: "123456" }),
+    );
+    // non-admin actor
+    await assert.rejects(() =>
+      issue().execute({ actorId: ownerId, expiry: "15m", password: "password123" }),
+    );
+    // non-admin target
+    await assert.rejects(() =>
+      issue().execute({
+        actorId: actor.id,
+        targetAdminId: ownerId,
+        expiry: "15m",
+        password: "CorrectHorse9!",
+      }),
+    );
+    const now = new Date();
+    const { token, link } = await issue().execute({
+      actorId: actor.id,
+      targetAdminId: adminId,
+      expiry: "1h",
+      password: "CorrectHorse9!",
+      now,
+    });
+    assert.equal(link.kind, "admin");
+    assert.equal(link.targetUserId, adminId);
+    assert.equal(link.createdBy, actor.id);
+    assert.equal(Date.parse(link.expiresAt) - now.getTime(), 60 * 60_000);
+    const r = await resolve().execute(token);
+    assert.ok(r.kind === "admin" && r.account.id === adminId);
+
+    const { shop } = await seedShop("otl-j");
+    const sl = await create().execute({ shopId: shop.id, adminId, expiry: "1h", now });
+    assert.equal(Date.parse(sl.link.expiresAt) - now.getTime(), 60 * 60_000);
   });
 });

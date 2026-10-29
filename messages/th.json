@@ -512,7 +512,21 @@
     "otlCopied": "คัดลอกแล้ว",
     "otlActive": "ลิงก์ที่ยังใช้ได้",
     "otlNoActive": "ไม่มีลิงก์ที่ยังใช้ได้",
-    "otlRevoke": "ยกเลิก"
+    "otlRevoke": "ยกเลิก",
+    "otlAdminTitle": "สร้างลิงก์ login ครั้งเดียวสำหรับผู้ดูแลระบบ",
+    "otlAdminSubtitle": "ลิงก์ใช้ได้ครั้งเดียว เก็บเฉพาะค่า hash และแสดง URL ครั้งเดียว",
+    "otlAdminAccount": "บัญชีผู้ดูแลระบบ",
+    "otlSelf": "ตัวคุณ",
+    "otlReauthPassword": "รหัสผ่านปัจจุบันของคุณ",
+    "otlReauthCode": "หรือรหัส 2FA",
+    "otlReauthHint": "ต้องยืนยันตัวตนอีกครั้งก่อนสร้างลิงก์ผู้ดูแลระบบ (จำกัด 10 ครั้ง/ชั่วโมง)",
+    "otlHistory": "ประวัติล่าสุด (ใช้แล้ว/ยกเลิก)",
+    "otlNoHistory": "ยังไม่มีประวัติ",
+    "otlUsedBy": "ใช้เมื่อ {at} โดย {user}",
+    "otlRevokedAt": "ยกเลิกเมื่อ {at}",
+    "otlUsed": "ใช้แล้ว",
+    "otlRevoked": "ยกเลิกแล้ว",
+    "otlCliNote": "สร้างผ่าน CLI ได้ด้วย: node scripts/admin-login-link.mjs"
   },
   "layout": {
     "navDashboard": "แดชบอร์ด",
@@ -551,7 +565,8 @@
     "navShopOrder": "สั่งอาหาร",
     "navShopOrders": "ออเดอร์ของฉัน",
     "navLoyalty": "สะสม",
-    "navPromotions": "โปรโมชัน"
+    "navPromotions": "โปรโมชัน",
+    "navLoginLinks": "ลิงก์ login ครั้งเดียว"
   },
   "map": {
     "noPinnedShops": "ยังไม่มีร้านค้าที่ปักหมุดตำแหน่ง",
