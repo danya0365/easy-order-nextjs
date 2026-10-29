@@ -13,3 +13,13 @@
   login alert is not sent.
 - Rate limits: failed page lookups 30 / 10 min / IP; consume attempts 10 / 10 min / IP.
 - Audit: `one_time_login_link_created`, `_revoked`, `_used` (chosen user + issuing admin).
+
+## Admin self-login links (kind = 'admin', migration 0018)
+
+`node scripts/admin-login-link.mjs --env staging|prod --email <admin email> [--ttl 15m|1h|24h]`
+inserts a `kind='admin'` row (shop_id null, target = that platform admin) using the DB creds in
+`/workspace/secrets/easy-order-<env>-db.env`, audits `one_time_login_link_created` (actor_role
+`cli`), and writes the URL only to `/workspace/secrets/admin-login-link-<env>.txt` (0600).
+Opening it shows a confirm button (no account list); confirming consumes it atomically and
+redirects to `/admin`. The /admin layout still enforces mandatory 2FA unless the hosted bypass
+vars are set.

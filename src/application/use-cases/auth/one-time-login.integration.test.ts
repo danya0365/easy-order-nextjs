@@ -7,6 +7,7 @@ import {
   ConsumeOneTimeLoginLinkUseCase,
   CreateOneTimeLoginLinkUseCase,
   ResolveOneTimeLoginLinkUseCase,
+  CreateAdminSelfLoginLinkUseCase,
 } from "./OneTimeLoginUseCases";
 import {
   hashOneTimeLoginToken,
@@ -108,5 +109,28 @@ describe("admin one-time login links", () => {
       consume().execute(token, ownerId),
     ]);
     assert.equal(res.filter((x) => x.status === "fulfilled").length, 1);
+  });
+
+  it("admin self-login link: confirm logs in as that admin once; others rejected", async () => {
+    const { ownerId } = await seedShop("otl-h");
+    const mk = () =>
+      new CreateAdminSelfLoginLinkUseCase(
+        container.adminLoginLinkRepository,
+        container.userRepository,
+      );
+    await assert.rejects(() => mk().execute({ adminUserId: ownerId, expiry: "15m" }));
+    const { token, link } = await mk().execute({ adminUserId: adminId, expiry: "15m" });
+    assert.equal(link.kind, "admin");
+    assert.equal(link.shopId, null);
+    const r = await resolve().execute(token);
+    assert.ok(r.kind === "admin" && r.account.id === adminId);
+    await assert.rejects(() => consume().execute(token, ownerId));
+    const { user } = await consume().execute(token, adminId);
+    assert.equal(user.role, "platform_admin");
+    await assert.rejects(() => consume().execute(token, adminId));
+
+    const past = new Date(Date.now() - 20 * 60_000);
+    const old = await mk().execute({ adminUserId: adminId, expiry: "15m", now: past });
+    assert.equal((await resolve().execute(old.token)).kind, "invalid");
   });
 });

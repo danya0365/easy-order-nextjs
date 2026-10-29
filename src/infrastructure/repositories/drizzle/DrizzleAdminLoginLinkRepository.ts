@@ -13,7 +13,8 @@ type Row = typeof t.$inferSelect;
 
 const toLink = (r: Row): AdminLoginLink => ({
   id: r.id,
-  shopId: r.shopId,
+  kind: r.kind,
+  shopId: r.shopId ?? null,
   tokenHash: r.tokenHash,
   createdBy: r.createdBy,
   targetUserId: r.targetUserId ?? null,

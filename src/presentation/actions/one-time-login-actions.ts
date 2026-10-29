@@ -133,7 +133,12 @@ export async function consumeOneTimeLoginAction(
       targetId: link.id,
       ip,
       userAgent: await getUserAgent(),
-      metadata: { issuedBy: link.createdBy, chosenUserId: user.id, role: user.role },
+      metadata: {
+        kind: link.kind,
+        issuedBy: link.createdBy,
+        chosenUserId: user.id,
+        role: user.role,
+      },
     });
     if (await getCurrentSessionToken()) await destroySession();
     await stopImpersonation();

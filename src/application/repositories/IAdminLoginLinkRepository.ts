@@ -1,6 +1,10 @@
+export type AdminLoginLinkKind = "shop" | "admin";
+
 export interface AdminLoginLink {
   id: string;
-  shopId: string;
+  kind: AdminLoginLinkKind;
+  /** null for kind 'admin'. */
+  shopId: string | null;
   tokenHash: string;
   createdBy: string;
   targetUserId: string | null;
@@ -12,7 +16,8 @@ export interface AdminLoginLink {
 }
 
 export interface CreateAdminLoginLinkInput {
-  shopId: string;
+  kind?: AdminLoginLinkKind;
+  shopId: string | null;
   tokenHash: string;
   createdBy: string;
   targetUserId: string | null;
