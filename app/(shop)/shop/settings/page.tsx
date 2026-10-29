@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, UserCog } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
@@ -13,8 +13,6 @@ import { ShopImagesManager } from "@/src/presentation/components/shop/ShopImages
 import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopControl";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { OrderAccessQrCard } from "@/src/presentation/components/shop/OrderAccessQrCard";
-import { StaticJoinQrCard } from "@/src/presentation/components/shop/StaticJoinQrCard";
-import { StaticJoinControls } from "@/src/presentation/components/shop/StaticJoinControls";
 import { LoyaltyModuleForm } from "@/src/presentation/components/loyalty/LoyaltyModuleForm";
 import { PromotionsModuleForm } from "@/src/presentation/components/promotions/PromotionsModuleForm";
 import { SettingsTabs } from "@/src/presentation/components/settings/SettingsTabs";
@@ -71,14 +69,6 @@ export default async function ShopSettingsPage() {
     return renderQrDataUrl(url);
   })();
 
-  const staticJoin = await (async () => {
-    if (!shop.onlineOrderingEnabled) return null;
-    const k = await container.shopRepository.getStaticJoinToken(shop.id);
-    if (!k) return null;
-    const url = `${await getBaseUrl()}/s/${shop.slug}/join?k=${encodeURIComponent(k)}`;
-    return { url, qr: await renderQrDataUrl(url) };
-  })();
-
   const tabs = [
     {
       id: "shop",
@@ -120,22 +110,20 @@ export default async function ShopSettingsPage() {
             </Card>
           )}
 
-          {staticJoin && (
-            <Card>
-              <CardHeader
-                title={t("staticJoinQrTitle")}
-                subtitle={t("staticJoinQrSubtitle")}
-              />
-              <StaticJoinQrCard
-                qrDataUrl={staticJoin.qr}
-                joinUrl={staticJoin.url}
-                shopName={shop.name}
-              />
-              <div className="mt-4">
-                <StaticJoinControls paused={shop.memberSignupPaused} />
-              </div>
-            </Card>
-          )}
+          <Card>
+            <CardHeader
+              title={t("memberSettingsTitle")}
+              subtitle={t("memberSettingsLinkDesc")}
+            />
+            <Link
+              href="/shop/settings/members"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-on-brand transition hover:bg-brand-600"
+            >
+              <UserCog className="size-4" />
+              {t("memberSettingsOpen")}
+              <ArrowRight className="size-4" />
+            </Link>
+          </Card>
 
           {shop.loyaltyAllowedByAdmin && (
             <Card>

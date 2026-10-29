@@ -1,3 +1,4 @@
+import type { MemberPolicy } from "@/src/domain/services/member-policy";
 import type { Shop, ShopStatus } from "@/src/domain/entities";
 
 export interface CreateShopInput {
@@ -31,6 +32,8 @@ export interface UpdateShopSettingsInput {
   memberOtpEnabled?: boolean;
   /** Pause new static-QR member signups. */
   memberSignupPaused?: boolean;
+  /** Full per-shop membership policy (validated by the use case). */
+  memberPolicy?: MemberPolicy;
 }
 
 export interface IShopRepository {

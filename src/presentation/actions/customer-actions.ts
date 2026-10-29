@@ -14,6 +14,11 @@ import {
   SetMemberSignupPausedUseCase,
 } from "@/src/application/use-cases/member/StaticJoinModerationUseCases";
 import type { CreateAuditLogInput } from "@/src/application/repositories/IAuditLogRepository";
+import { UpdateMemberSettingsUseCase } from "@/src/application/use-cases/member/UpdateMemberSettingsUseCase";
+import {
+  MEMBER_POLICY_KEYS,
+  type MemberPolicy,
+} from "@/src/domain/services/member-policy";
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
 import { getClientIp } from "@/src/presentation/lib/request-ip";
 
@@ -130,6 +135,7 @@ export async function rotateStaticJoinTokenAction(): Promise<ActionResult> {
     );
     await audit(AUDIT_ACTIONS.staticJoinTokenRotated, actor, shopId, "shop", shopId);
     revalidatePath("/shop/settings");
+    revalidatePath("/shop/settings/members");
     revalidatePath("/shop/customers");
     return { message: "สร้าง QR ใหม่แล้ว — QR เดิมใช้ไม่ได้อีก" };
   } catch (e) {
@@ -151,6 +157,7 @@ export async function setMemberSignupPausedAction(
       paused,
     });
     revalidatePath("/shop/settings");
+    revalidatePath("/shop/settings/members");
     revalidatePath("/shop/customers");
     return {
       message: paused ? "หยุดรับสมาชิกใหม่ชั่วคราวแล้ว" : "เปิดรับสมาชิกใหม่แล้ว",
@@ -197,6 +204,40 @@ export async function blockMemberPhoneAction(
     await audit(AUDIT_ACTIONS.customerPhoneBlocked, actor, shopId, "customer", customerId);
     revalidatePath("/shop/customers");
     return { message: "บล็อกเบอร์นี้แล้ว" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+export type MemberSettingsState = { error?: string; message?: string };
+
+/** Save the shop's membership / anti-spam settings (owner or impersonating admin). */
+export async function updateMemberSettingsAction(
+  _prev: MemberSettingsState,
+  formData: FormData,
+): Promise<MemberSettingsState> {
+  try {
+    const { actor, shopId } = await requireShopWrite();
+    const policy = {} as MemberPolicy;
+    for (const k of MEMBER_POLICY_KEYS) {
+      const raw = String(formData.get(k) ?? "").trim();
+      if (!/^\d{1,7}$/.test(raw)) throw new Error(`ค่า ${k} ไม่ถูกต้อง`);
+      policy[k] = Number(raw);
+    }
+    const { before, after } = await new UpdateMemberSettingsUseCase(
+      container.shopRepository,
+    ).execute(shopId, {
+      policy,
+      memberOtpEnabled: formData.get("memberOtpEnabled") === "on",
+      memberSignupPaused: formData.get("memberSignupPaused") === "on",
+    });
+    await audit(AUDIT_ACTIONS.memberSettingsUpdated, actor, shopId, "shop", shopId, {
+      before,
+      after,
+    });
+    revalidatePath("/shop/settings/members");
+    revalidatePath("/shop/customers");
+    return { message: "บันทึกการตั้งค่าสมาชิกแล้ว" };
   } catch (e) {
     return { error: (e as Error).message };
   }

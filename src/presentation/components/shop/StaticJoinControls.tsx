@@ -13,7 +13,13 @@ import { useToast } from "@/src/presentation/components/ui/Toast";
 import { useConfirm } from "@/src/presentation/components/ui/ConfirmDialog";
 
 /** Rotate (revoke) the printed static QR + pause/resume new signups. */
-export function StaticJoinControls({ paused }: { paused: boolean }) {
+export function StaticJoinControls({
+  paused,
+  showPause = true,
+}: {
+  paused: boolean;
+  showPause?: boolean;
+}) {
   const t = useTranslations("shopPages");
   const toast = useToast();
   const confirm = useConfirm();
@@ -50,20 +56,22 @@ export function StaticJoinControls({ paused }: { paused: boolean }) {
         </p>
       ) : null}
       <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          disabled={pending}
-          onClick={togglePause}
-        >
-          {paused ? (
-            <PlayCircle className="size-4" />
-          ) : (
-            <PauseCircle className="size-4" />
-          )}
-          {paused ? t("staticJoinResume") : t("staticJoinPause")}
-        </Button>
+        {showPause ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={pending}
+            onClick={togglePause}
+          >
+            {paused ? (
+              <PlayCircle className="size-4" />
+            ) : (
+              <PauseCircle className="size-4" />
+            )}
+            {paused ? t("staticJoinResume") : t("staticJoinPause")}
+          </Button>
+        ) : null}
         <Button
           type="button"
           size="sm"

@@ -1,3 +1,4 @@
+import type { MemberPolicyOverrides } from "@/src/domain/services/member-policy";
 import type { Role } from "../types/roles";
 
 export type ShopStatus = "active" | "suspended_by_admin";
@@ -219,6 +220,8 @@ export interface Shop {
   memberOtpEnabled: boolean;
   /** Pause NEW static-QR member signups (existing members unaffected). */
   memberSignupPaused: boolean;
+  /** Per-shop membership policy overrides (null = default). */
+  memberPolicyOverrides: MemberPolicyOverrides;
   createdAt: string;
   updatedAt: string;
 }

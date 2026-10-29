@@ -5,6 +5,11 @@ import type { IMemberSignupGuardRepository } from "@/src/application/repositorie
 import type { Customer } from "@/src/domain/entities";
 import { normalizePhone } from "@/src/domain/services/phone";
 import {
+  DAY_MS,
+  HOUR_MS,
+  effectiveMemberPolicy,
+} from "@/src/domain/services/member-policy";
+import {
   STATIC_JOIN_POLICY,
   isPendingExpired,
   isSuspiciousPhone,
@@ -86,6 +91,9 @@ export class RegisterStaticMemberUseCase {
       );
     }
 
+    const policy = effectiveMemberPolicy(shop.memberPolicyOverrides);
+    const pendingTtlMs = policy.pendingExpiryHours * HOUR_MS;
+
     const name = displayName.trim();
     if (name.length < 1 || name.length > 80) {
       throw new Error("กรุณากรอกชื่อ 1–80 ตัวอักษร");
@@ -126,10 +134,10 @@ export class RegisterStaticMemberUseCase {
 
     if (existing?.onlineOrderRejectedAt) {
       const since = now.getTime() - new Date(existing.onlineOrderRejectedAt).getTime();
-      if (since < STATIC_JOIN_POLICY.rejectCooldownMs) {
+      if (since < policy.rejectCooldownDays * DAY_MS) {
         throw new StaticJoinError(
           "reject_cooldown",
-          "เบอร์นี้ถูกร้านปฏิเสธ ลงทะเบียนใหม่ได้หลัง 30 วัน",
+          `เบอร์นี้ถูกร้านปฏิเสธ ลงทะเบียนใหม่ได้หลัง ${policy.rejectCooldownDays} วัน`,
         );
       }
     }
@@ -137,7 +145,7 @@ export class RegisterStaticMemberUseCase {
     // Still-open pending request: just bind this device (no new request).
     if (
       existing?.onlineOrderStatus === "pending" &&
-      !isPendingExpired(existing.onlineOrderRequestedAt, now)
+      !isPendingExpired(existing.onlineOrderRequestedAt, now, pendingTtlMs)
     ) {
       const { token } = await this.devices.create(existing.id);
       return { token, customer: existing };
@@ -152,7 +160,7 @@ export class RegisterStaticMemberUseCase {
       ctx.deviceId ?? null,
       dayAgo,
     );
-    if (recent >= STATIC_JOIN_POLICY.maxSignupsPerDevicePerDay) {
+    if (recent >= policy.signupsPerDevicePerDay) {
       throw new StaticJoinError(
         "rate_limited",
         "ลงทะเบียนจากอุปกรณ์นี้บ่อยเกินไป ลองใหม่พรุ่งนี้",
@@ -160,10 +168,10 @@ export class RegisterStaticMemberUseCase {
     }
 
     const pendingCutoff = new Date(
-      now.getTime() - STATIC_JOIN_POLICY.pendingTtlMs,
+      now.getTime() - pendingTtlMs,
     ).toISOString();
     const open = await this.customers.countOpenPending(shop.id, pendingCutoff);
-    if (open >= STATIC_JOIN_POLICY.maxOpenPendingPerShop) {
+    if (open >= policy.maxPendingRequests) {
       throw new StaticJoinError(
         "queue_full",
         "ร้านมีคำขอค้างมาก ลองใหม่ภายหลัง",

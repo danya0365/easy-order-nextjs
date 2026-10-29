@@ -1,6 +1,6 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
 
-/** Anti-spam policy constants for static-QR membership (`/s/[slug]/join`). */
+/** Fixed anti-spam constants (per-shop values: member-policy.ts; these are fallbacks) for static-QR membership (`/s/[slug]/join`). */
 export const STATIC_JOIN_POLICY = {
   /** Max successful signups per device OR ip_hash per shop per 24h. */
   maxSignupsPerDevicePerDay: 3,
@@ -12,13 +12,6 @@ export const STATIC_JOIN_POLICY = {
   rejectCooldownMs: 30 * 24 * 60 * 60 * 1000,
   /** Window for "same ip_hash" / device signals in the shop queue. */
   signalWindowMs: 24 * 60 * 60 * 1000,
-} as const;
-
-/** New static-path member limits until the first completed/paid order. */
-export const NEW_MEMBER_ORDER_POLICY = {
-  maxOpenOrders: 1,
-  /** Order total cap in satang (1,000 THB). */
-  maxTotalSatang: 100_000,
 } as const;
 
 /** Random URL-safe token (24 bytes → 32 base64url chars). */
@@ -75,10 +68,8 @@ export function isSuspiciousPhone(digits: string): boolean {
 export function isPendingExpired(
   requestedAt: string | null | undefined,
   now: Date,
+  ttlMs: number = STATIC_JOIN_POLICY.pendingTtlMs,
 ): boolean {
   if (!requestedAt) return false;
-  return (
-    now.getTime() - new Date(requestedAt).getTime() >
-    STATIC_JOIN_POLICY.pendingTtlMs
-  );
+  return now.getTime() - new Date(requestedAt).getTime() > ttlMs;
 }
