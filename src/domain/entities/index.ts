@@ -250,6 +250,8 @@ export interface User {
   lineUserId: string | null;
   /** Whether TOTP two-factor is active (secret confirmed). Never exposes the secret. */
   totpEnabled: boolean;
+  /** Platform superadmin flag (platform_admin only). */
+  isSuperadmin?: boolean;
   createdAt: string;
   updatedAt: string;
 }

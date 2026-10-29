@@ -27,6 +27,9 @@ export const users = sqliteTable(
     shopId: text().references(() => shops.id, { onDelete: "cascade" }),
     branchId: text().references(() => branches.id, { onDelete: "set null" }),
     isActive: integer({ mode: "boolean" }).notNull().default(true),
+    // Superadmin (platform_admin only): cannot be suspended/demoted; only a
+    // superadmin may grant/revoke admin or superadmin. At least one must exist.
+    isSuperadmin: integer({ mode: "boolean" }).notNull().default(false),
     // LINE Messaging API push target, set once the operator links their LINE
     // (via the webhook flow). lineLinkCode is the transient code they send in
     // chat to prove ownership; cleared on successful link. lineLinkCodeExpiresAt
