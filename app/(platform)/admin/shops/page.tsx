@@ -65,10 +65,12 @@ export default async function AdminShopsPage() {
               return (
                 <li
                   key={shop.id}
-                  className="flex flex-wrap items-center justify-between gap-2 py-3"
+                  className="flex min-w-0 flex-col gap-3 py-3 lg:flex-row lg:items-start lg:justify-between"
                 >
-                  <div>
-                    <p className="font-medium text-foreground">{shop.name}</p>
+                  <div className="min-w-0">
+                    <p className="break-words font-medium text-foreground">
+                      {shop.name}
+                    </p>
                     <Link
                       href={`/s/${shop.slug}`}
                       className="text-xs text-brand-600 hover:underline"
@@ -76,89 +78,107 @@ export default async function AdminShopsPage() {
                       /s/{shop.slug}
                     </Link>
                     {owner && (
-                      <p className="text-xs text-muted">{t("ownerLabel", { email: owner.email })}</p>
+                      <p className="break-all text-xs text-muted">
+                        {t("ownerLabel", { email: owner.email })}
+                      </p>
                     )}
                   </div>
-                  <div className="flex items-start gap-2">
-                    {adminSuspended ? (
-                      <Badge tone="danger">{t("badgeAdminSuspended")}</Badge>
-                    ) : status.isPaused ? (
-                      <Badge tone="warning">{t("badgePaused")}</Badge>
-                    ) : status.isSuspended ? (
-                      <Badge tone="danger">{t("badgeOverdueSuspended")}</Badge>
-                    ) : status.state === "overdue" ? (
-                      <Badge tone="warning">{t("badgeOverdue", { days: status.daysOverdue })}</Badge>
-                    ) : (
-                      <Badge tone="success">{t("badgeNormal")}</Badge>
-                    )}
-                    {!adminSuspended && (
-                      <PauseShopToggle
-                        shopId={shop.id}
-                        paused={status.isPaused}
-                      />
-                    )}
-                    <LoyaltyAllowToggle
-                      shopId={shop.id}
-                      allowed={shop.loyaltyAllowedByAdmin}
-                    />
-                    <PromotionsAllowToggle
-                      shopId={shop.id}
-                      allowed={shop.promotionsAllowedByAdmin}
-                    />
-                    <ShopStatusToggle
-                      shopId={shop.id}
-                      adminSuspended={adminSuspended}
-                    />
-                    <form action={startImpersonationAction.bind(null, shop.id)}>
-                      <button
-                        type="submit"
-                        title={t("impersonateTitle")}
-                        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-foreground"
-                      >
-                        <Eye className="size-3.5" />
-                        {t("impersonateButton")}
-                      </button>
-                    </form>
-                    {(() => {
-                      const accts = eligibleAccounts(members[i], shop.id);
-                      const label = (id: string | null) => {
-                        const u = accts.find((a) => a.id === id);
-                        return u ? `${u.email} (${roleLabel(u.role)})` : null;
-                      };
-                      return (
-                        <OneTimeLoginLinkButton
+                  <div className="flex min-w-0 flex-col gap-2 lg:items-end">
+                    <div>
+                      {adminSuspended ? (
+                        <Badge tone="danger">{t("badgeAdminSuspended")}</Badge>
+                      ) : status.isPaused ? (
+                        <Badge tone="warning">{t("badgePaused")}</Badge>
+                      ) : status.isSuspended ? (
+                        <Badge tone="danger">
+                          {t("badgeOverdueSuspended")}
+                        </Badge>
+                      ) : status.state === "overdue" ? (
+                        <Badge tone="warning">
+                          {t("badgeOverdue", { days: status.daysOverdue })}
+                        </Badge>
+                      ) : (
+                        <Badge tone="success">{t("badgeNormal")}</Badge>
+                      )}
+                    </div>
+                    <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-start sm:justify-start lg:justify-end [&>button]:w-full [&>button]:justify-center [&>button]:whitespace-nowrap [&>form>button]:w-full [&>form>button]:justify-center [&>form>button]:whitespace-nowrap [&>div>button]:w-full [&>div>button]:justify-center [&>div>button]:whitespace-nowrap [&>div]:items-stretch sm:[&>button]:w-auto sm:[&>form>button]:w-auto sm:[&>div>button]:w-auto sm:[&>div]:items-end">
+                      {!adminSuspended && (
+                        <PauseShopToggle
                           shopId={shop.id}
-                          accounts={accts.map((u) => ({ id: u.id, label: label(u.id)! }))}
-                          activeLinks={activeLinks
-                            .filter((l) => l.shopId === shop.id)
-                            .map((l) => ({
-                              id: l.id,
-                              expiresAt: l.expiresAt,
-                              target: label(l.targetUserId),
-                            }))}
+                          paused={status.isPaused}
                         />
-                      );
-                    })()}
-                    {owner && (
-                      <>
-                        <ShopHandoffButton shopId={shop.id} />
-                        <ResetPasswordControl kind="owner" userId={owner.id} />
-                        <ConfirmSubmitButton
-                          action={async () => {
-                            "use server";
-                            await forceLogoutUserAction(owner.id);
-                          }}
-                          title={t("forceLogoutTitle")}
-                          message={t("forceLogoutOwnerMessage")}
-                          confirmLabel={t("forceLogoutConfirm")}
-                          buttonTitle={t("forceLogoutButtonTitle")}
-                          className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-error"
+                      )}
+                      <LoyaltyAllowToggle
+                        shopId={shop.id}
+                        allowed={shop.loyaltyAllowedByAdmin}
+                      />
+                      <PromotionsAllowToggle
+                        shopId={shop.id}
+                        allowed={shop.promotionsAllowedByAdmin}
+                      />
+                      <ShopStatusToggle
+                        shopId={shop.id}
+                        adminSuspended={adminSuspended}
+                      />
+                      <form
+                        action={startImpersonationAction.bind(null, shop.id)}
+                      >
+                        <button
+                          type="submit"
+                          title={t("impersonateTitle")}
+                          className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-foreground"
                         >
-                          <LogOut className="size-3.5" />
-                          {t("kickOut")}
-                        </ConfirmSubmitButton>
-                      </>
-                    )}
+                          <Eye className="size-3.5" />
+                          {t("impersonateButton")}
+                        </button>
+                      </form>
+                      {(() => {
+                        const accts = eligibleAccounts(members[i], shop.id);
+                        const label = (id: string | null) => {
+                          const u = accts.find((a) => a.id === id);
+                          return u ? `${u.email} (${roleLabel(u.role)})` : null;
+                        };
+                        return (
+                          <OneTimeLoginLinkButton
+                            shopId={shop.id}
+                            accounts={accts.map((u) => ({
+                              id: u.id,
+                              label: label(u.id)!,
+                            }))}
+                            activeLinks={activeLinks
+                              .filter((l) => l.shopId === shop.id)
+                              .map((l) => ({
+                                id: l.id,
+                                expiresAt: l.expiresAt,
+                                target: label(l.targetUserId),
+                              }))}
+                          />
+                        );
+                      })()}
+                      {owner && (
+                        <>
+                          <ShopHandoffButton shopId={shop.id} />
+                          <ResetPasswordControl
+                            kind="owner"
+                            userId={owner.id}
+                          />
+                          <ConfirmSubmitButton
+                            action={async () => {
+                              "use server";
+                              await forceLogoutUserAction(owner.id);
+                            }}
+                            title={t("forceLogoutTitle")}
+                            message={t("forceLogoutOwnerMessage")}
+                            confirmLabel={t("forceLogoutConfirm")}
+                            buttonTitle={t("forceLogoutButtonTitle")}
+                            className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-error"
+                          >
+                            <LogOut className="size-3.5" />
+                            {t("kickOut")}
+                          </ConfirmSubmitButton>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </li>
               );
