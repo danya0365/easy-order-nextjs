@@ -69,7 +69,18 @@ const nextConfig: NextConfig = {
     },
   },
   async headers() {
-    return [{ source: "/:path*", headers: SECURITY_HEADERS }];
+    return [
+      { source: "/:path*", headers: SECURITY_HEADERS },
+      // One-time login links carry a secret in the query string.
+      {
+        source: "/login/one-time",
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          { key: "Cache-Control", value: "no-store" },
+        ],
+      },
+    ];
   },
   // Allow the dev server's own assets/HMR to be requested from the phone's LAN URL.
   allowedDevOrigins: lanDevOrigins(),

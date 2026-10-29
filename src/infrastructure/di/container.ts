@@ -58,6 +58,8 @@ import type { ILoyaltyPointsSettingsRepository } from "@/src/application/reposit
 import type { ILoyaltyPointsBalanceRepository } from "@/src/application/repositories/ILoyaltyPointsBalanceRepository";
 import type { ILoyaltyPointsTransactionRepository } from "@/src/application/repositories/ILoyaltyPointsTransactionRepository";
 import type { ILoyaltyPointsRewardRepository } from "@/src/application/repositories/ILoyaltyPointsRewardRepository";
+import { DrizzleAdminLoginLinkRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleAdminLoginLinkRepository";
+import type { IAdminLoginLinkRepository } from "@/src/application/repositories/IAdminLoginLinkRepository";
 import { DrizzleMemberSignupGuardRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMemberSignupGuardRepository";
 import type { IMemberSignupGuardRepository } from "@/src/application/repositories/IMemberSignupGuardRepository";
 import type { IShopPromotionRepository } from "@/src/application/repositories/IShopPromotionRepository";
@@ -125,6 +127,8 @@ class Container extends GenericContainer {
     new DrizzleShopPromotionRepository();
   readonly memberSignupGuardRepository: IMemberSignupGuardRepository =
     new DrizzleMemberSignupGuardRepository();
+  readonly adminLoginLinkRepository: IAdminLoginLinkRepository =
+    new DrizzleAdminLoginLinkRepository();
 }
 
 const globalForContainer = globalThis as unknown as {
