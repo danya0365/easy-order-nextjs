@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { container } from "@/src/infrastructure/di/container";
 import { requireShopWrite } from "@/src/infrastructure/auth/session";
 import { AnonymizeCustomerUseCase } from "@/src/application/use-cases/customer/AnonymizeCustomerUseCase";
+import { ApproveOnlineMemberUseCase } from "@/src/application/use-cases/member/ApproveOnlineMemberUseCase";
+import { RejectOnlineMemberUseCase } from "@/src/application/use-cases/member/RejectOnlineMemberUseCase";
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
 import { getClientIp } from "@/src/presentation/lib/request-ip";
 
@@ -22,8 +24,6 @@ export async function anonymizeCustomerAction(
       container.customerRepository,
       container.customerDeviceRepository,
     ).execute(shopId, customerId);
-    // Accountability: attribute the irreversible erasure to the real actor
-    // (the admin themselves when impersonating, not the shop).
     await container.auditLogger.record({
       actorUserId: actor.id,
       actorRole: actor.role,
@@ -35,6 +35,58 @@ export async function anonymizeCustomerAction(
     });
     revalidatePath("/shop/customers");
     return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+export async function approveOnlineMemberAction(
+  customerId: string,
+): Promise<{ error?: string; message?: string }> {
+  try {
+    const { actor, shopId } = await requireShopWrite();
+    await new ApproveOnlineMemberUseCase(container.customerRepository).execute(
+      shopId,
+      customerId,
+      actor.id,
+    );
+    await container.auditLogger.record({
+      actorUserId: actor.id,
+      actorRole: actor.role,
+      action: AUDIT_ACTIONS.customerOnlineApproved,
+      targetType: "customer",
+      targetId: customerId,
+      shopId,
+      ip: await getClientIp(),
+    });
+    revalidatePath("/shop/customers");
+    return { message: "อนุมัติสมาชิกสำเร็จ" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+export async function rejectOnlineMemberAction(
+  customerId: string,
+): Promise<{ error?: string; message?: string }> {
+  try {
+    const { actor, shopId } = await requireShopWrite();
+    await new RejectOnlineMemberUseCase(container.customerRepository).execute(
+      shopId,
+      customerId,
+      actor.id,
+    );
+    await container.auditLogger.record({
+      actorUserId: actor.id,
+      actorRole: actor.role,
+      action: AUDIT_ACTIONS.customerOnlineRejected,
+      targetType: "customer",
+      targetId: customerId,
+      shopId,
+      ip: await getClientIp(),
+    });
+    revalidatePath("/shop/customers");
+    return { message: "ปฏิเสธคำขอสมาชิกแล้ว" };
   } catch (e) {
     return { error: (e as Error).message };
   }

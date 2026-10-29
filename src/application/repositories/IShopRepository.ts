@@ -27,6 +27,8 @@ export interface UpdateShopSettingsInput {
   spendPointsEnabled?: boolean;
   /** Promotions module (mirrors loyalty gates). */
   promotionsEnabled?: boolean;
+  /** Shop toggle for OTP verification on static member registration. Default false. */
+  memberOtpEnabled?: boolean;
 }
 
 export interface IShopRepository {

@@ -35,6 +35,7 @@ function toShop(r: Row): Shop {
     promotionsEnabled: r.promotionsEnabled,
     stampCardEnabled: r.stampCardEnabled,
     spendPointsEnabled: r.spendPointsEnabled,
+    memberOtpEnabled: r.memberOtpEnabled,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
@@ -121,6 +122,9 @@ export class DrizzleShopRepository implements IShopRepository {
           : {}),
         ...(input.spendPointsEnabled !== undefined
           ? { spendPointsEnabled: input.spendPointsEnabled }
+          : {}),
+        ...(input.memberOtpEnabled !== undefined
+          ? { memberOtpEnabled: input.memberOtpEnabled }
           : {}),
       })
       .where(eq(schema.shops.id, id))

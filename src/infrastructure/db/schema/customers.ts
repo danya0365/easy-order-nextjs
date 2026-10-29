@@ -23,6 +23,10 @@ export const customers = sqliteTable(
       .notNull()
       .unique()
       .$defaultFn(() => nanoid(12)),
+    onlineOrderStatus: text().notNull().default("none"),
+    onlineOrderRequestedAt: text(),
+    onlineOrderReviewedAt: text(),
+    onlineOrderReviewedBy: text(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

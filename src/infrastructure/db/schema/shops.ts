@@ -48,6 +48,8 @@ export const shops = sqliteTable(
     // Per-kind toggles (only meaningful when the module is effective).
     stampCardEnabled: integer({ mode: "boolean" }).notNull().default(false),
     spendPointsEnabled: integer({ mode: "boolean" }).notNull().default(false),
+    // Shop toggle for membership OTP verification (default OFF — no SMS cost yet).
+    memberOtpEnabled: integer({ mode: "boolean" }).notNull().default(false),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

@@ -13,6 +13,7 @@ import { ShopImagesManager } from "@/src/presentation/components/shop/ShopImages
 import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopControl";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { OrderAccessQrCard } from "@/src/presentation/components/shop/OrderAccessQrCard";
+import { StaticJoinQrCard } from "@/src/presentation/components/shop/StaticJoinQrCard";
 import { LoyaltyModuleForm } from "@/src/presentation/components/loyalty/LoyaltyModuleForm";
 import { PromotionsModuleForm } from "@/src/presentation/components/promotions/PromotionsModuleForm";
 import { SettingsTabs } from "@/src/presentation/components/settings/SettingsTabs";
@@ -69,6 +70,12 @@ export default async function ShopSettingsPage() {
     return renderQrDataUrl(url);
   })();
 
+  const staticJoinQr = await (async () => {
+    if (!shop.onlineOrderingEnabled) return null;
+    const url = `${await getBaseUrl()}/s/${shop.slug}/join`;
+    return renderQrDataUrl(url);
+  })();
+
   const tabs = [
     {
       id: "shop",
@@ -92,6 +99,7 @@ export default async function ShopSettingsPage() {
               deliveryFeeSatang={shop.deliveryFeeSatang}
               deliveryNotes={shop.deliveryNotes}
               minOrderSatang={shop.minOrderSatang}
+              memberOtpEnabled={shop.memberOtpEnabled}
             />
             <p className="mt-3 text-xs text-muted">{t("kioskPromptpayHint")}</p>
           </Card>
@@ -104,6 +112,19 @@ export default async function ShopSettingsPage() {
               />
               <OrderAccessQrCard
                 qrDataUrl={orderAccessQr}
+                shopName={shop.name}
+              />
+            </Card>
+          )}
+
+          {staticJoinQr && (
+            <Card>
+              <CardHeader
+                title={t("staticJoinQrTitle")}
+                subtitle={t("staticJoinQrSubtitle")}
+              />
+              <StaticJoinQrCard
+                qrDataUrl={staticJoinQr}
                 shopName={shop.name}
               />
             </Card>

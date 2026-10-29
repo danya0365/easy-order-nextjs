@@ -12,6 +12,8 @@ export interface UpdateSettingsInput {
   deliveryFeeSatang?: number;
   deliveryNotes?: string | null;
   minOrderSatang?: number | null;
+  /** Shop toggle for OTP verification on static member registration. Default false. */
+  memberOtpEnabled?: boolean;
 }
 
 /** Update the shop's display name, category, PromptPay target (order QR) and online-order settings. */
@@ -29,6 +31,7 @@ export class UpdateShopSettingsUseCase {
       deliveryFeeSatang?: number;
       deliveryNotes?: string | null;
       minOrderSatang?: number | null;
+      memberOtpEnabled?: boolean;
     } = {};
 
     if (input.categoryId !== undefined) {
@@ -87,6 +90,9 @@ export class UpdateShopSettingsUseCase {
         throw new Error("ยอดขั้นต่ำต้องเป็นตัวเลขที่ไม่ติดลบ");
       }
       patch.minOrderSatang = min;
+    }
+    if (input.memberOtpEnabled !== undefined) {
+      patch.memberOtpEnabled = input.memberOtpEnabled;
     }
 
     return this.shops.updateSettings(shopId, patch);

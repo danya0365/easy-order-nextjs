@@ -168,6 +168,7 @@ export async function updateSettingsAction(
         numOrNull(minOrderRaw) === null
           ? null
           : bahtToSatang(numOrNull(minOrderRaw)!),
+      memberOtpEnabled: formData.get("memberOtpEnabled") === "on",
     });
     revalidatePath("/shop/settings");
     return { success: "บันทึกการตั้งค่าแล้ว" };

@@ -1,6 +1,8 @@
 import type { Customer } from "@/src/domain/entities";
 import type { Page, PageOpts } from "./pagination";
 
+export type OnlineOrderStatus = "none" | "pending" | "approved" | "rejected";
+
 export interface ICustomerRepository {
   /** Resolve a customer by id, scoped to the shop (returns null cross-tenant). */
   findById(shopId: string, id: string): Promise<Customer | null>;
@@ -25,4 +27,20 @@ export interface ICustomerRepository {
     shopId: string,
     opts?: PageOpts & { search?: string },
   ): Promise<Page<Customer>>;
+  /** Customers awaiting shop approval for online ordering. */
+  listPendingOnlineOrder(shopId: string): Promise<Customer[]>;
+  /** Mark membership request as pending (static join register). */
+  requestOnlineOrderMembership(
+    shopId: string,
+    customerId: string,
+    nowIso: string,
+  ): Promise<Customer | null>;
+  /** Approve or reject a pending online-order membership. */
+  setOnlineOrderStatus(
+    shopId: string,
+    customerId: string,
+    status: "approved" | "rejected",
+    reviewedBy: string,
+    nowIso: string,
+  ): Promise<Customer | null>;
 }
