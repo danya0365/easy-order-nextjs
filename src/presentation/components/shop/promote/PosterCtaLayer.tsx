@@ -79,7 +79,7 @@ export function PosterCtaLayer({
         style={{ fontSize: px(24), gap: px(8), lineHeight: 1.2 }}
       >
         <ScanLine style={{ width: px(26), height: px(26) }} />
-        {t("ctaScanLine")}
+        {t(seed.qrMode === "join" ? "ctaScanJoinLine" : "ctaScanLine")}
       </p>
       <p
         className="break-all text-muted"

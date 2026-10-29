@@ -6,7 +6,7 @@ import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
 import { getBaseUrl } from "@/src/presentation/lib/base-url";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { PromoStudio } from "@/src/presentation/components/shop/promote/PromoStudio";
-import type { PromoSeedData } from "@/src/presentation/components/shop/promote/types";
+import type { PromoPageSeed } from "@/src/presentation/components/shop/promote/types";
 
 export const dynamic = "force-dynamic";
 
@@ -16,10 +16,19 @@ export default async function ShopPromotePage() {
   const shop = await container.shopRepository.findById(shopId);
   if (!shop) return null;
 
-  // QR points at the public shop page (where customers see the shop + can find
-  // its in-store ordering). Already a data URL.
-  const publicUrl = `${await getBaseUrl()}/s/${shop.slug}`;
-  const qrDataUrl = await renderQrDataUrl(publicUrl);
+  // Two QR options: the public shop page, and (when static join is on) the
+  // shop's permanent join QR that lets customers sign up + order online.
+  const baseUrl = await getBaseUrl();
+  const publicUrl = `${baseUrl}/s/${shop.slug}`;
+  const shopQrDataUrl = await renderQrDataUrl(publicUrl);
+  const joinQrDataUrl = await (async () => {
+    if (!shop.onlineOrderingEnabled) return null;
+    const k = await container.shopRepository.getStaticJoinToken(shop.id);
+    if (!k) return null;
+    return renderQrDataUrl(
+      `${baseUrl}/s/${shop.slug}/join?k=${encodeURIComponent(k)}`,
+    );
+  })();
 
   // Inline the profile image as a data URL so html-to-image can draw it onto a
   // canvas at export time without tainting it (the public image route sets no
@@ -34,10 +43,11 @@ export default async function ShopPromotePage() {
     }
   }
 
-  const seed: PromoSeedData = {
+  const seed: PromoPageSeed = {
     shopName: shop.name,
     publicUrl,
-    qrDataUrl,
+    shopQrDataUrl,
+    joinQrDataUrl,
     profileImageDataUrl,
   };
 
