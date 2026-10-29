@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { createContext, useContext, useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, StickyNote } from "lucide-react";
 
 import type {
   OrderChannel,
@@ -64,14 +65,19 @@ function OrderBadges({ order }: { order: OrderWithItems }) {
 
 const AUTO_REFRESH_MS = 15_000;
 
+/** customerId -> shop-internal CRM note, shown as a badge on order cards. */
+const CustomerNotesCtx = createContext<Record<string, string>>({});
+
 export function OrderQueue({
   activeOrders,
   historyInitial,
   historyCursor,
+  customerNotes = {},
 }: {
   activeOrders: OrderWithItems[];
   historyInitial: OrderWithItems[];
   historyCursor: string | null;
+  customerNotes?: Record<string, string>;
 }) {
   const t = useTranslations("order");
   const router = useRouter();
@@ -86,6 +92,7 @@ export function OrderQueue({
     activeOrders.filter((o) => o.status === s);
 
   return (
+    <CustomerNotesCtx.Provider value={customerNotes}>
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs text-muted">{t("autoRefreshHint")}</p>
@@ -122,6 +129,7 @@ export function OrderQueue({
         initialCursor={historyCursor}
       />
     </div>
+    </CustomerNotesCtx.Provider>
   );
 }
 
@@ -138,6 +146,8 @@ function cap(s: string): string {
 
 function OrderCard({ order }: { order: OrderWithItems }) {
   const t = useTranslations("order");
+  const notesMap = useContext(CustomerNotesCtx);
+  const customerNote = order.customerId ? notesMap[order.customerId] : undefined;
   const router = useRouter();
   const toast = useToast();
   const confirm = useConfirm();
@@ -226,6 +236,16 @@ function OrderCard({ order }: { order: OrderWithItems }) {
             .filter(Boolean)
             .join(" · ")}
         </p>
+      )}
+
+      {customerNote && order.customerId && (
+        <Link
+          href={`/shop/customers/${order.customerId}`}
+          className="mt-2 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+        >
+          <StickyNote className="mt-0.5 size-4 shrink-0" />
+          <span className="min-w-0 break-words">{customerNote}</span>
+        </Link>
       )}
 
       {order.deliveryAddress && (

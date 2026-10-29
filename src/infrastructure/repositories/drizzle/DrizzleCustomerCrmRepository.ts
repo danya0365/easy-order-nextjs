@@ -1,14 +1,18 @@
 import "server-only";
 
-import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
-import type { ICustomerCrmRepository } from "@/src/application/repositories/ICustomerCrmRepository";
+import type { CustomerDetailStats, ICustomerCrmRepository } from "@/src/application/repositories/ICustomerCrmRepository";
 import type { CrmCustomerRow } from "@/src/domain/services/customer-crm";
 import { parseTags } from "./DrizzleCustomerRepository";
 
 const c = schema.customers;
 const o = schema.orders;
 const b = schema.loyaltyPointsBalances;
+const oi = schema.orderItems;
+const tx = schema.loyaltyPointsTransactions;
+const al = schema.auditLogs;
+const live = sql`${o.status} <> 'cancelled'`;
 
 export class DrizzleCustomerCrmRepository implements ICustomerCrmRepository {
   async listWithStats(shopId: string): Promise<CrmCustomerRow[]> {
@@ -111,5 +115,107 @@ export class DrizzleCustomerCrmRepository implements ICustomerCrmRepository {
       .where(and(eq(c.shopId, shopId), inArray(c.id, ids), isNotNull(c.note)));
     for (const r of rows) if (r.note?.trim()) m.set(r.id, r.note.trim());
     return m;
+  }
+
+  async detailStats(shopId: string, customerId: string): Promise<CustomerDetailStats> {
+    const scope = and(eq(o.shopId, shopId), eq(o.customerId, customerId), live);
+    const [[agg], split, top] = await Promise.all([
+      db
+        .select({
+          n: sql<number>`count(*)`,
+          spend: sql<number>`coalesce(sum(${o.totalSatang}), 0)`,
+          first: sql<string | null>`min(${o.createdAt})`,
+          last: sql<string | null>`max(${o.createdAt})`,
+        })
+        .from(o)
+        .where(scope),
+      db.select({ f: o.fulfillmentType, n: sql<number>`count(*)` }).from(o).where(scope).groupBy(o.fulfillmentType),
+      db
+        .select({ name: oi.nameSnapshot, q: sql<number>`sum(${oi.quantity})` })
+        .from(oi)
+        .innerJoin(o, eq(oi.orderId, o.id))
+        .where(and(eq(oi.shopId, shopId), scope))
+        .groupBy(oi.nameSnapshot)
+        .orderBy(desc(sql`sum(${oi.quantity})`))
+        .limit(3),
+    ]);
+    const n = Number(agg?.n ?? 0);
+    const spend = Number(agg?.spend ?? 0);
+    const fulfillment = { pickup: 0, delivery: 0, dine_in: 0 };
+    for (const r of split) if (r.f in fulfillment) fulfillment[r.f as keyof typeof fulfillment] = Number(r.n);
+    return {
+      orderCount: n,
+      totalSpendSatang: spend,
+      avgTicketSatang: n ? Math.round(spend / n) : 0,
+      firstOrderAt: agg?.first ?? null,
+      lastOrderAt: agg?.last ?? null,
+      fulfillment,
+      topItems: top.map((t) => ({ name: t.name, quantity: Number(t.q) })),
+    };
+  }
+
+  async pageOrders(shopId: string, customerId: string, page: number, size: number) {
+    const scope = and(eq(o.shopId, shopId), eq(o.customerId, customerId));
+    const p = Math.max(1, Math.floor(page) || 1);
+    const [items, [cnt]] = await Promise.all([
+      db
+        .select({
+          id: o.id,
+          orderNo: o.orderNo,
+          createdAt: o.createdAt,
+          status: o.status,
+          paymentStatus: o.paymentStatus,
+          fulfillmentType: o.fulfillmentType,
+          totalSatang: o.totalSatang,
+        })
+        .from(o)
+        .where(scope)
+        .orderBy(desc(o.createdAt))
+        .limit(size)
+        .offset((p - 1) * size),
+      db.select({ n: sql<number>`count(*)` }).from(o).where(scope),
+    ]);
+    return { items, total: Number(cnt?.n ?? 0) };
+  }
+
+  async deliveryAddresses(shopId: string, customerId: string, limit = 5) {
+    const rows = await db
+      .select({ address: o.deliveryAddress, last: sql<string>`max(${o.createdAt})`, n: sql<number>`count(*)` })
+      .from(o)
+      .where(and(eq(o.shopId, shopId), eq(o.customerId, customerId), isNotNull(o.deliveryAddress)))
+      .groupBy(o.deliveryAddress)
+      .orderBy(desc(sql`max(${o.createdAt})`))
+      .limit(limit);
+    return rows
+      .filter((r) => r.address?.trim())
+      .map((r) => ({ address: r.address!, lastUsedAt: r.last, count: Number(r.n) }));
+  }
+
+  async ledger(shopId: string, customerId: string, limit = 50) {
+    return db
+      .select({ id: tx.id, type: tx.type, quantity: tx.quantity, note: tx.note, orderId: tx.orderId, createdAt: tx.createdAt })
+      .from(tx)
+      .where(and(eq(tx.shopId, shopId), eq(tx.customerId, customerId)))
+      .orderBy(desc(tx.createdAt))
+      .limit(limit);
+  }
+
+  async adjustBalance(shopId: string, customerId: string, delta: number) {
+    await db.insert(b).values({ shopId, customerId }).onConflictDoNothing();
+    const r = await db
+      .update(b)
+      .set({ currentPoints: sql`${b.currentPoints} + ${delta}`, updatedAt: new Date().toISOString() })
+      .where(and(eq(b.shopId, shopId), eq(b.customerId, customerId), sql`${b.currentPoints} + ${delta} >= 0`))
+      .returning({ p: b.currentPoints });
+    return r.length ? Number(r[0].p) : null;
+  }
+
+  async timeline(shopId: string, customerId: string, limit = 50) {
+    return db
+      .select({ id: al.id, action: al.action, actorUserId: al.actorUserId, metadata: al.metadata, createdAt: al.createdAt })
+      .from(al)
+      .where(and(eq(al.shopId, shopId), eq(al.targetType, "customer"), eq(al.targetId, customerId)))
+      .orderBy(desc(al.createdAt))
+      .limit(limit);
   }
 }

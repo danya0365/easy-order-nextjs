@@ -1,3 +1,4 @@
+import type { ILoyaltyPointsTransactionRepository } from "@/src/application/repositories/ILoyaltyPointsTransactionRepository";
 import type { ICustomerRepository } from "@/src/application/repositories/ICustomerRepository";
 import type { ICustomerCrmRepository } from "@/src/application/repositories/ICustomerCrmRepository";
 import type { IMemberSignupGuardRepository } from "@/src/application/repositories/IMemberSignupGuardRepository";
@@ -71,5 +72,44 @@ export class BulkCustomerUseCase {
     const uc = new BlockCustomerUseCase(this.customers, this.crm, this.guard);
     for (const id of own) await uc.block(shopId, id, actorId);
     return { done: own, skipped: foreign };
+  }
+}
+
+export const POINTS_ADJUST_MAX = 100_000;
+
+/** Manual +/- points with a required reason; never drives the balance below 0. */
+export class AdjustCustomerPointsUseCase {
+  constructor(
+    private readonly customers: ICustomerRepository,
+    private readonly crm: ICustomerCrmRepository,
+    private readonly transactions: ILoyaltyPointsTransactionRepository,
+  ) {}
+
+  async execute(input: {
+    shopId: string;
+    customerId: string;
+    delta: number;
+    reason: string;
+    actorId: string;
+  }): Promise<number> {
+    const delta = Number(input.delta);
+    if (!Number.isInteger(delta) || delta === 0 || Math.abs(delta) > POINTS_ADJUST_MAX) {
+      throw new Error("จำนวนแต้มไม่ถูกต้อง");
+    }
+    const reason = input.reason.trim();
+    if (reason.length < 2 || reason.length > 200) throw new Error("กรุณาระบุเหตุผล (2-200 ตัวอักษร)");
+    const c = await this.customers.findById(input.shopId, input.customerId);
+    if (!c) throw new Error("ไม่พบลูกค้า");
+    const next = await this.crm.adjustBalance(input.shopId, c.id, delta);
+    if (next === null) throw new Error("แต้มคงเหลือไม่พอ");
+    await this.transactions.create({
+      shopId: input.shopId,
+      customerId: c.id,
+      type: "adjust",
+      quantity: delta,
+      performedBy: input.actorId,
+      note: reason,
+    });
+    return next;
   }
 }
