@@ -134,7 +134,14 @@
     "comingSoon": "เร็วๆ นี้",
     "loginWithProvider": "เข้าสู่ระบบด้วย {provider}",
     "loginContactHelp": "มีปัญหาในการเข้าสู่ระบบ? ติดต่อผู้ดูแล",
-    "seeTutorial": "ดูวิธีใช้งาน"
+    "seeTutorial": "ดูวิธีใช้งาน",
+    "oneTimeTitle": "เข้าสู่ระบบร้าน {shop}",
+    "oneTimeDesc": "เลือกบัญชีที่ต้องการเข้าสู่ระบบ",
+    "oneTimeRoleOwner": "เจ้าของร้าน",
+    "oneTimeRoleStaff": "พนักงานสาขา",
+    "oneTimeSingleUseNote": "ลิงก์นี้ใช้ได้ครั้งเดียว เมื่อเข้าสู่ระบบแล้วลิงก์จะใช้ไม่ได้อีก",
+    "oneTimeInvalidTitle": "ลิงก์ใช้ไม่ได้",
+    "oneTimeInvalidDesc": "ลิงก์ไม่ถูกต้อง หมดอายุ ถูกยกเลิก หรือถูกใช้ไปแล้ว กรุณาขอลิงก์ใหม่จากผู้ดูแลระบบ"
   },
   "billing": {
     "badgePopular": "ยอดนิยม",
@@ -487,7 +494,22 @@
     "settingsSuspensionHint": "ปิด = เตือนอย่างเดียว ร้านยังใช้ได้ · เปิด = ระงับเมื่อค้างชำระเกินกำหนด",
     "settingsSaving": "กำลังบันทึก…",
     "settingsSave": "บันทึก",
-    "halalOnlyCreateHint": "Easy Order รับเฉพาะร้านอาหารฮาลาล — เมนูต้องเป็นฮาลาลเท่านั้น"
+    "halalOnlyCreateHint": "Easy Order รับเฉพาะร้านอาหารฮาลาล — เมนูต้องเป็นฮาลาลเท่านั้น",
+    "otlButton": "สร้างลิงก์ login ครั้งเดียว",
+    "otlExpiry": "หมดอายุใน",
+    "otlExpiry15m": "15 นาที",
+    "otlExpiry1h": "1 ชั่วโมง",
+    "otlExpiry24h": "24 ชั่วโมง",
+    "otlAccount": "บัญชี",
+    "otlAccountAny": "ให้เลือกตอนเปิดลิงก์",
+    "otlCreate": "สร้างลิงก์",
+    "otlShownOnce": "ลิงก์นี้แสดงครั้งเดียว คัดลอกเก็บไว้ตอนนี้",
+    "otlExpiresAt": "หมดอายุ {at}",
+    "otlCopy": "คัดลอก",
+    "otlCopied": "คัดลอกแล้ว",
+    "otlActive": "ลิงก์ที่ยังใช้ได้",
+    "otlNoActive": "ไม่มีลิงก์ที่ยังใช้ได้",
+    "otlRevoke": "ยกเลิก"
   },
   "layout": {
     "navDashboard": "แดชบอร์ด",

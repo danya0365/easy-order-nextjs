@@ -144,7 +144,22 @@
     "settingsSuspensionHint": "Off = warning only, shops keep working · On = suspend overdue shops",
     "settingsSaving": "Saving…",
     "settingsSave": "Save",
-    "halalOnlyCreateHint": "Easy Order accepts Halal restaurants only — menus must be Halal"
+    "halalOnlyCreateHint": "Easy Order accepts Halal restaurants only — menus must be Halal",
+    "otlButton": "One-time login link",
+    "otlExpiry": "Expires in",
+    "otlExpiry15m": "15 minutes",
+    "otlExpiry1h": "1 hour",
+    "otlExpiry24h": "24 hours",
+    "otlAccount": "Account",
+    "otlAccountAny": "Choose when opening",
+    "otlCreate": "Create link",
+    "otlShownOnce": "This link is shown only once — copy it now",
+    "otlExpiresAt": "Expires {at}",
+    "otlCopy": "Copy",
+    "otlCopied": "Copied",
+    "otlActive": "Active links",
+    "otlNoActive": "No active links",
+    "otlRevoke": "Revoke"
   },
   "adminPages": {
     "settingsTitle": "Platform settings",
@@ -342,5 +357,14 @@
     "recommended": "Recommended",
     "notRecommended": "Not recommended",
     "halalOnlyHint": "This platform accepts Halal shops and menus only — no pork, ham, bacon, or alcohol"
+  },
+  "auth": {
+    "oneTimeTitle": "Sign in to {shop}",
+    "oneTimeDesc": "Choose the account to sign in as",
+    "oneTimeRoleOwner": "Shop owner",
+    "oneTimeRoleStaff": "Branch staff",
+    "oneTimeSingleUseNote": "This link works once; it stops working after you sign in.",
+    "oneTimeInvalidTitle": "Link unavailable",
+    "oneTimeInvalidDesc": "This link is invalid, expired, revoked or already used. Ask the platform admin for a new one."
   }
 }
