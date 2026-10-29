@@ -24,6 +24,7 @@ export function CustomerDetailActions({
   newMemberCleared,
   showNewMember,
   rewards,
+  perms,
 }: {
   customerId: string;
   phone: string;
@@ -34,6 +35,7 @@ export function CustomerDetailActions({
   newMemberCleared: boolean;
   showNewMember: boolean;
   rewards: { id: string; name: string; pointsCost: number }[];
+  perms: Record<"editName" | "note" | "tags" | "points" | "redeem" | "block" | "newMember" | "resetDevices" | "pdpa", boolean>;
 }) {
   const t = useTranslations("customerDetail");
   const toast = useToast();
@@ -76,7 +78,7 @@ export function CustomerDetailActions({
         <h2 className="text-sm font-semibold text-foreground">{t("editProfile")}</h2>
         <label className="flex flex-col gap-1 text-sm">
           {t("name")}
-          <input className={field} value={name} maxLength={100} onChange={(e) => setName(e.target.value)} />
+          <input className={field} value={name} maxLength={100} disabled={!perms.editName} onChange={(e) => setName(e.target.value)} />
         </label>
         <label className="flex flex-col gap-1 text-sm">
           {t("note")}
@@ -88,6 +90,7 @@ export function CustomerDetailActions({
         </Button>
       </Card>
 
+      {perms.tags && (
       <Card className="flex flex-col gap-3">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <Tag className="size-4" />
@@ -131,9 +134,12 @@ export function CustomerDetailActions({
           </Button>
         </form>
       </Card>
+      )}
 
+      {(perms.points || (perms.redeem && rewards.length > 0)) && (
       <Card className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold text-foreground">{t("adjustPoints")}</h2>
+        {perms.points && (<>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-[8rem_1fr]">
           <input className={field} type="number" inputMode="numeric" step={1} placeholder="+10 / -10" value={delta} onChange={(e) => setDelta(e.target.value)} />
           <input className={field} value={reason} maxLength={200} placeholder={t("reasonRequired")} onChange={(e) => setReason(e.target.value)} />
@@ -146,7 +152,8 @@ export function CustomerDetailActions({
         >
           {t("applyAdjust")}
         </Button>
-        {rewards.length > 0 && (
+        </>)}
+        {perms.redeem && rewards.length > 0 && (
           <div className="flex flex-col gap-2 border-t border-border pt-3 sm:flex-row">
             <select className={field} value={rewardId} onChange={(e) => setRewardId(e.target.value)}>
               {rewards.map((r) => (
@@ -163,14 +170,16 @@ export function CustomerDetailActions({
         )}
       </Card>
 
+      )}
+
       <Card className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold text-foreground">{t("accountActions")}</h2>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <a href={`tel:${phone}`} className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+          {phone && <a href={`tel:${phone}`} className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
             <Phone className="size-4" />
             {t("call")}
-          </a>
-          {blocked ? (
+          </a>}
+          {perms.block && (blocked ? (
             <Button size="sm" variant="outline" disabled={pending} onClick={() => guarded(t("unblock"), t("unblockConfirm"), { op: "unblock" }, t("saved"), false)}>
               <UserCheck className="size-4" />
               {t("unblock")}
@@ -180,8 +189,8 @@ export function CustomerDetailActions({
               <Ban className="size-4" />
               {t("block")}
             </Button>
-          )}
-          {showNewMember && (
+          ))}
+          {showNewMember && perms.newMember && (
             <Button
               size="sm"
               variant="outline"
@@ -196,15 +205,16 @@ export function CustomerDetailActions({
               {newMemberCleared ? t("restoreNewMember") : t("clearNewMember")}
             </Button>
           )}
-          <Button size="sm" variant="outline" disabled={pending} onClick={() => guarded(t("resetDevices"), t("resetDevicesConfirm"), { op: "resetDevices" }, t("devicesReset"))}>
+          {perms.resetDevices && <Button size="sm" variant="outline" disabled={pending} onClick={() => guarded(t("resetDevices"), t("resetDevicesConfirm"), { op: "resetDevices" }, t("devicesReset"))}>
             <MonitorX className="size-4" />
             {t("resetDevices")}
-          </Button>
+          </Button>}
         </div>
-        <div className="flex items-center justify-between border-t border-border pt-2 text-xs text-muted">
+        {!perms.block && <p className="text-xs text-muted">{t("ownerOnlyHint")}</p>}
+        {perms.pdpa && <div className="flex items-center justify-between border-t border-border pt-2 text-xs text-muted">
           {t("pdpa")}
           <CustomerRowActions customerId={customerId} />
-        </div>
+        </div>}
       </Card>
     </div>
   );

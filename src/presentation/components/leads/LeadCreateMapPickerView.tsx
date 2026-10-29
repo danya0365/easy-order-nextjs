@@ -100,8 +100,8 @@ export default function LeadCreateMapPickerView({
     const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
     setLoadingPois(true);
     fetch(`/api/geo/pois?bbox=${bbox}`)
-      .then((r) => (r.ok ? r.json() : { pois: [] }))
-      .then((d: { pois: OsmPoi[] }) => setPois(d.pois ?? []))
+      .then((r) => (r.ok ? (r.json() as Promise<{ pois?: OsmPoi[] }>) : { pois: [] as OsmPoi[] }))
+      .then((d) => setPois(d.pois ?? []))
       .catch(() => setPois([]))
       .finally(() => setLoadingPois(false));
   }

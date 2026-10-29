@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { Clock, Coins, Search, UserPlus, Users, UserX } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Coins, Search, UserPlus, Users, UserX } from "lucide-react";
+import { BULK_MAX } from "@/src/application/use-cases/customer/CustomerCrmUseCases";
 import { getTranslations } from "next-intl/server";
 
-import { requireShopAccess } from "@/src/infrastructure/auth/session";
+import type { CrmAccess } from "@/src/infrastructure/auth/crm-access";
+import { crmCan } from "@/src/domain/services/crm-permissions";
 import { container } from "@/src/infrastructure/di/container";
 import { Card } from "@/src/presentation/components/ui/Card";
 import { Input } from "@/src/presentation/components/ui/Input";
@@ -11,30 +13,30 @@ import { RejectSuspiciousButton } from "@/src/presentation/components/shop/Pendi
 import { CustomerCrmList, type CrmListItem } from "@/src/presentation/components/shop/CustomerCrmList";
 import { ListPendingMemberRequestsUseCase } from "@/src/application/use-cases/member/ListPendingMemberRequestsUseCase";
 import {
+  CRM_PAGE_SIZES,
   CRM_TABS,
-  inTab,
   maskPhone,
+  normalizePageSize,
   normalizeQuery,
-  queryCrm,
   signupChannel,
-  summarize,
 } from "@/src/domain/services/customer-crm";
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { formatDate } from "@/src/presentation/lib/format-date";
 
-export const dynamic = "force-dynamic";
-
-const RENDER_LIMIT = 200;
 const field = "rounded-lg border border-border bg-surface px-3 py-2 text-sm";
 
-export default async function ShopCustomersPage({
-  searchParams,
+/** Customers CRM list — shared by /shop/customers (owner) and /staff/customers (staff). */
+export async function CustomersListView({
+  access,
+  sp,
 }: {
-  searchParams: Promise<Record<string, string | undefined>>;
+  access: CrmAccess;
+  sp: Record<string, string | undefined>;
 }) {
-  const sp = await searchParams;
+  const { shopId, role, base } = access;
   const query = normalizeQuery(sp);
-  const { shopId } = await requireShopAccess();
+  const size = normalizePageSize(sp.size);
+  const reqPage = Math.max(1, Math.floor(Number(sp.page)) || 1);
   const t = await getTranslations("customersCrm");
   const tp = await getTranslations("shopPages");
 
@@ -43,10 +45,19 @@ export default async function ShopCustomersPage({
     container.customerRepository,
     container.memberSignupGuardRepository,
   ).execute(shopId);
-  const rows = await container.customerCrmRepository.listWithStats(shopId);
   const now = Date.now();
-  const summary = summarize(rows, now);
-  const result = queryCrm(rows, query, now);
+  const [overview, firstTry] = await Promise.all([
+    container.customerCrmRepository.overview(shopId, now),
+    container.customerCrmRepository.searchPage(shopId, query, { page: reqPage, size, now }),
+  ]);
+  const pages = Math.max(1, Math.ceil(firstTry.total / size));
+  // Out-of-range page (e.g. after a filter change) -> clamp to the last page.
+  const result =
+    reqPage > pages && firstTry.total > 0
+      ? await container.customerCrmRepository.searchPage(shopId, query, { page: pages, size, now })
+      : firstTry;
+  const summary = overview.summary;
+  const tabCount = overview.tabs;
   const flags = new Map(
     pendingReqs
       .filter((r) => r.suspicious)
@@ -57,12 +68,11 @@ export default async function ShopCustomersPage({
           .join(" · "),
       ]),
   );
-  const tabCount = Object.fromEntries(CRM_TABS.map((tab) => [tab, rows.filter((r) => inTab(r, tab, now)).length]));
 
-  const items: CrmListItem[] = result.slice(0, RENDER_LIMIT).map((c) => ({
+  const items: CrmListItem[] = result.items.map((c) => ({
     id: c.id,
     name: c.displayName,
-    phone: c.phone,
+    phone: role === "owner" ? c.phone : "",
     maskedPhone: maskPhone(c.phone),
     orderCount: c.orderCount,
     spend: satangToBaht(c.totalSpendSatang),
@@ -79,7 +89,7 @@ export default async function ShopCustomersPage({
 
   const qs = (over: Record<string, string>) => {
     const p = new URLSearchParams();
-    const merged = { tab: query.tab, q: query.q, channel: query.channel, sort: query.sort, ...over };
+    const merged = { tab: query.tab, q: query.q, channel: query.channel, sort: query.sort, size: size === 25 ? "" : String(size), ...over };
     for (const [k, v] of Object.entries(merged)) if (v) p.set(k, v);
     return p.toString();
   };
@@ -134,6 +144,11 @@ export default async function ShopCustomersPage({
               <option value="static">{t("channelStatic")}</option>
               <option value="instore">{t("channelInstore")}</option>
             </select>
+            <select name="size" defaultValue={String(size)} className={field} aria-label={t("pageSize")}>
+              {CRM_PAGE_SIZES.map((n) => (
+                <option key={n} value={n}>{t("perPage", { n })}</option>
+              ))}
+            </select>
             <select name="sort" defaultValue={query.sort} className={field} aria-label={t("sort")}>
               <option value="recent">{t("sortRecent")}</option>
               <option value="spend">{t("sortSpend")}</option>
@@ -147,20 +162,49 @@ export default async function ShopCustomersPage({
       </Card>
 
       <Card>
-        {query.tab === "pending" && flags.size > 0 ? (
+        {query.tab === "pending" && flags.size > 0 && crmCan(role, "rejectSuspicious") ? (
           <div className="mb-2 flex items-center justify-between gap-2">
             <p className="text-sm text-warning">{tp("pendingSuspiciousCount", { count: flags.size })}</p>
             <RejectSuspiciousButton />
           </div>
         ) : null}
         <p className="mb-1 text-xs text-muted">
-          {t("showing", { n: items.length, total: result.length })}
-          {result.length > RENDER_LIMIT ? ` · ${t("limitNote", { limit: RENDER_LIMIT })}` : ""}
+          {t("showingRange", {
+            from: result.total === 0 ? 0 : (result.page - 1) * result.size + 1,
+            to: (result.page - 1) * result.size + items.length,
+            total: result.total,
+          })}
         </p>
         {items.length === 0 ? (
           <EmptyState icon={<Users />} title={t("empty")} />
         ) : (
-          <CustomerCrmList items={items} exportQuery={qs({})} />
+          <CustomerCrmList
+            items={items}
+            exportQuery={qs({})}
+            query={{ tab: query.tab, q: query.q, channel: query.channel, sort: query.sort }}
+            total={result.total}
+            bulkMax={BULK_MAX}
+            base={base}
+            canBulkBlock={crmCan(role, "bulkBlock")}
+            canApprove={crmCan(role, "approve")}
+          />
+        )}
+        {pages > 1 && (
+          <nav className="mt-3 flex items-center justify-between text-sm" aria-label={t("pagination")}>
+            {result.page > 1 ? (
+              <Link href={`?${qs({ page: String(result.page - 1) })}`} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2">
+                <ChevronLeft className="size-4" />
+                {t("prev")}
+              </Link>
+            ) : <span />}
+            <span className="text-muted">{t("pageOf", { page: result.page, pages })}</span>
+            {result.page < pages ? (
+              <Link href={`?${qs({ page: String(result.page + 1) })}`} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2">
+                {t("next")}
+                <ChevronRight className="size-4" />
+              </Link>
+            ) : <span />}
+          </nav>
         )}
       </Card>
     </div>

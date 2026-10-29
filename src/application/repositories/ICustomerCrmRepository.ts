@@ -1,4 +1,4 @@
-import type { CrmCustomerRow } from "@/src/domain/services/customer-crm";
+import type { CrmCustomerRow, CrmOverview, CrmQuery } from "@/src/domain/services/customer-crm";
 
 export interface CustomerDetailStats {
   orderCount: number;
@@ -41,6 +41,13 @@ export interface CustomerTimelineRow {
 export interface ICustomerCrmRepository {
   /** All customers of a shop with order/spend/points aggregates (one query). */
   listWithStats(shopId: string): Promise<CrmCustomerRow[]>;
+  /** SQL search/filter/sort + LIMIT/OFFSET page. */
+  searchPage(shopId: string, query: CrmQuery, opts: { page: number; size: number; now?: number }): Promise<{ items: CrmCustomerRow[]; total: number; page: number; size: number }>;
+  /** Ids of every row matching the filter, up to `cap` (overCap when more exist). */
+  matchingIds(shopId: string, query: CrmQuery, cap: number, now?: number): Promise<{ ids: string[]; overCap: boolean }>;
+  exportRows(shopId: string, query: CrmQuery, opts: { ids?: string[]; cap: number; now?: number }): Promise<{ rows: CrmCustomerRow[]; overCap: boolean }>;
+  /** Summary cards + per-tab counts in one aggregate query. */
+  overview(shopId: string, now?: number): Promise<CrmOverview>;
   /** Customers of this shop among `ids` (bulk ops filter foreign ids out). */
   filterOwnIds(shopId: string, ids: string[]): Promise<string[]>;
   updateProfile(shopId: string, id: string, input: { displayName?: string | null; note?: string | null }): Promise<boolean>;

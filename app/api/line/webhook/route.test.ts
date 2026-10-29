@@ -83,7 +83,7 @@ test("GET reports not-configured when env is absent", async () => {
   delete process.env.LINE_CHANNEL_SECRET;
   try {
     const res = await GET();
-    assert.equal((await res.json()).lineConfigured, false);
+    assert.equal(((await res.json()) as { lineConfigured: boolean }).lineConfigured, false);
   } finally {
     process.env.LINE_CHANNEL_SECRET = saved;
   }
