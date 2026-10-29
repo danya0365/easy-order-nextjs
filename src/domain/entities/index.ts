@@ -215,6 +215,8 @@ export interface Shop {
   stampCardEnabled: boolean;
   /** Spend-points kind toggle (requires effective module). */
   spendPointsEnabled: boolean;
+  /** Shop toggle for OTP verification on static member registration. Default false. */
+  memberOtpEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -367,6 +369,14 @@ export interface Customer {
   displayName: string | null;
   /** Opaque code embedded in the customer's QR (staff scan instead of typing). */
   publicCode: string;
+  /** Online order membership status: 'none' | 'pending' | 'approved' | 'rejected'. */
+  onlineOrderStatus: "none" | "pending" | "approved" | "rejected";
+  /** ISO 8601 timestamp when the pending online-order request was created. */
+  onlineOrderRequestedAt: string | null;
+  /** ISO 8601 timestamp when the status was last reviewed by staff. */
+  onlineOrderReviewedAt: string | null;
+  /** User ID of the staff member who approved/rejected. */
+  onlineOrderReviewedBy: string | null;
   createdAt: string;
   updatedAt: string;
 }

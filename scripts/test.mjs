@@ -32,7 +32,16 @@ if (files.length === 0) {
 // `--experimental-test-module-mocks` enables mock.module() (used by action-layer
 // tests to stub next/headers · next/cache · next/navigation). Harmless for tests
 // that don't call it.
-const args = ["--import", "tsx", "--test", "--experimental-test-module-mocks"];
+// Register path-alias hook first so `cloudflare:workers` resolves to the Node stub
+// (R2BindingSlipStorage imports it at module load).
+const args = [
+  "--import",
+  "./scripts/register-test-hooks.mjs",
+  "--import",
+  "tsx",
+  "--test",
+  "--experimental-test-module-mocks",
+];
 if (coverage) args.push("--experimental-test-coverage");
 args.push(...files);
 

@@ -10,13 +10,22 @@ import { cursorWhere, toPage } from "./_cursor";
 
 type Row = typeof schema.customers.$inferSelect;
 
+const STATUSES = new Set(["none", "pending", "approved", "rejected"]);
+
 function toCustomer(r: Row): Customer {
+  const status = STATUSES.has(r.onlineOrderStatus)
+    ? (r.onlineOrderStatus as Customer["onlineOrderStatus"])
+    : "none";
   return {
     id: r.id,
     shopId: r.shopId,
     phone: r.phone,
     displayName: r.displayName,
     publicCode: r.publicCode,
+    onlineOrderStatus: status,
+    onlineOrderRequestedAt: r.onlineOrderRequestedAt ?? null,
+    onlineOrderReviewedAt: r.onlineOrderReviewedAt ?? null,
+    onlineOrderReviewedBy: r.onlineOrderReviewedBy ?? null,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
@@ -44,9 +53,6 @@ export class DrizzleCustomerRepository implements ICustomerRepository {
   }
 
   async anonymize(id: string): Promise<void> {
-    // Synthetic, per-customer-unique values so the (shopId, phone) and publicCode
-    // unique constraints still hold while the real PII is gone. The old phone /
-    // QR code no longer resolve to this person.
     await db
       .update(schema.customers)
       .set({
@@ -78,7 +84,6 @@ export class DrizzleCustomerRepository implements ICustomerRepository {
   ): Promise<Customer> {
     const existing = await this.findByPhone(shopId, phone);
     if (existing) {
-      // Fill in a name if we didn't have one and the customer just gave it.
       if (!existing.displayName && displayName) {
         const [r] = await db
           .update(schema.customers)
@@ -138,5 +143,68 @@ export class DrizzleCustomerRepository implements ICustomerRepository {
       limit: limit + 1,
     });
     return toPage(rows.map(toCustomer), limit);
+  }
+
+  async listPendingOnlineOrder(shopId: string): Promise<Customer[]> {
+    const rows = await db.query.customers.findMany({
+      where: and(
+        eq(schema.customers.shopId, shopId),
+        eq(schema.customers.onlineOrderStatus, "pending"),
+      ),
+      orderBy: [
+        desc(schema.customers.onlineOrderRequestedAt),
+        desc(schema.customers.createdAt),
+      ],
+    });
+    return rows.map(toCustomer);
+  }
+
+  async requestOnlineOrderMembership(
+    shopId: string,
+    customerId: string,
+    nowIso: string,
+  ): Promise<Customer | null> {
+    const [r] = await db
+      .update(schema.customers)
+      .set({
+        onlineOrderStatus: "pending",
+        onlineOrderRequestedAt: nowIso,
+        onlineOrderReviewedAt: null,
+        onlineOrderReviewedBy: null,
+        updatedAt: nowIso,
+      })
+      .where(
+        and(
+          eq(schema.customers.shopId, shopId),
+          eq(schema.customers.id, customerId),
+        ),
+      )
+      .returning();
+    return r ? toCustomer(r) : null;
+  }
+
+  async setOnlineOrderStatus(
+    shopId: string,
+    customerId: string,
+    status: "approved" | "rejected",
+    reviewedBy: string,
+    nowIso: string,
+  ): Promise<Customer | null> {
+    const [r] = await db
+      .update(schema.customers)
+      .set({
+        onlineOrderStatus: status,
+        onlineOrderReviewedAt: nowIso,
+        onlineOrderReviewedBy: reviewedBy,
+        updatedAt: nowIso,
+      })
+      .where(
+        and(
+          eq(schema.customers.shopId, shopId),
+          eq(schema.customers.id, customerId),
+        ),
+      )
+      .returning();
+    return r ? toCustomer(r) : null;
   }
 }
