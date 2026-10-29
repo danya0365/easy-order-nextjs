@@ -11,9 +11,10 @@ export const adminLoginLinks = sqliteTable(
   "admin_login_links",
   {
     id: id(),
-    shopId: text()
-      .notNull()
-      .references(() => shops.id, { onDelete: "cascade" }),
+    // 'shop' = choose a shop account on open; 'admin' = log in as targetUserId
+    // (a platform admin; CLI-issued with DB creds). shopId is null for 'admin'.
+    kind: text({ enum: ["shop", "admin"] }).notNull().default("shop"),
+    shopId: text().references(() => shops.id, { onDelete: "cascade" }),
     tokenHash: text().notNull().unique(),
     createdBy: text()
       .notNull()

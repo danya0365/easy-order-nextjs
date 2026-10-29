@@ -365,6 +365,9 @@
     "oneTimeRoleStaff": "Branch staff",
     "oneTimeSingleUseNote": "This link works once; it stops working after you sign in.",
     "oneTimeInvalidTitle": "Link unavailable",
-    "oneTimeInvalidDesc": "This link is invalid, expired, revoked or already used. Ask the platform admin for a new one."
+    "oneTimeInvalidDesc": "This link is invalid, expired, revoked or already used. Ask the platform admin for a new one.",
+    "oneTimeAdminTitle": "Platform admin sign-in",
+    "oneTimeAdminDesc": "Press the button below to confirm signing in as the platform admin",
+    "oneTimeAdminConfirm": "Confirm admin sign-in"
   }
 }

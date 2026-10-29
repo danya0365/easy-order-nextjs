@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Link2Off, LogIn } from "lucide-react";
+import { Link2Off, LogIn, ShieldCheck } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -48,6 +48,24 @@ export default async function OneTimeLoginPage({
           <Link2Off className="size-8 text-error" />
           <h1 className="text-lg font-semibold">{t("oneTimeInvalidTitle")}</h1>
           <p className="text-sm text-muted">{t("oneTimeInvalidDesc")}</p>
+        </div>
+      ) : check.kind === "admin" ? (
+        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="size-5 text-brand-500" />
+            <h1 className="text-lg font-semibold">{t("oneTimeAdminTitle")}</h1>
+          </div>
+          <p className="text-sm text-muted">{t("oneTimeAdminDesc")}</p>
+          <OneTimeLoginChooser
+            token={token!}
+            accounts={[
+              {
+                id: check.account.id,
+                email: maskEmail(check.account.email),
+                role: check.account.role,
+              },
+            ]}
+          />
         </div>
       ) : (
         <div className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6">

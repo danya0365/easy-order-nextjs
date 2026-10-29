@@ -61,7 +61,40 @@ export class CreateOneTimeLoginLinkUseCase {
 
 export type OneTimeLinkCheck =
   | { kind: "invalid" }
-  | { kind: "ok"; link: AdminLoginLink; shopName: string; accounts: User[] };
+  | { kind: "ok"; link: AdminLoginLink; shopName: string; accounts: User[] }
+  | { kind: "admin"; link: AdminLoginLink; account: User };
+
+/** Admin self-login link (normally issued by scripts/admin-login-link.mjs with DB creds). */
+export class CreateAdminSelfLoginLinkUseCase {
+  constructor(
+    private readonly links: IAdminLoginLinkRepository,
+    private readonly users: IUserRepository,
+  ) {}
+
+  async execute(input: {
+    adminUserId: string;
+    expiry: OneTimeLoginExpiry;
+    now?: Date;
+  }): Promise<{ token: string; link: AdminLoginLink }> {
+    const ttl = ONE_TIME_LOGIN_EXPIRY[input.expiry];
+    if (!ttl) throw new Error("ระยะเวลาหมดอายุไม่ถูกต้อง");
+    const admin = await this.users.findById(input.adminUserId);
+    if (!admin || !admin.isActive || admin.role !== "platform_admin") {
+      throw new Error("ไม่พบบัญชีผู้ดูแลระบบ");
+    }
+    const now = input.now ?? new Date();
+    const token = generateOneTimeLoginToken();
+    const link = await this.links.create({
+      kind: "admin",
+      shopId: null,
+      tokenHash: hashOneTimeLoginToken(token),
+      createdBy: admin.id,
+      targetUserId: admin.id,
+      expiresAt: new Date(now.getTime() + ttl).toISOString(),
+    });
+    return { token, link };
+  }
+}
 
 /** Validate a raw token WITHOUT consuming it. */
 export class ResolveOneTimeLoginLinkUseCase {
@@ -84,6 +117,16 @@ export class ResolveOneTimeLoginLinkUseCase {
     ) {
       return { kind: "invalid" };
     }
+    if (link.kind === "admin") {
+      const admin = link.targetUserId
+        ? await this.users.findById(link.targetUserId)
+        : null;
+      if (!admin || !admin.isActive || admin.role !== "platform_admin") {
+        return { kind: "invalid" };
+      }
+      return { kind: "admin", link, account: admin };
+    }
+    if (!link.shopId) return { kind: "invalid" };
     const shop = await this.shops.findById(link.shopId);
     if (!shop) return { kind: "invalid" };
     let accounts = eligibleAccounts(await this.users.listByShop(shop.id), shop.id);
@@ -111,8 +154,9 @@ export class ConsumeOneTimeLoginLinkUseCase {
       this.shops,
       this.users,
     ).execute(token, now);
-    if (check.kind !== "ok") throw new Error("ลิงก์ไม่ถูกต้อง หมดอายุ หรือถูกใช้ไปแล้ว");
-    const user = check.accounts.find((u) => u.id === userId);
+    if (check.kind === "invalid") throw new Error("ลิงก์ไม่ถูกต้อง หมดอายุ หรือถูกใช้ไปแล้ว");
+    const candidates = check.kind === "admin" ? [check.account] : check.accounts;
+    const user = candidates.find((u) => u.id === userId);
     if (!user) throw new Error("ไม่สามารถเข้าสู่ระบบด้วยบัญชีนี้ได้");
     const won = await this.links.consume(check.link.id, user.id, now.toISOString());
     if (!won) throw new Error("ลิงก์ไม่ถูกต้อง หมดอายุ หรือถูกใช้ไปแล้ว");
