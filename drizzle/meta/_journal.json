@@ -85,6 +85,62 @@
       "when": 1793110118822,
       "tag": "0011_loyalty_stamp_and_points",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1793145245914,
+      "tag": "0012_shop_promotions",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1793113421637,
+      "tag": "0013_menu_item_is_recommended",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1796278512345,
+      "tag": "0014_static_qr_membership",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1796380000000,
+      "tag": "0015_static_qr_antispam",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1796390000000,
+      "tag": "0016_member_policy_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1796400000000,
+      "tag": "0017_admin_login_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1796410000000,
+      "tag": "0018_admin_login_links_kind",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1796500000000,
+      "tag": "0019_users_superadmin",
+      "breakpoints": true
     }
   ]
 }

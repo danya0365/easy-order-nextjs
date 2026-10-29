@@ -23,6 +23,12 @@ export const customers = sqliteTable(
       .notNull()
       .unique()
       .$defaultFn(() => nanoid(12)),
+    onlineOrderStatus: text().notNull().default("none"),
+    onlineOrderRequestedAt: text(),
+    onlineOrderReviewedAt: text(),
+    onlineOrderReviewedBy: text(),
+    // Last time the shop rejected this phone (kept across re-requests; 30-day cooldown).
+    onlineOrderRejectedAt: text(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

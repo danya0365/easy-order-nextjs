@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, UserCog } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
@@ -14,6 +14,7 @@ import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopCo
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { OrderAccessQrCard } from "@/src/presentation/components/shop/OrderAccessQrCard";
 import { LoyaltyModuleForm } from "@/src/presentation/components/loyalty/LoyaltyModuleForm";
+import { PromotionsModuleForm } from "@/src/presentation/components/promotions/PromotionsModuleForm";
 import { SettingsTabs } from "@/src/presentation/components/settings/SettingsTabs";
 import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
 import { getBaseUrl } from "@/src/presentation/lib/base-url";
@@ -25,6 +26,7 @@ export default async function ShopSettingsPage() {
   const { shopId } = await requireShopAccess();
   const t = await getTranslations("shopPages");
   const tLoyalty = await getTranslations("loyalty");
+  const tPromo = await getTranslations("promotions");
   const shop = await container.shopRepository.findById(shopId);
   if (!shop) return null;
   const [
@@ -90,6 +92,7 @@ export default async function ShopSettingsPage() {
               deliveryFeeSatang={shop.deliveryFeeSatang}
               deliveryNotes={shop.deliveryNotes}
               minOrderSatang={shop.minOrderSatang}
+              memberOtpEnabled={shop.memberOtpEnabled}
             />
             <p className="mt-3 text-xs text-muted">{t("kioskPromptpayHint")}</p>
           </Card>
@@ -107,6 +110,21 @@ export default async function ShopSettingsPage() {
             </Card>
           )}
 
+          <Card>
+            <CardHeader
+              title={t("memberSettingsTitle")}
+              subtitle={t("memberSettingsLinkDesc")}
+            />
+            <Link
+              href="/shop/settings/members"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-on-brand transition hover:bg-brand-600"
+            >
+              <UserCog className="size-4" />
+              {t("memberSettingsOpen")}
+              <ArrowRight className="size-4" />
+            </Link>
+          </Card>
+
           {shop.loyaltyAllowedByAdmin && (
             <Card>
               <CardHeader
@@ -118,6 +136,16 @@ export default async function ShopSettingsPage() {
                 stampCardEnabled={shop.stampCardEnabled}
                 spendPointsEnabled={shop.spendPointsEnabled}
               />
+            </Card>
+          )}
+
+          {shop.promotionsAllowedByAdmin && (
+            <Card>
+              <CardHeader
+                title={tPromo("settingsTitle")}
+                subtitle={tPromo("settingsSubtitle")}
+              />
+              <PromotionsModuleForm promotionsEnabled={shop.promotionsEnabled} />
             </Card>
           )}
 

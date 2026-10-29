@@ -29,6 +29,7 @@ import { DrizzleLoyaltyPointsSettingsRepository } from "@/src/infrastructure/rep
 import { DrizzleLoyaltyPointsBalanceRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyPointsBalanceRepository";
 import { DrizzleLoyaltyPointsTransactionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyPointsTransactionRepository";
 import { DrizzleLoyaltyPointsRewardRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyPointsRewardRepository";
+import { DrizzleShopPromotionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleShopPromotionRepository";
 
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import type { IShopCategoryRepository } from "@/src/application/repositories/IShopCategoryRepository";
@@ -57,6 +58,11 @@ import type { ILoyaltyPointsSettingsRepository } from "@/src/application/reposit
 import type { ILoyaltyPointsBalanceRepository } from "@/src/application/repositories/ILoyaltyPointsBalanceRepository";
 import type { ILoyaltyPointsTransactionRepository } from "@/src/application/repositories/ILoyaltyPointsTransactionRepository";
 import type { ILoyaltyPointsRewardRepository } from "@/src/application/repositories/ILoyaltyPointsRewardRepository";
+import { DrizzleAdminLoginLinkRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleAdminLoginLinkRepository";
+import type { IAdminLoginLinkRepository } from "@/src/application/repositories/IAdminLoginLinkRepository";
+import { DrizzleMemberSignupGuardRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMemberSignupGuardRepository";
+import type { IMemberSignupGuardRepository } from "@/src/application/repositories/IMemberSignupGuardRepository";
+import type { IShopPromotionRepository } from "@/src/application/repositories/IShopPromotionRepository";
 
 /**
  * Server-side composition root. The 🟢 generic core (account/auth, billing,
@@ -117,6 +123,12 @@ class Container extends GenericContainer {
     new DrizzleLoyaltyPointsTransactionRepository();
   readonly loyaltyPointsRewardRepository: ILoyaltyPointsRewardRepository =
     new DrizzleLoyaltyPointsRewardRepository();
+  readonly shopPromotionRepository: IShopPromotionRepository =
+    new DrizzleShopPromotionRepository();
+  readonly memberSignupGuardRepository: IMemberSignupGuardRepository =
+    new DrizzleMemberSignupGuardRepository();
+  readonly adminLoginLinkRepository: IAdminLoginLinkRepository =
+    new DrizzleAdminLoginLinkRepository();
 }
 
 const globalForContainer = globalThis as unknown as {

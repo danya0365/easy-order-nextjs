@@ -1,6 +1,7 @@
 import type { MenuItem } from "@/src/domain/entities";
 import type { IMenuItemRepository } from "@/src/application/repositories/IMenuItemRepository";
 import type { IMenuCategoryRepository } from "@/src/application/repositories/IMenuCategoryRepository";
+import { assertHalalMenuContent } from "@/src/domain/services/halal-menu";
 
 export interface CreateMenuItemUseCaseInput {
   shopId: string;
@@ -23,6 +24,7 @@ export class CreateMenuItemUseCase {
     if (name.length < 1 || name.length > 80) {
       throw new Error("ชื่อเมนูต้องยาว 1–80 ตัวอักษร");
     }
+    assertHalalMenuContent(name, input.description);
     if (!Number.isInteger(input.priceSatang) || input.priceSatang < 0) {
       throw new Error("ราคาไม่ถูกต้อง");
     }

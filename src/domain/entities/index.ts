@@ -1,3 +1,4 @@
+import type { MemberPolicyOverrides } from "@/src/domain/services/member-policy";
 import type { Role } from "../types/roles";
 
 export type ShopStatus = "active" | "suspended_by_admin";
@@ -207,10 +208,20 @@ export interface Shop {
   loyaltyAllowedByAdmin: boolean;
   /** Shop toggle for loyalty. Effective = allowed && enabled. */
   loyaltyEnabled: boolean;
+  /** Platform admin allow-list for the promotions module. */
+  promotionsAllowedByAdmin: boolean;
+  /** Shop toggle for promotions. Effective = allowed && enabled. */
+  promotionsEnabled: boolean;
   /** Stamp-card kind toggle (requires effective module). */
   stampCardEnabled: boolean;
   /** Spend-points kind toggle (requires effective module). */
   spendPointsEnabled: boolean;
+  /** Shop toggle for OTP verification on static member registration. Default false. */
+  memberOtpEnabled: boolean;
+  /** Pause NEW static-QR member signups (existing members unaffected). */
+  memberSignupPaused: boolean;
+  /** Per-shop membership policy overrides (null = default). */
+  memberPolicyOverrides: MemberPolicyOverrides;
   createdAt: string;
   updatedAt: string;
 }
@@ -239,6 +250,8 @@ export interface User {
   lineUserId: string | null;
   /** Whether TOTP two-factor is active (secret confirmed). Never exposes the secret. */
   totpEnabled: boolean;
+  /** Platform superadmin flag (platform_admin only). */
+  isSuperadmin?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -292,6 +305,8 @@ export interface MenuItem {
   priceSatang: number;
   imageUrl: string | null;
   isAvailable: boolean;
+  /** Owner-marked for the public recommended section. */
+  isRecommended: boolean;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
@@ -361,6 +376,16 @@ export interface Customer {
   displayName: string | null;
   /** Opaque code embedded in the customer's QR (staff scan instead of typing). */
   publicCode: string;
+  /** Online order membership status: 'none' | 'pending' | 'approved' | 'rejected'. */
+  onlineOrderStatus: "none" | "pending" | "approved" | "rejected" | "expired";
+  /** ISO 8601 timestamp when the pending online-order request was created. */
+  onlineOrderRequestedAt: string | null;
+  /** ISO 8601 timestamp when the status was last reviewed by staff. */
+  onlineOrderReviewedAt: string | null;
+  /** User ID of the staff member who approved/rejected. */
+  onlineOrderReviewedBy: string | null;
+  /** Last rejection time (kept across re-requests; drives the 30-day cooldown). */
+  onlineOrderRejectedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -474,6 +499,24 @@ export interface KnownAccount {
   role: Role;
 }
 
+
+// --- Shop promotions (customer-facing promo cards) ---
+
+export interface ShopPromotion {
+  id: string;
+  shopId: string;
+  title: string;
+  description: string | null;
+  /** Optional image URL (https). */
+  imageUrl: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  /** ISO 8601 show-window; null = open-ended on that side. */
+  startsAt: string | null;
+  endsAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 // --- Loyalty (stamp card + spend points) ---
 

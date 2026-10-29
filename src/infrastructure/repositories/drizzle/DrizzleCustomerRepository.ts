@@ -1,6 +1,10 @@
 import "server-only";
 
-import { and, desc, eq, like, or } from "drizzle-orm";
+import { and, count, desc, eq, gte, like, lt, or } from "drizzle-orm";
+import {
+  HOUR_MS,
+  effectiveMemberPolicy,
+} from "@/src/domain/services/member-policy";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { Customer } from "@/src/domain/entities";
 import type { ICustomerRepository } from "@/src/application/repositories/ICustomerRepository";
@@ -10,13 +14,23 @@ import { cursorWhere, toPage } from "./_cursor";
 
 type Row = typeof schema.customers.$inferSelect;
 
+const STATUSES = new Set(["none", "pending", "approved", "rejected", "expired"]);
+
 function toCustomer(r: Row): Customer {
+  const status = STATUSES.has(r.onlineOrderStatus)
+    ? (r.onlineOrderStatus as Customer["onlineOrderStatus"])
+    : "none";
   return {
     id: r.id,
     shopId: r.shopId,
     phone: r.phone,
     displayName: r.displayName,
     publicCode: r.publicCode,
+    onlineOrderStatus: status,
+    onlineOrderRequestedAt: r.onlineOrderRequestedAt ?? null,
+    onlineOrderReviewedAt: r.onlineOrderReviewedAt ?? null,
+    onlineOrderReviewedBy: r.onlineOrderReviewedBy ?? null,
+    onlineOrderRejectedAt: r.onlineOrderRejectedAt ?? null,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
@@ -44,9 +58,6 @@ export class DrizzleCustomerRepository implements ICustomerRepository {
   }
 
   async anonymize(id: string): Promise<void> {
-    // Synthetic, per-customer-unique values so the (shopId, phone) and publicCode
-    // unique constraints still hold while the real PII is gone. The old phone /
-    // QR code no longer resolve to this person.
     await db
       .update(schema.customers)
       .set({
@@ -78,7 +89,6 @@ export class DrizzleCustomerRepository implements ICustomerRepository {
   ): Promise<Customer> {
     const existing = await this.findByPhone(shopId, phone);
     if (existing) {
-      // Fill in a name if we didn't have one and the customer just gave it.
       if (!existing.displayName && displayName) {
         const [r] = await db
           .update(schema.customers)
@@ -138,5 +148,108 @@ export class DrizzleCustomerRepository implements ICustomerRepository {
       limit: limit + 1,
     });
     return toPage(rows.map(toCustomer), limit);
+  }
+
+  async listPendingOnlineOrder(shopId: string): Promise<Customer[]> {
+    const shop = await db.query.shops.findFirst({
+      where: eq(schema.shops.id, shopId),
+      columns: { memberPendingExpiryHours: true },
+    });
+    const ttlMs =
+      effectiveMemberPolicy({
+        pendingExpiryHours: shop?.memberPendingExpiryHours ?? null,
+      }).pendingExpiryHours * HOUR_MS;
+    const cutoff = new Date(Date.now() - ttlMs).toISOString();
+    await this.expireStalePending(shopId, cutoff);
+    const rows = await db.query.customers.findMany({
+      where: and(
+        eq(schema.customers.shopId, shopId),
+        eq(schema.customers.onlineOrderStatus, "pending"),
+      ),
+      orderBy: [
+        desc(schema.customers.onlineOrderRequestedAt),
+        desc(schema.customers.createdAt),
+      ],
+    });
+    return rows.map(toCustomer);
+  }
+
+  async expireStalePending(shopId: string, cutoffIso: string): Promise<number> {
+    const rows = await db
+      .update(schema.customers)
+      .set({ onlineOrderStatus: "expired" })
+      .where(
+        and(
+          eq(schema.customers.shopId, shopId),
+          eq(schema.customers.onlineOrderStatus, "pending"),
+          lt(schema.customers.onlineOrderRequestedAt, cutoffIso),
+        ),
+      )
+      .returning({ id: schema.customers.id });
+    return rows.length;
+  }
+
+  async countOpenPending(shopId: string, cutoffIso: string): Promise<number> {
+    const [c] = await db
+      .select({ value: count() })
+      .from(schema.customers)
+      .where(
+        and(
+          eq(schema.customers.shopId, shopId),
+          eq(schema.customers.onlineOrderStatus, "pending"),
+          gte(schema.customers.onlineOrderRequestedAt, cutoffIso),
+        ),
+      );
+    return c?.value ?? 0;
+  }
+
+  async requestOnlineOrderMembership(
+    shopId: string,
+    customerId: string,
+    nowIso: string,
+  ): Promise<Customer | null> {
+    const [r] = await db
+      .update(schema.customers)
+      .set({
+        onlineOrderStatus: "pending",
+        onlineOrderRequestedAt: nowIso,
+        onlineOrderReviewedAt: null,
+        onlineOrderReviewedBy: null,
+        updatedAt: nowIso,
+      })
+      .where(
+        and(
+          eq(schema.customers.shopId, shopId),
+          eq(schema.customers.id, customerId),
+        ),
+      )
+      .returning();
+    return r ? toCustomer(r) : null;
+  }
+
+  async setOnlineOrderStatus(
+    shopId: string,
+    customerId: string,
+    status: "approved" | "rejected",
+    reviewedBy: string,
+    nowIso: string,
+  ): Promise<Customer | null> {
+    const [r] = await db
+      .update(schema.customers)
+      .set({
+        onlineOrderStatus: status,
+        ...(status === "rejected" ? { onlineOrderRejectedAt: nowIso } : {}),
+        onlineOrderReviewedAt: nowIso,
+        onlineOrderReviewedBy: reviewedBy,
+        updatedAt: nowIso,
+      })
+      .where(
+        and(
+          eq(schema.customers.shopId, shopId),
+          eq(schema.customers.id, customerId),
+        ),
+      )
+      .returning();
+    return r ? toCustomer(r) : null;
   }
 }

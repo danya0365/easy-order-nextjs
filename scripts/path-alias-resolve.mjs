@@ -31,6 +31,10 @@ export async function resolve(specifier, context, nextResolve) {
   if (specifier === "server-only" || specifier === "client-only") {
     return nextResolve(emptyStub, context);
   }
+  if (specifier === "cloudflare:workers") {
+    const stub = resolveExisting(resolvePath(root, "src/test/cloudflare-workers-stub"));
+    if (stub) return nextResolve(pathToFileURL(stub).href, context);
+  }
   if (specifier.startsWith("@/")) {
     const found = resolveExisting(resolvePath(root, specifier.slice(2)));
     if (!found) return nextResolve(specifier, context);

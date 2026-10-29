@@ -1,5 +1,6 @@
 import type { MenuCategory } from "@/src/domain/entities";
 import type { IMenuCategoryRepository } from "@/src/application/repositories/IMenuCategoryRepository";
+import { assertHalalMenuContent } from "@/src/domain/services/halal-menu";
 
 /** Create a menu category for a shop. Keep validation here, not in the action. */
 export class CreateMenuCategoryUseCase {
@@ -10,6 +11,7 @@ export class CreateMenuCategoryUseCase {
     if (trimmed.length < 1 || trimmed.length > 60) {
       throw new Error("ชื่อหมวดหมู่ต้องยาว 1–60 ตัวอักษร");
     }
+    assertHalalMenuContent(trimmed);
     const existing = await this.categories.listByShop(shopId);
     return this.categories.create({
       shopId,

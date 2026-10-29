@@ -7,13 +7,23 @@ import type { ICustomerDeviceRepository } from "@/src/application/repositories/I
 
 type CustomerRow = typeof schema.customers.$inferSelect;
 
+const STATUSES = new Set(["none", "pending", "approved", "rejected", "expired"]);
+
 function toCustomer(r: CustomerRow): Customer {
+  const status = STATUSES.has(r.onlineOrderStatus)
+    ? (r.onlineOrderStatus as Customer["onlineOrderStatus"])
+    : "none";
   return {
     id: r.id,
     shopId: r.shopId,
     phone: r.phone,
     displayName: r.displayName,
     publicCode: r.publicCode,
+    onlineOrderStatus: status,
+    onlineOrderRequestedAt: r.onlineOrderRequestedAt ?? null,
+    onlineOrderReviewedAt: r.onlineOrderReviewedAt ?? null,
+    onlineOrderReviewedBy: r.onlineOrderReviewedBy ?? null,
+    onlineOrderRejectedAt: r.onlineOrderRejectedAt ?? null,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };

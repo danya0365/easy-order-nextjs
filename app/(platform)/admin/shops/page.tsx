@@ -15,7 +15,10 @@ import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { CreateShopForm } from "@/src/presentation/components/admin/CreateShopForm";
 import { ShopStatusToggle } from "@/src/presentation/components/admin/ShopStatusToggle";
 import { LoyaltyAllowToggle } from "@/src/presentation/components/loyalty/LoyaltyAllowToggle";
+import { PromotionsAllowToggle } from "@/src/presentation/components/promotions/PromotionsAllowToggle";
 import { PauseShopToggle } from "@/src/presentation/components/admin/PauseShopToggle";
+import { OneTimeLoginLinkButton } from "@/src/presentation/components/admin/OneTimeLoginLinkButton";
+import { eligibleAccounts } from "@/src/application/use-cases/auth/OneTimeLoginUseCases";
 import { ShopHandoffButton } from "@/src/presentation/components/admin/ShopHandoffButton";
 import { ConfirmSubmitButton } from "@/src/presentation/components/ui/ConfirmDialog";
 import { ResetPasswordControl } from "@/src/presentation/components/auth/ResetPasswordControl";
@@ -32,15 +35,15 @@ export default async function AdminShopsPage() {
     container.platformSettingsRepository,
     container.orderRepository,
   );
-  const [states, owners] = await Promise.all([
+  const [states, members, activeLinks] = await Promise.all([
     Promise.all(shops.map((s) => billing.execute(s.id))),
-    Promise.all(
-      shops.map(async (s) => {
-        const members = await container.userRepository.listByShop(s.id);
-        return members.find((u) => u.role === "shop_owner") ?? null;
-      }),
-    ),
+    Promise.all(shops.map((s) => container.userRepository.listByShop(s.id))),
+    container.adminLoginLinkRepository.listActive(new Date().toISOString()),
   ]);
+  const owners = members.map(
+    (m) => m.find((u) => u.role === "shop_owner") ?? null,
+  );
+  const roleLabel = (r: string) => (r === "shop_owner" ? "owner" : "staff");
 
   return (
     <div className="flex flex-col gap-4">
@@ -98,6 +101,10 @@ export default async function AdminShopsPage() {
                       shopId={shop.id}
                       allowed={shop.loyaltyAllowedByAdmin}
                     />
+                    <PromotionsAllowToggle
+                      shopId={shop.id}
+                      allowed={shop.promotionsAllowedByAdmin}
+                    />
                     <ShopStatusToggle
                       shopId={shop.id}
                       adminSuspended={adminSuspended}
@@ -112,6 +119,26 @@ export default async function AdminShopsPage() {
                         {t("impersonateButton")}
                       </button>
                     </form>
+                    {(() => {
+                      const accts = eligibleAccounts(members[i], shop.id);
+                      const label = (id: string | null) => {
+                        const u = accts.find((a) => a.id === id);
+                        return u ? `${u.email} (${roleLabel(u.role)})` : null;
+                      };
+                      return (
+                        <OneTimeLoginLinkButton
+                          shopId={shop.id}
+                          accounts={accts.map((u) => ({ id: u.id, label: label(u.id)! }))}
+                          activeLinks={activeLinks
+                            .filter((l) => l.shopId === shop.id)
+                            .map((l) => ({
+                              id: l.id,
+                              expiresAt: l.expiresAt,
+                              target: label(l.targetUserId),
+                            }))}
+                        />
+                      );
+                    })()}
                     {owner && (
                       <>
                         <ShopHandoffButton shopId={shop.id} />

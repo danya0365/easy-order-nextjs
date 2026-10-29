@@ -1,3 +1,4 @@
+import type { MemberPolicy } from "@/src/domain/services/member-policy";
 import type { Shop, ShopStatus } from "@/src/domain/entities";
 
 export interface CreateShopInput {
@@ -25,6 +26,14 @@ export interface UpdateShopSettingsInput {
   loyaltyEnabled?: boolean;
   stampCardEnabled?: boolean;
   spendPointsEnabled?: boolean;
+  /** Promotions module (mirrors loyalty gates). */
+  promotionsEnabled?: boolean;
+  /** Shop toggle for OTP verification on static member registration. Default false. */
+  memberOtpEnabled?: boolean;
+  /** Pause new static-QR member signups. */
+  memberSignupPaused?: boolean;
+  /** Full per-shop membership policy (validated by the use case). */
+  memberPolicy?: MemberPolicy;
 }
 
 export interface IShopRepository {
@@ -38,6 +47,16 @@ export interface IShopRepository {
   setSelfService(id: string, on: boolean): Promise<Shop>;
   /** Platform admin allow/deny the loyalty module for a shop. */
   setLoyaltyAllowedByAdmin(id: string, on: boolean): Promise<Shop>;
+  /** Platform admin allow/deny the promotions module for a shop. */
+  setPromotionsAllowedByAdmin(id: string, on: boolean): Promise<Shop>;
   /** Returns the stored kiosk PIN hash (or null) — infra-only, for verification. */
   getKioskPinHash(id: string): Promise<string | null>;
+  /** Static-QR join secret (lazily generated if missing). Infra-only, never public. */
+  getStaticJoinToken(id: string): Promise<string | null>;
+  /** Replace the static-QR join secret; old printed QR stops working. */
+  rotateStaticJoinToken(
+    id: string,
+    newToken: string,
+    nowIso: string,
+  ): Promise<void>;
 }

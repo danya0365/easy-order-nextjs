@@ -17,6 +17,7 @@ import {
   EditableShopGallery,
 } from "@/src/presentation/components/shop/ShopImageEditor";
 import { ShopDetails } from "@/src/presentation/components/shop/ShopDetails";
+import { RecommendedMenu } from "@/src/presentation/components/shop/RecommendedMenu";
 import { ShopReviewsSection } from "@/src/presentation/components/reviews/ShopReviewsSection";
 import { CustomerLoyaltyPanel } from "@/src/presentation/components/loyalty/CustomerLoyaltyPanel";
 import {
@@ -24,6 +25,7 @@ import {
   isStampCardOn,
 } from "@/src/domain/services/loyalty-gates";
 import { GetCustomerStampCardUseCase } from "@/src/application/use-cases/loyalty/GetCustomerStampCardUseCase";
+import { GetRecommendedMenuUseCase } from "@/src/application/use-cases/menu/GetRecommendedMenuUseCase";
 
 export const dynamic = "force-dynamic";
 
@@ -107,6 +109,11 @@ export default async function CustomerShopPage({
   // order QR (the claim cookie enables direct ordering).
   const hasOrderAccess = !!(await getOrderAccess(slug));
 
+  const recommendedItems = await new GetRecommendedMenuUseCase(
+    container.menuCategoryRepository,
+    container.menuItemRepository,
+  ).execute(shop.id);
+
   const showStamp = isStampCardOn(shop);
   const showPoints = isSpendPointsOn(shop);
   let stampView: Awaited<
@@ -189,6 +196,13 @@ export default async function CustomerShopPage({
       ) : (
         <ShopGallery images={gallery} />
       )}
+
+      <RecommendedMenu
+        slug={slug}
+        items={recommendedItems}
+        hasOrderAccess={hasOrderAccess}
+        onlineOrderingEnabled={shop.onlineOrderingEnabled}
+      />
 
       {history ? (
         <Card>

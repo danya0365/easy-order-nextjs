@@ -28,6 +28,7 @@ export function SettingsForm({
   deliveryFeeSatang,
   deliveryNotes,
   minOrderSatang,
+  memberOtpEnabled,
 }: {
   name: string;
   categoryId: string | null;
@@ -39,8 +40,10 @@ export function SettingsForm({
   deliveryFeeSatang: number;
   deliveryNotes: string | null;
   minOrderSatang: number | null;
+  memberOtpEnabled: boolean;
 }) {
   const t = useTranslations("shop");
+  const tPages = useTranslations("shopPages");
   const [state, action, pending] = useActionState<FormState, FormData>(
     updateSettingsAction,
     {},
@@ -107,6 +110,20 @@ export function SettingsForm({
           />
           {t("setDeliveryLabel")}
         </label>
+        <label className="flex items-start gap-3 text-sm text-foreground">
+          <input
+            type="checkbox"
+            name="memberOtpEnabled"
+            defaultChecked={memberOtpEnabled}
+            className="mt-0.5 size-4 accent-[var(--color-brand-500)]"
+          />
+          <span>
+            <span className="font-medium">{tPages("memberOtpEnabledLabel")}</span>
+            <span className="mt-0.5 block text-xs text-muted">
+              {tPages("memberOtpEnabledDesc")} · {tPages("memberOtpCostNote")}
+            </span>
+          </span>
+        </label>
       </div>
 
       <FormField
@@ -124,10 +141,7 @@ export function SettingsForm({
           defaultValue={deliveryFeeSatang / 100}
         />
       </FormField>
-      <FormField
-        label={t("setDeliveryNotesLabel")}
-        htmlFor="deliveryNotes"
-      >
+      <FormField label={t("setDeliveryNotesLabel")} htmlFor="deliveryNotes">
         <Textarea
           id="deliveryNotes"
           name="deliveryNotes"

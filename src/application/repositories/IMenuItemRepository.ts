@@ -17,6 +17,7 @@ export interface UpdateMenuItemInput {
   priceSatang?: number;
   imageUrl?: string | null;
   isAvailable?: boolean;
+  isRecommended?: boolean;
   sortOrder?: number;
 }
 

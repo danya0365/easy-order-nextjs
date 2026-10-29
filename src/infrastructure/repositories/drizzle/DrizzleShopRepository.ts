@@ -1,6 +1,7 @@
 import "server-only";
 
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
+import { generateStaticJoinToken } from "@/src/domain/services/static-join-guard";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { Shop } from "@/src/domain/entities";
 import type {
@@ -31,8 +32,20 @@ function toShop(r: Row): Shop {
     minOrderSatang: r.minOrderSatang,
     loyaltyAllowedByAdmin: r.loyaltyAllowedByAdmin,
     loyaltyEnabled: r.loyaltyEnabled,
+    promotionsAllowedByAdmin: r.promotionsAllowedByAdmin,
+    promotionsEnabled: r.promotionsEnabled,
     stampCardEnabled: r.stampCardEnabled,
     spendPointsEnabled: r.spendPointsEnabled,
+    memberOtpEnabled: r.memberOtpEnabled,
+    memberSignupPaused: r.memberSignupPaused,
+    memberPolicyOverrides: {
+      newMemberOrderCapThb: r.memberOrderCapThb ?? null,
+      newMemberMaxOpenOrders: r.memberMaxOpenOrders ?? null,
+      signupsPerDevicePerDay: r.memberSignupsPerDay ?? null,
+      maxPendingRequests: r.memberMaxPending ?? null,
+      pendingExpiryHours: r.memberPendingExpiryHours ?? null,
+      rejectCooldownDays: r.memberRejectCooldownDays ?? null,
+    },
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
@@ -111,11 +124,30 @@ export class DrizzleShopRepository implements IShopRepository {
         ...(input.loyaltyEnabled !== undefined
           ? { loyaltyEnabled: input.loyaltyEnabled }
           : {}),
+        ...(input.promotionsEnabled !== undefined
+          ? { promotionsEnabled: input.promotionsEnabled }
+          : {}),
         ...(input.stampCardEnabled !== undefined
           ? { stampCardEnabled: input.stampCardEnabled }
           : {}),
         ...(input.spendPointsEnabled !== undefined
           ? { spendPointsEnabled: input.spendPointsEnabled }
+          : {}),
+        ...(input.memberOtpEnabled !== undefined
+          ? { memberOtpEnabled: input.memberOtpEnabled }
+          : {}),
+        ...(input.memberPolicy
+          ? {
+              memberOrderCapThb: input.memberPolicy.newMemberOrderCapThb,
+              memberMaxOpenOrders: input.memberPolicy.newMemberMaxOpenOrders,
+              memberSignupsPerDay: input.memberPolicy.signupsPerDevicePerDay,
+              memberMaxPending: input.memberPolicy.maxPendingRequests,
+              memberPendingExpiryHours: input.memberPolicy.pendingExpiryHours,
+              memberRejectCooldownDays: input.memberPolicy.rejectCooldownDays,
+            }
+          : {}),
+        ...(input.memberSignupPaused !== undefined
+          ? { memberSignupPaused: input.memberSignupPaused }
           : {}),
       })
       .where(eq(schema.shops.id, id))
@@ -150,11 +182,51 @@ export class DrizzleShopRepository implements IShopRepository {
     return toShop(r);
   }
 
+  async setPromotionsAllowedByAdmin(id: string, on: boolean): Promise<Shop> {
+    const [r] = await db
+      .update(schema.shops)
+      .set({ promotionsAllowedByAdmin: on })
+      .where(eq(schema.shops.id, id))
+      .returning();
+    return toShop(r);
+  }
+
   async getKioskPinHash(id: string): Promise<string | null> {
     const r = await db.query.shops.findFirst({
       where: eq(schema.shops.id, id),
       columns: { kioskPinHash: true },
     });
     return r?.kioskPinHash ?? null;
+  }
+
+  async getStaticJoinToken(id: string): Promise<string | null> {
+    const r = await db.query.shops.findFirst({
+      where: eq(schema.shops.id, id),
+      columns: { staticJoinToken: true },
+    });
+    if (!r) return null;
+    if (r.staticJoinToken) return r.staticJoinToken;
+    // Lazy backfill (shops created before migration 0015 without a token).
+    const token = generateStaticJoinToken();
+    await db
+      .update(schema.shops)
+      .set({ staticJoinToken: token })
+      .where(and(eq(schema.shops.id, id), isNull(schema.shops.staticJoinToken)));
+    const again = await db.query.shops.findFirst({
+      where: eq(schema.shops.id, id),
+      columns: { staticJoinToken: true },
+    });
+    return again?.staticJoinToken ?? token;
+  }
+
+  async rotateStaticJoinToken(
+    id: string,
+    newToken: string,
+    nowIso: string,
+  ): Promise<void> {
+    await db
+      .update(schema.shops)
+      .set({ staticJoinToken: newToken, staticJoinTokenRotatedAt: nowIso })
+      .where(eq(schema.shops.id, id));
   }
 }

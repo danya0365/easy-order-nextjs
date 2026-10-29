@@ -21,6 +21,7 @@ function toUser(row: Row): User {
     isActive: row.isActive,
     lineUserId: row.lineUserId,
     totpEnabled: !!row.totpConfirmedAt,
+    isSuperadmin: !!row.isSuperadmin,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

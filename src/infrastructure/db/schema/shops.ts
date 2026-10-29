@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 import { id, createdAt, updatedAt } from "./_shared";
 import { shopCategories } from "./shop-categories";
@@ -42,9 +43,28 @@ export const shops = sqliteTable(
     loyaltyAllowedByAdmin: integer({ mode: "boolean" }).notNull().default(false),
     // Shop-level module toggle. Effective = loyaltyAllowedByAdmin && loyaltyEnabled.
     loyaltyEnabled: integer({ mode: "boolean" }).notNull().default(false),
+    // Promotions module gates (mirror loyalty). Effective = allowed && enabled.
+    promotionsAllowedByAdmin: integer({ mode: "boolean" }).notNull().default(false),
+    promotionsEnabled: integer({ mode: "boolean" }).notNull().default(false),
     // Per-kind toggles (only meaningful when the module is effective).
     stampCardEnabled: integer({ mode: "boolean" }).notNull().default(false),
     spendPointsEnabled: integer({ mode: "boolean" }).notNull().default(false),
+    // Shop toggle for membership OTP verification (default OFF — no SMS cost yet).
+    memberOtpEnabled: integer({ mode: "boolean" }).notNull().default(false),
+    // Revocable secret embedded in the permanent static QR (`/s/{slug}/join?k=`).
+    staticJoinToken: text().$defaultFn(() =>
+      randomBytes(24).toString("base64url"),
+    ),
+    staticJoinTokenRotatedAt: text(),
+    // Shop toggle: pause NEW static-QR member signups (existing members unaffected).
+    memberSignupPaused: integer({ mode: "boolean" }).notNull().default(false),
+    // Per-shop membership policy overrides (NULL = default, see member-policy.ts).
+    memberOrderCapThb: integer(),
+    memberMaxOpenOrders: integer(),
+    memberSignupsPerDay: integer(),
+    memberMaxPending: integer(),
+    memberPendingExpiryHours: integer(),
+    memberRejectCooldownDays: integer(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
