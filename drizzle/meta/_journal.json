@@ -141,6 +141,13 @@
       "when": 1796500000000,
       "tag": "0019_users_superadmin",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1796600000000,
+      "tag": "0020_customers_crm",
+      "breakpoints": true
     }
   ]
 }

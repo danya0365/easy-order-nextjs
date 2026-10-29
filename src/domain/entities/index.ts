@@ -386,6 +386,15 @@ export interface Customer {
   onlineOrderReviewedBy: string | null;
   /** Last rejection time (kept across re-requests; drives the 30-day cooldown). */
   onlineOrderRejectedAt: string | null;
+  /** CRM: shop-internal note. */
+  note?: string | null;
+  /** CRM: lowercase tags ("vip", "regular", custom). */
+  tags?: string[];
+  /** CRM: shop block (no ordering / re-signup). */
+  blockedAt?: string | null;
+  blockedBy?: string | null;
+  /** CRM: new-member order cap lifted early. */
+  newMemberClearedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -615,7 +624,7 @@ export interface LoyaltyPointsBalance {
   updatedAt: string;
 }
 
-export type LoyaltyPointsTxType = "earn" | "redeem";
+export type LoyaltyPointsTxType = "earn" | "redeem" | "adjust";
 
 export interface LoyaltyPointsTransaction {
   id: string;

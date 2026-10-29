@@ -24,6 +24,7 @@ export async function getClientMessages() {
     shop: messages.shop,
     admin: messages.admin,
     adminUsers: messages.adminUsers,
+    customersCrm: messages.customersCrm,
     layout: messages.layout,
     channels: messages.channels,
     theme: messages.theme,

@@ -154,11 +154,18 @@ export class PlaceOrderUseCase {
       );
       customerId = customer.id;
       customerPhone = phone;
+      if (customer.blockedAt) {
+        throw new Error("ร้านไม่สามารถรับออเดอร์จากเบอร์นี้ได้ กรุณาติดต่อร้าน");
+      }
 
       // New static-QR members (approved by the shop, no finished order yet):
       // max 1 open order + order total cap. Dynamic-QR / kiosk customers
       // never have onlineOrderStatus="approved", so they're unaffected.
-      if (channel === "online" && customer.onlineOrderStatus === "approved") {
+      if (
+        channel === "online" &&
+        customer.onlineOrderStatus === "approved" &&
+        !customer.newMemberClearedAt
+      ) {
         const stats = await this.orders.customerOrderStats(
           input.shopId,
           customer.id,

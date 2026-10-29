@@ -6,7 +6,7 @@ import { orders } from "./orders";
 import { loyaltyPointsRewards } from "./loyalty-points-rewards";
 import { users } from "./users";
 
-export const LOYALTY_POINTS_TX_TYPES = ["earn", "redeem"] as const;
+export const LOYALTY_POINTS_TX_TYPES = ["earn", "redeem", "adjust"] as const;
 export type LoyaltyPointsTxType = (typeof LOYALTY_POINTS_TX_TYPES)[number];
 
 /** Immutable ledger of points movements. */
