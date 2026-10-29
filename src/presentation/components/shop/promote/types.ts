@@ -27,4 +27,4 @@ export interface PromoPageSeed {
 }
 
 /** Which of the three studio paths is active. */
-export type PromoPath = "template" | "ai_prompt" | "upload";
+export type PromoPath = "template" | "card" | "ai_prompt" | "upload";
