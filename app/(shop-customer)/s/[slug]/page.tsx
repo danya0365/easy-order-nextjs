@@ -54,27 +54,38 @@ export default async function CustomerShopPage({
   searchParams: Promise<{ bind?: string }>;
 }) {
   const { slug } = await params;
-  const { bind } = await searchParams;
-  const t = await getTranslations("publicPages");
-  const tOrder = await getTranslations("order");
-
-  const shop = await container.shopRepository.findBySlug(slug);
+  const [{ bind }, t, tOrder, shop] = await Promise.all([
+    searchParams,
+    getTranslations("publicPages"),
+    getTranslations("order"),
+    container.shopRepository.findBySlug(slug),
+  ]);
   if (!shop) notFound();
 
+  // Independent lookups run in parallel: each is a remote DB round trip, so
+  // running them sequentially multiplied the request's wall time.
   // Temporarily-closed shops: show a notice but keep the page viewable.
-  const subscription = await container.subscriptionRepository.findByShop(shop.id);
+  // Order history comes ONLY from a bound device (secret token cookie).
+  const [subscription, history, images, sessionUser, orderAccess, recommendedItems] =
+    await Promise.all([
+      container.subscriptionRepository.findByShop(shop.id),
+      getMemberToken(slug).then((token) =>
+        new GetCustomerOrderHistoryUseCase(
+          container.shopRepository,
+          container.customerDeviceRepository,
+          container.orderRepository,
+        ).execute(slug, token),
+      ),
+      container.shopImageRepository.listByShop(shop.id),
+      getSession(),
+      getOrderAccess(slug),
+      new GetRecommendedMenuUseCase(
+        container.menuCategoryRepository,
+        container.menuItemRepository,
+      ).execute(shop.id),
+    ]);
   const isPaused = !!subscription?.pausedAt;
 
-  // Order history comes ONLY from a bound device (secret token cookie).
-  const token = await getMemberToken(slug);
-  const history = await new GetCustomerOrderHistoryUseCase(
-    container.shopRepository,
-    container.customerDeviceRepository,
-    container.orderRepository,
-  ).execute(slug, token);
-
-  // Shop presentation: imagery, category, profile, reviews, location.
-  const images = await container.shopImageRepository.listByShop(shop.id);
   const coverImage = images.find((i) => i.kind === "cover") ?? null;
   const profileImage = images.find((i) => i.kind === "profile") ?? null;
   const gallery = images.filter((i) => i.kind === "gallery");
@@ -101,18 +112,12 @@ export default async function CustomerShopPage({
   // Owner viewing their OWN page → show inline image edit affordances. Writes
   // stay guarded server-side (uploadShopImageAction scopes to the session's own
   // shop), so this only gates the UI.
-  const sessionUser = await getSession();
   const isOwner =
     sessionUser?.role === "shop_owner" && sessionUser.shopId === shop.id;
 
   // Shop QR gate: the "สั่งออนไลน์" CTA appears only after scanning the shop's
   // order QR (the claim cookie enables direct ordering).
-  const hasOrderAccess = !!(await getOrderAccess(slug));
-
-  const recommendedItems = await new GetRecommendedMenuUseCase(
-    container.menuCategoryRepository,
-    container.menuItemRepository,
-  ).execute(shop.id);
+  const hasOrderAccess = !!orderAccess;
 
   const showStamp = isStampCardOn(shop);
   const showPoints = isSpendPointsOn(shop);
@@ -136,14 +141,15 @@ export default async function CustomerShopPage({
       ).byCustomerId(shop.id, history.customer.id);
     }
     if (showPoints) {
-      pointsBalance = await container.loyaltyPointsBalanceRepository.findByCustomer(
-        shop.id,
-        history.customer.id,
-      );
-      pointsRewards = await container.loyaltyPointsRewardRepository.listByShop(
-        shop.id,
-        { activeOnly: true },
-      );
+      [pointsBalance, pointsRewards] = await Promise.all([
+        container.loyaltyPointsBalanceRepository.findByCustomer(
+          shop.id,
+          history.customer.id,
+        ),
+        container.loyaltyPointsRewardRepository.listByShop(shop.id, {
+          activeOnly: true,
+        }),
+      ]);
     }
   }
 

@@ -134,7 +134,8 @@
     "memberPolicy_signupsPerDevicePerDay": "Sign-ups per device/IP per day",
     "memberPolicy_maxPendingRequests": "Max pending requests per shop",
     "memberPolicy_pendingExpiryHours": "Pending request expiry (hours)",
-    "memberPolicy_rejectCooldownDays": "Rejected phone cooldown (days)"
+    "memberPolicy_rejectCooldownDays": "Rejected phone cooldown (days)",
+    "staticJoinQrPrintCaption": "Scan to join and order"
   },
   "admin": {
     "settingsBillingUiLabel": "Show monthly billing UI",
@@ -612,5 +613,29 @@
     "orderTitle": "Order",
     "paid": "Paid",
     "unpaid": "Unpaid"
+  },
+  "promote": {
+    "ctaScanJoinLine": "Scan to join and order",
+    "qrModeLabel": "Poster QR",
+    "qrModeJoin": "Join / order online QR",
+    "qrModeShop": "Shop page QR",
+    "qrModeRotateNote": "If you rotate the join QR in member settings, reprint this poster — the old QR will stop working.",
+    "qrModeJoinOff": "The join QR is off, so the poster uses the shop page QR.",
+    "qrModeJoinOffLink": "Turn it on in member settings",
+    "ctaScanLine": "Scan to see the shop and order",
+    "pathCard": "QR card",
+    "cardCaption": "Caption under QR",
+    "cardCaptionDefault": "สแกนเพื่อสมัครสมาชิกและสั่งอาหาร",
+    "cardSubtitle": "Subtitle (optional)",
+    "cardSubtitlePlaceholder": "e.g. Open daily 10:00–20:00",
+    "cardColor": "Theme color",
+    "cardColor_ink": "Black",
+    "cardColor_orange": "Orange",
+    "cardColor_green": "Green",
+    "cardColor_blue": "Blue",
+    "cardColor_rose": "Rose",
+    "cardPaper": "Paper size",
+    "cardShowLogo": "Show shop logo",
+    "cardQrAlt": "Shop QR code"
   }
 }

@@ -810,7 +810,8 @@
     "memberPolicy_signupsPerDevicePerDay": "สมัครได้ต่ออุปกรณ์/IP ต่อวัน",
     "memberPolicy_maxPendingRequests": "คำขอรออนุมัติสูงสุดของร้าน",
     "memberPolicy_pendingExpiryHours": "คำขอหมดอายุหลัง (ชั่วโมง)",
-    "memberPolicy_rejectCooldownDays": "เบอร์ที่ถูกปฏิเสธสมัครใหม่ได้หลัง (วัน)"
+    "memberPolicy_rejectCooldownDays": "เบอร์ที่ถูกปฏิเสธสมัครใหม่ได้หลัง (วัน)",
+    "staticJoinQrPrintCaption": "สแกนเพื่อสมัครสมาชิกและสั่งอาหาร"
   },
   "adminPages": {
     "overviewTitle": "ภาพรวมระบบ",
@@ -955,7 +956,28 @@
     "aiVibeLabel": "โทน / บรรยากาศ",
     "aiPromptOutput": "พรอมต์ที่ได้",
     "copyPrompt": "คัดลอกพรอมต์",
-    "copied": "คัดลอกแล้ว"
+    "copied": "คัดลอกแล้ว",
+    "ctaScanJoinLine": "สแกนเพื่อสมัครสมาชิกและสั่งอาหาร",
+    "qrModeLabel": "QR บนโปสเตอร์",
+    "qrModeJoin": "QR สมัครสมาชิก/สั่งออนไลน์",
+    "qrModeShop": "QR หน้าร้าน",
+    "qrModeRotateNote": "ถ้าเปลี่ยน (หมุน) QR สมัครสมาชิกในตั้งค่าสมาชิก ต้องพิมพ์โปสเตอร์ใหม่ เพราะ QR เดิมจะใช้ไม่ได้",
+    "qrModeJoinOff": "QR สมัครสมาชิกยังไม่เปิด โปสเตอร์จะใช้ QR หน้าร้านแทน",
+    "qrModeJoinOffLink": "เปิดในตั้งค่าสมาชิก",
+    "pathCard": "การ์ด QR",
+    "cardCaption": "ข้อความใต้ QR",
+    "cardCaptionDefault": "สแกนเพื่อสมัครสมาชิกและสั่งอาหาร",
+    "cardSubtitle": "บรรทัดรอง (ไม่บังคับ)",
+    "cardSubtitlePlaceholder": "เช่น เปิดทุกวัน 10:00–20:00",
+    "cardColor": "สีธีม",
+    "cardColor_ink": "ดำ",
+    "cardColor_orange": "ส้ม",
+    "cardColor_green": "เขียว",
+    "cardColor_blue": "น้ำเงิน",
+    "cardColor_rose": "ชมพู",
+    "cardPaper": "ขนาดกระดาษ",
+    "cardShowLogo": "แสดงโลโก้ร้าน",
+    "cardQrAlt": "QR ของร้าน"
   },
   "analytics": {
     "ordersLabel": "ออเดอร์",
