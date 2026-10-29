@@ -810,7 +810,8 @@
     "memberPolicy_signupsPerDevicePerDay": "สมัครได้ต่ออุปกรณ์/IP ต่อวัน",
     "memberPolicy_maxPendingRequests": "คำขอรออนุมัติสูงสุดของร้าน",
     "memberPolicy_pendingExpiryHours": "คำขอหมดอายุหลัง (ชั่วโมง)",
-    "memberPolicy_rejectCooldownDays": "เบอร์ที่ถูกปฏิเสธสมัครใหม่ได้หลัง (วัน)"
+    "memberPolicy_rejectCooldownDays": "เบอร์ที่ถูกปฏิเสธสมัครใหม่ได้หลัง (วัน)",
+    "staticJoinQrPrintCaption": "สแกนเพื่อสมัครสมาชิกและสั่งอาหาร"
   },
   "adminPages": {
     "overviewTitle": "ภาพรวมระบบ",
