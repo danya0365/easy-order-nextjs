@@ -30,7 +30,9 @@
     "onlineCashNote": "Please prepare cash to pay when you receive the order",
     "minOrderHint": "Minimum order {amount} baht",
     "resultHistoryLink": "View my order history",
-    "resultBackToShop": "Back to shop"
+    "resultBackToShop": "Back to shop",
+    "cancelKeep": "Keep order",
+    "cancelReasonPlaceholder": "Reason for cancelling (required)"
   },
   "publicPages": {
     "onlineOrderMetaTitle": "Order online · {name}",
@@ -481,7 +483,19 @@
     "bulkBlockConfirm": "Block {n} customers? They will not be able to order or re-register.",
     "bulkDone": "Done {done}, skipped {skipped}",
     "exportCsv": "Export CSV",
-    "exportSelected": "Export selected"
+    "exportSelected": "Export selected",
+    "pageSize": "Page size",
+    "perPage": "{n} / page",
+    "showingRange": "Showing {from}–{to} of {total}",
+    "pagination": "Pagination",
+    "prev": "Prev",
+    "next": "Next",
+    "pageOf": "Page {page} / {pages}",
+    "selectPage": "Select page",
+    "selectAllMatching": "Select all {n} matching",
+    "clearSelection": "Clear selection",
+    "bulkApproveConfirm": "Approve {n} customers?",
+    "bulkTooMany": "Max {max} per bulk action — narrow the filter"
   },
   "customerDetail": {
     "back": "Back",
@@ -578,6 +592,15 @@
       "customer_online_rejected_suspicious": "Rejected (suspicious)",
       "customer_phone_blocked": "Phone blocked",
       "customer_erased": "Erased (PDPA)"
-    }
+    },
+    "ownerOnlyHint": "Points, tags, block and device reset are owner-only",
+    "print": "Print",
+    "copy": "Copy",
+    "copied": "Copied",
+    "openCustomer": "Open customer",
+    "callCustomer": "Call customer",
+    "orderTitle": "Order",
+    "paid": "Paid",
+    "unpaid": "Unpaid"
   }
 }

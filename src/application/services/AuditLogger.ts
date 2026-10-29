@@ -52,6 +52,7 @@ export const AUDIT_ACTIONS = {
   customerOnlineRejectedSuspicious: "customer_online_rejected_suspicious",
   customerPhoneBlocked: "customer_phone_blocked",
   customerBlocked: "customer_blocked",
+  orderStatusChanged: "order_status_changed",
   customerUnblocked: "customer_unblocked",
   customerProfileUpdated: "customer_profile_updated",
   customerTagsUpdated: "customer_tags_updated",

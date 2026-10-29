@@ -4,7 +4,7 @@ import type { ICustomerCrmRepository } from "@/src/application/repositories/ICus
 import type { IMemberSignupGuardRepository } from "@/src/application/repositories/IMemberSignupGuardRepository";
 import { ApproveOnlineMemberUseCase } from "@/src/application/use-cases/member/ApproveOnlineMemberUseCase";
 
-export const BULK_MAX = 200;
+export const BULK_MAX = 500;
 
 export interface BulkResult {
   done: string[];

@@ -5,59 +5,54 @@ import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
-import { Badge } from "@/src/presentation/components/ui/Badge";
-import { Card } from "@/src/presentation/components/ui/Card";
+import { OrderCard } from "@/src/presentation/components/order/OrderQueue";
+import { OrderDetailExtras } from "@/src/presentation/components/order/OrderDetailExtras";
 import { satangToBaht } from "@/src/presentation/lib/money";
-import { formatDateTime } from "@/src/presentation/lib/format-date";
+import { withCustomerNotes } from "@/src/presentation/lib/order-notes";
 
 export const dynamic = "force-dynamic";
 
-/** Read-only order detail (linked from the customer CRM order history). */
+/**
+ * Shop order detail with the same actions as the queue card (status
+ * transitions, cancel-with-reason, mark paid) plus print / copy / call /
+ * open-customer. No loading.tsx above this route, so notFound() is a real 404.
+ */
 export default async function ShopOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { shopId } = await requireShopAccess();
   if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) notFound();
-  const order = await container.orderRepository.findById(shopId, id);
-  if (!order) notFound();
+  const found = await container.orderRepository.findById(shopId, id);
+  if (!found) notFound();
+  const [order] = await withCustomerNotes(shopId, [found]);
   const t = await getTranslations("customerDetail");
+
+  const summary = [
+    `#${order.orderNo}`,
+    ...order.items.map((it) => `${it.nameSnapshot} x${it.quantity}  ${satangToBaht(it.lineTotalSatang)}`),
+    `${t("total")}: ${satangToBaht(order.totalSatang)}`,
+    order.customerName || "",
+    order.customerPhone || "",
+    order.deliveryAddress || "",
+    order.note || "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   return (
     <div className="flex flex-col gap-4">
       <Link
         href={order.customerId ? `/shop/customers/${order.customerId}` : "/shop/orders"}
-        className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground"
+        className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground print:hidden"
       >
         <ArrowLeft className="size-4" />
         {t("back")}
       </Link>
-      <Card className="flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <h1 className="text-xl font-bold">#{order.orderNo}</h1>
-            <p className="text-xs text-muted">{formatDateTime(order.createdAt)}</p>
-          </div>
-          <div className="flex flex-col items-end gap-1">
-            <Badge tone={order.status === "cancelled" ? "danger" : order.status === "completed" ? "success" : "warning"}>
-              {t(`ostatus_${order.status}` as "ostatus_pending")}
-            </Badge>
-            <Badge>{t(order.fulfillmentType === "dine_in" ? "dineIn" : (order.fulfillmentType as "pickup"))}</Badge>
-          </div>
-        </div>
-        <ul className="flex flex-col gap-1 text-sm">
-          {order.items.map((it) => (
-            <li key={it.id} className="flex justify-between gap-2">
-              <span className="min-w-0 break-words">{it.nameSnapshot} ×{it.quantity}</span>
-              <span className="shrink-0 text-muted">{satangToBaht(it.lineTotalSatang)}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="flex justify-between border-t border-border pt-2 font-semibold">
-          <span>{t("total")}</span>
-          <span>{satangToBaht(order.totalSatang)}</span>
-        </p>
-        {order.note && <p className="text-sm">{order.note}</p>}
-        {order.deliveryAddress && <p className="text-sm text-muted break-words">{order.deliveryAddress}</p>}
-      </Card>
+      <OrderDetailExtras
+        summary={summary}
+        phone={order.customerPhone}
+        customerHref={order.customerId ? `/shop/customers/${order.customerId}` : null}
+      />
+      <OrderCard order={order} />
     </div>
   );
 }

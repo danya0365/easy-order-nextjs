@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { AlertTriangle, Ban, CheckCircle, ChevronRight, Crown, Download, Phone, QrCode, Store } from "lucide-react";
 
-import { bulkCustomerAction } from "@/src/presentation/actions/customer-crm-actions";
+import { bulkCustomerAction, type BulkTarget } from "@/src/presentation/actions/customer-crm-actions";
 import { PendingMemberActions } from "@/src/presentation/components/shop/PendingMemberActions";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { useConfirm } from "@/src/presentation/components/ui/ConfirmDialog";
@@ -29,38 +29,71 @@ export interface CrmListItem {
   flags?: string | null;
 }
 
-export function CustomerCrmList({ items, exportQuery }: { items: CrmListItem[]; exportQuery: string }) {
+export function CustomerCrmList({
+  items,
+  exportQuery,
+  query,
+  total,
+  bulkMax,
+  base,
+  canBulkBlock,
+  canApprove,
+}: {
+  items: CrmListItem[];
+  exportQuery: string;
+  query: { tab: string; q: string; channel: string; sort: string };
+  total: number;
+  bulkMax: number;
+  base: "/shop" | "/staff";
+  canBulkBlock: boolean;
+  canApprove: boolean;
+}) {
   const t = useTranslations("customersCrm");
   const toast = useToast();
   const confirm = useConfirm();
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [pending, start] = useTransition();
-  const all = items.length > 0 && sel.size === items.length;
+  const [allMatching, setAllMatching] = useState(false);
+  const all = items.length > 0 && items.every((i) => sel.has(i.id));
+  const count = allMatching ? total : sel.size;
 
-  const toggle = (id: string) =>
+  const toggle = (id: string) => {
+    setAllMatching(false);
     setSel((s) => {
       const n = new Set(s);
       if (n.has(id)) n.delete(id);
       else n.add(id);
       return n;
     });
+  };
 
   function bulk(op: "approve" | "block") {
     start(async () => {
-      if (op === "block") {
-        const ok = await confirm({ title: t("bulkBlock"), message: t("bulkBlockConfirm", { n: sel.size }), tone: "danger", confirmLabel: t("bulkBlock") });
+      if (allMatching && total > bulkMax) {
+        toast.error(t("bulkTooMany", { max: bulkMax }));
+        return;
+      }
+      if (op === "block" || allMatching) {
+        const ok = await confirm({
+          title: op === "block" ? t("bulkBlock") : t("bulkApprove"),
+          message: op === "block" ? t("bulkBlockConfirm", { n: count }) : t("bulkApproveConfirm", { n: count }),
+          tone: op === "block" ? "danger" : undefined,
+          confirmLabel: op === "block" ? t("bulkBlock") : t("bulkApprove"),
+        });
         if (!ok) return;
       }
-      const r = await bulkCustomerAction(op, [...sel]);
+      const target: BulkTarget = allMatching ? { query } : { ids: [...sel] };
+      const r = await bulkCustomerAction(op, target);
       if (r.error) toast.error(r.error);
       else {
         toast.success(t("bulkDone", { done: r.done ?? 0, skipped: r.skipped ?? 0 }));
         setSel(new Set());
+        setAllMatching(false);
       }
     });
   }
 
-  const exportHref = `/api/shop/customers/export?${exportQuery}${sel.size ? `&ids=${[...sel].join(",")}` : ""}`;
+  const exportHref = `/api/shop/customers/export?${exportQuery}${!allMatching && sel.size ? `&ids=${[...sel].join(",")}` : ""}`;
 
   return (
     <div className="flex flex-col gap-2">
@@ -70,26 +103,39 @@ export function CustomerCrmList({ items, exportQuery }: { items: CrmListItem[]; 
             type="checkbox"
             className="size-5"
             checked={all}
-            onChange={() => setSel(all ? new Set() : new Set(items.map((i) => i.id)))}
+            onChange={() => {
+              setAllMatching(false);
+              setSel(all ? new Set() : new Set(items.map((i) => i.id)));
+            }}
           />
-          {sel.size > 0 ? t("selected", { n: sel.size }) : t("selectAll")}
+          {count > 0 ? t("selected", { n: count }) : t("selectPage")}
         </label>
+        {all && total > items.length && !allMatching && (
+          <button type="button" className="text-sm text-brand-600 underline" onClick={() => setAllMatching(true)}>
+            {t("selectAllMatching", { n: total })}
+          </button>
+        )}
+        {allMatching && (
+          <button type="button" className="text-sm text-muted underline" onClick={() => { setAllMatching(false); setSel(new Set()); }}>
+            {t("clearSelection")}
+          </button>
+        )}
         <div className="ml-auto flex flex-wrap gap-2">
-          {sel.size > 0 && (
+          {count > 0 && (
             <>
-              <button type="button" disabled={pending} onClick={() => bulk("approve")} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm">
+              {canApprove && <button type="button" disabled={pending} onClick={() => bulk("approve")} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm">
                 <CheckCircle className="size-4" />
                 {t("bulkApprove")}
-              </button>
-              <button type="button" disabled={pending} onClick={() => bulk("block")} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm text-error">
+              </button>}
+              {canBulkBlock && <button type="button" disabled={pending} onClick={() => bulk("block")} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm text-error">
                 <Ban className="size-4" />
                 {t("bulkBlock")}
-              </button>
+              </button>}
             </>
           )}
           <a href={exportHref} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm">
             <Download className="size-4" />
-            {sel.size > 0 ? t("exportSelected") : t("exportCsv")}
+            {!allMatching && sel.size > 0 ? t("exportSelected") : t("exportCsv")}
           </a>
         </div>
       </div>
@@ -99,7 +145,7 @@ export function CustomerCrmList({ items, exportQuery }: { items: CrmListItem[]; 
           <li key={c.id} className="flex items-start gap-3 py-3">
             <input type="checkbox" className="mt-1 size-5 shrink-0" checked={sel.has(c.id)} onChange={() => toggle(c.id)} aria-label={c.name ?? c.maskedPhone} />
             <div className="min-w-0 flex-1">
-              <Link href={`/shop/customers/${c.id}`} className="flex items-center gap-1 font-medium text-foreground">
+              <Link href={`${base}/customers/${c.id}`} className="flex items-center gap-1 font-medium text-foreground">
                 {c.vip && <Crown className="size-4 shrink-0 text-amber-500" />}
                 <span className="truncate">{c.name || t("noName")}</span>
               </Link>
@@ -130,15 +176,15 @@ export function CustomerCrmList({ items, exportQuery }: { items: CrmListItem[]; 
               )}
               {c.pending && (
                 <div className="mt-2">
-                  <PendingMemberActions customerId={c.id} />
+                  <PendingMemberActions customerId={c.id} canBlock={canBulkBlock} />
                 </div>
               )}
             </div>
             <div className="flex shrink-0 items-center gap-1">
-              <a href={`tel:${c.phone}`} className="inline-flex size-10 items-center justify-center rounded-full text-muted hover:bg-muted-surface" aria-label={t("call")} title={t("call")}>
+              {c.phone && <a href={`tel:${c.phone}`} className="inline-flex size-10 items-center justify-center rounded-full text-muted hover:bg-muted-surface" aria-label={t("call")} title={t("call")}>
                 <Phone className="size-4" />
-              </a>
-              <Link href={`/shop/customers/${c.id}`} className="inline-flex size-10 items-center justify-center rounded-full text-muted hover:bg-muted-surface" aria-label={t("openDetail")} title={t("openDetail")}>
+              </a>}
+              <Link href={`${base}/customers/${c.id}`} className="inline-flex size-10 items-center justify-center rounded-full text-muted hover:bg-muted-surface" aria-label={t("openDetail")} title={t("openDetail")}>
                 <ChevronRight className="size-5" />
               </Link>
             </div>

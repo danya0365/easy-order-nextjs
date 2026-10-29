@@ -21,6 +21,7 @@ import { getClientIp } from "@/src/presentation/lib/request-ip";
 import { getBaseUrl } from "@/src/presentation/lib/base-url";
 import { renderPromptPayQR } from "@/src/infrastructure/services/promptpay";
 import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
+import { withCustomerNotes, type QueueOrder } from "@/src/presentation/lib/order-notes";
 import type {
   OrderStatus,
   OrderPaymentMethod,
@@ -392,26 +393,28 @@ export async function searchCustomersAction(
 export async function advanceOrderStatusAction(
   orderId: string,
   to: OrderStatus,
+  reason?: string,
 ): Promise<{ error?: string }> {
   try {
     const { actor, shopId } = await requireShopWrite();
+    const why = typeof reason === "string" ? reason.trim().slice(0, 200) : "";
     await new AdvanceOrderStatusUseCase(container.orderRepository).execute(
       shopId,
       orderId,
       to,
     );
-    if (to === "cancelled") {
-      await container.auditLogger.record({
-        actorUserId: actor.id,
-        actorRole: actor.role,
-        action: AUDIT_ACTIONS.orderCancelled,
-        targetType: "order",
-        targetId: orderId,
-        shopId,
-        ip: await getClientIp(),
-      });
-    }
+    await container.auditLogger.record({
+      actorUserId: actor.id,
+      actorRole: actor.role,
+      action: to === "cancelled" ? AUDIT_ACTIONS.orderCancelled : AUDIT_ACTIONS.orderStatusChanged,
+      targetType: "order",
+      targetId: orderId,
+      shopId,
+      ip: await getClientIp(),
+      metadata: to === "cancelled" ? { to, reason: why || null } : { to },
+    });
     revalidatePath("/shop/orders");
+    revalidatePath(`/shop/orders/${orderId}`);
     revalidatePath("/staff");
     return {};
   } catch (e) {
@@ -457,7 +460,8 @@ export async function confirmOrderPaymentAction(
 /** Next page of finished orders (history "load more"). */
 export async function loadMoreOrderHistoryAction(
   cursor: string,
-): Promise<Page<OrderWithItems>> {
+): Promise<Page<QueueOrder>> {
   const { shopId } = await requireShopWrite();
-  return container.orderRepository.pageHistoryByShop(shopId, { cursor });
+  const page = await container.orderRepository.pageHistoryByShop(shopId, { cursor });
+  return { ...page, items: await withCustomerNotes(shopId, page.items) };
 }

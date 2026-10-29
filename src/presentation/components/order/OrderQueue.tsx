@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -12,6 +12,9 @@ import type {
   OrderStatus,
   OrderWithItems,
 } from "@/src/domain/entities";
+
+/** Order card data: the order plus the customer's shop-internal CRM note. */
+export type QueueOrder = OrderWithItems & { customerNote?: string | null };
 import {
   advanceOrderStatusAction,
   confirmOrderPaymentAction,
@@ -23,7 +26,7 @@ import { Button } from "@/src/presentation/components/ui/Button";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { LoadMore } from "@/src/presentation/components/ui/LoadMore";
-import { useConfirm } from "@/src/presentation/components/ui/ConfirmDialog";
+import { Modal } from "@/src/presentation/components/ui/Modal";
 import { useToast } from "@/src/presentation/components/ui/Toast";
 
 const ACTIVE_ORDER: OrderStatus[] = ["pending", "preparing", "ready"];
@@ -53,7 +56,7 @@ const FULFILL_KEY: Record<FulfillmentType, "fulfillPickup" | "fulfillDelivery" |
   dine_in: "fulfillDineIn",
 };
 
-function OrderBadges({ order }: { order: OrderWithItems }) {
+function OrderBadges({ order }: { order: QueueOrder }) {
   const t = useTranslations("order");
   return (
     <span className="flex flex-wrap justify-end gap-1">
@@ -65,19 +68,14 @@ function OrderBadges({ order }: { order: OrderWithItems }) {
 
 const AUTO_REFRESH_MS = 15_000;
 
-/** customerId -> shop-internal CRM note, shown as a badge on order cards. */
-const CustomerNotesCtx = createContext<Record<string, string>>({});
-
 export function OrderQueue({
   activeOrders,
   historyInitial,
   historyCursor,
-  customerNotes = {},
 }: {
-  activeOrders: OrderWithItems[];
-  historyInitial: OrderWithItems[];
+  activeOrders: QueueOrder[];
+  historyInitial: QueueOrder[];
   historyCursor: string | null;
-  customerNotes?: Record<string, string>;
 }) {
   const t = useTranslations("order");
   const router = useRouter();
@@ -92,7 +90,6 @@ export function OrderQueue({
     activeOrders.filter((o) => o.status === s);
 
   return (
-    <CustomerNotesCtx.Provider value={customerNotes}>
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs text-muted">{t("autoRefreshHint")}</p>
@@ -129,7 +126,6 @@ export function OrderQueue({
         initialCursor={historyCursor}
       />
     </div>
-    </CustomerNotesCtx.Provider>
   );
 }
 
@@ -144,13 +140,11 @@ function cap(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-function OrderCard({ order }: { order: OrderWithItems }) {
+export function OrderCard({ order }: { order: QueueOrder }) {
   const t = useTranslations("order");
-  const notesMap = useContext(CustomerNotesCtx);
-  const customerNote = order.customerId ? notesMap[order.customerId] : undefined;
+  const customerNote = order.customerNote;
   const router = useRouter();
   const toast = useToast();
-  const confirm = useConfirm();
   const [pending, start] = useTransition();
 
   function advance(to: OrderStatus) {
@@ -169,18 +163,20 @@ function OrderCard({ order }: { order: OrderWithItems }) {
     });
   }
 
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   function cancel() {
+    setCancelReason("");
+    setCancelOpen(true);
+  }
+  function submitCancel() {
     start(async () => {
-      const ok = await confirm({
-        title: t("cancelConfirmTitle"),
-        message: t("cancelConfirmMessage"),
-        confirmLabel: t("cancelConfirmLabel"),
-        tone: "danger",
-      });
-      if (!ok) return;
-      const res = await advanceOrderStatusAction(order.id, "cancelled");
+      const res = await advanceOrderStatusAction(order.id, "cancelled", cancelReason);
       if (res.error) toast.error(res.error || t("actionError"));
-      else router.refresh();
+      else {
+        setCancelOpen(false);
+        router.refresh();
+      }
     });
   }
 
@@ -279,10 +275,37 @@ function OrderCard({ order }: { order: OrderWithItems }) {
             {t("confirmPayment")}
           </Button>
         )}
-        <Button variant="ghost" onClick={cancel} disabled={pending}>
-          {t("cancel")}
-        </Button>
+        {order.status !== "completed" && order.status !== "cancelled" && (
+          <Button variant="ghost" onClick={cancel} disabled={pending}>
+            {t("cancel")}
+          </Button>
+        )}
       </div>
+      <Modal
+        open={cancelOpen}
+        onClose={() => setCancelOpen(false)}
+        title={t("cancelConfirmTitle")}
+        footer={
+          <>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setCancelOpen(false)} disabled={pending}>
+              {t("cancelKeep")}
+            </Button>
+            <Button type="button" variant="danger" size="sm" onClick={submitCancel} disabled={pending || cancelReason.trim().length < 2}>
+              {t("cancelConfirmLabel")}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-muted">{t("cancelConfirmMessage")}</p>
+        <textarea
+          className="mt-2 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+          rows={2}
+          maxLength={200}
+          value={cancelReason}
+          placeholder={t("cancelReasonPlaceholder")}
+          onChange={(e) => setCancelReason(e.target.value)}
+        />
+      </Modal>
     </Card>
   );
 }
@@ -291,7 +314,7 @@ function HistorySection({
   initialItems,
   initialCursor,
 }: {
-  initialItems: OrderWithItems[];
+  initialItems: QueueOrder[];
   initialCursor: string | null;
 }) {
   const t = useTranslations("order");
@@ -314,7 +337,7 @@ function HistorySection({
           {initialItems.length === 0 ? (
             <p className="text-sm text-muted">{t("historyEmpty")}</p>
           ) : (
-            <LoadMore<OrderWithItems>
+            <LoadMore<QueueOrder>
               initialItems={initialItems}
               initialCursor={initialCursor}
               loadMore={(cursor) => loadMoreOrderHistoryAction(cursor)}

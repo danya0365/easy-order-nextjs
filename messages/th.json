@@ -1161,7 +1161,9 @@
     "onlineCashNote": "โปรดเตรียมเงินสดจ่ายเมื่อรับออเดอร์",
     "minOrderHint": "ยอดขั้นต่ำ {amount} บาท",
     "resultHistoryLink": "ดูประวัติการสั่งของฉัน",
-    "resultBackToShop": "กลับหน้าร้าน"
+    "resultBackToShop": "กลับหน้าร้าน",
+    "cancelKeep": "ไม่ยกเลิก",
+    "cancelReasonPlaceholder": "เหตุผลที่ยกเลิก (จำเป็น)"
   },
   "kiosk": {
     "kioskPinTitle": "PIN หน้าร้าน",
@@ -1581,7 +1583,19 @@
     "bulkBlockConfirm": "บล็อกลูกค้า {n} ราย? ลูกค้าจะสั่งออเดอร์และสมัครใหม่ไม่ได้",
     "bulkDone": "สำเร็จ {done} รายการ ข้าม {skipped} รายการ",
     "exportCsv": "ส่งออก CSV",
-    "exportSelected": "ส่งออกที่เลือก"
+    "exportSelected": "ส่งออกที่เลือก",
+    "pageSize": "จำนวนต่อหน้า",
+    "perPage": "{n} ต่อหน้า",
+    "showingRange": "แสดง {from}–{to} จาก {total}",
+    "pagination": "เปลี่ยนหน้า",
+    "prev": "ก่อนหน้า",
+    "next": "ถัดไป",
+    "pageOf": "หน้า {page} / {pages}",
+    "selectPage": "เลือกทั้งหน้า",
+    "selectAllMatching": "เลือกทั้งหมดที่ตรงตัวกรอง ({n})",
+    "clearSelection": "ล้างการเลือก",
+    "bulkApproveConfirm": "อนุมัติ {n} รายการ?",
+    "bulkTooMany": "เลือกได้สูงสุด {max} รายการต่อครั้ง กรุณากรองให้แคบลง"
   },
   "customerDetail": {
     "back": "กลับ",
@@ -1678,6 +1692,15 @@
       "customer_online_rejected_suspicious": "ปฏิเสธ (น่าสงสัย)",
       "customer_phone_blocked": "บล็อกเบอร์",
       "customer_erased": "ลบข้อมูล (PDPA)"
-    }
+    },
+    "ownerOnlyHint": "การปรับแต้ม แท็ก บล็อก และรีเซ็ตอุปกรณ์ ทำได้เฉพาะเจ้าของร้าน",
+    "print": "พิมพ์",
+    "copy": "คัดลอก",
+    "copied": "คัดลอกแล้ว",
+    "openCustomer": "ดูข้อมูลลูกค้า",
+    "callCustomer": "โทรหาลูกค้า",
+    "orderTitle": "ออเดอร์",
+    "paid": "ชำระแล้ว",
+    "unpaid": "ยังไม่ชำระ"
   }
 }

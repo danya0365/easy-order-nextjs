@@ -14,7 +14,7 @@ import { Button } from "@/src/presentation/components/ui/Button";
 import { useToast } from "@/src/presentation/components/ui/Toast";
 import { useConfirm } from "@/src/presentation/components/ui/ConfirmDialog";
 
-export function PendingMemberActions({ customerId }: { customerId: string }) {
+export function PendingMemberActions({ customerId, canBlock = true }: { customerId: string; canBlock?: boolean }) {
   const t = useTranslations("shopPages");
   const toast = useToast();
   const confirm = useConfirm();
@@ -53,6 +53,7 @@ export function PendingMemberActions({ customerId }: { customerId: string }) {
         <Ban className="size-4" />
         {t("rejectMember")}
       </Button>
+      {canBlock && (
       <Button
         type="button"
         size="sm"
@@ -76,6 +77,7 @@ export function PendingMemberActions({ customerId }: { customerId: string }) {
         <PhoneOff className="size-4" />
         {t("blockPhone")}
       </Button>
+      )}
     </div>
   );
 }

@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 
 import { container } from "@/src/infrastructure/di/container";
 import { requireShopWrite } from "@/src/infrastructure/auth/session";
+import { requireCrmActor } from "@/src/infrastructure/auth/crm-access";
+import { assertCrmCan } from "@/src/domain/services/crm-permissions";
 import { AnonymizeCustomerUseCase } from "@/src/application/use-cases/customer/AnonymizeCustomerUseCase";
 import { ApproveOnlineMemberUseCase } from "@/src/application/use-cases/member/ApproveOnlineMemberUseCase";
 import { RejectOnlineMemberUseCase } from "@/src/application/use-cases/member/RejectOnlineMemberUseCase";
@@ -56,7 +58,8 @@ export async function approveOnlineMemberAction(
   customerId: string,
 ): Promise<{ error?: string; message?: string }> {
   try {
-    const { actor, shopId } = await requireShopWrite();
+    const { actor, shopId, role } = await requireCrmActor();
+    assertCrmCan(role, "approve");
     await new ApproveOnlineMemberUseCase(container.customerRepository).execute(
       shopId,
       customerId,
@@ -72,6 +75,7 @@ export async function approveOnlineMemberAction(
       ip: await getClientIp(),
     });
     revalidatePath("/shop/customers");
+    revalidatePath("/staff/customers");
     return { message: "อนุมัติสมาชิกสำเร็จ" };
   } catch (e) {
     return { error: (e as Error).message };
@@ -82,7 +86,8 @@ export async function rejectOnlineMemberAction(
   customerId: string,
 ): Promise<{ error?: string; message?: string }> {
   try {
-    const { actor, shopId } = await requireShopWrite();
+    const { actor, shopId, role } = await requireCrmActor();
+    assertCrmCan(role, "approve");
     await new RejectOnlineMemberUseCase(container.customerRepository).execute(
       shopId,
       customerId,
@@ -98,6 +103,7 @@ export async function rejectOnlineMemberAction(
       ip: await getClientIp(),
     });
     revalidatePath("/shop/customers");
+    revalidatePath("/staff/customers");
     return { message: "ปฏิเสธคำขอสมาชิกแล้ว" };
   } catch (e) {
     return { error: (e as Error).message };

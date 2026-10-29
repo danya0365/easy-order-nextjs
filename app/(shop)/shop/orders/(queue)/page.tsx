@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
+import { withCustomerNotes } from "@/src/presentation/lib/order-notes";
 import { OrderQueue } from "@/src/presentation/components/order/OrderQueue";
 
 export const dynamic = "force-dynamic";
@@ -13,10 +14,10 @@ export default async function ShopOrdersPage() {
     container.orderRepository.listActiveByShop(shopId),
     container.orderRepository.pageHistoryByShop(shopId, {}),
   ]);
-  const notes = await container.customerCrmRepository.notesFor(
-    shopId,
-    [...activeOrders, ...history.items].map((o) => o.customerId ?? "").filter(Boolean),
-  );
+  const [active, hist] = await Promise.all([
+    withCustomerNotes(shopId, activeOrders),
+    withCustomerNotes(shopId, history.items),
+  ]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -25,10 +26,9 @@ export default async function ShopOrdersPage() {
         <p className="mt-0.5 text-sm text-muted">{t("queueSubtitle")}</p>
       </div>
       <OrderQueue
-        activeOrders={activeOrders}
-        historyInitial={history.items}
+        activeOrders={active}
+        historyInitial={hist}
         historyCursor={history.nextCursor}
-        customerNotes={Object.fromEntries(notes)}
       />
     </div>
   );

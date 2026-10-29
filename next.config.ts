@@ -53,7 +53,17 @@ const SECURITY_HEADERS = [
   },
 ];
 
+// vinext (Workers build/dev) also reads this config but must keep the real
+// `cloudflare:workers` module, so the Node stub alias applies to `next` only.
+const isNextCli = !process.argv.some((a) => /vinext|[\\/]vite|^vite$/.test(a));
+
 const nextConfig: NextConfig = {
+  // `next build` runs in Node, where the Workers-only `cloudflare:workers`
+  // module doesn't exist; alias it to the Node stub (vinext/Workers builds use
+  // the real module and ignore this).
+  ...(isNextCli
+    ? { turbopack: { resolveAlias: { "cloudflare:workers": "./src/test/cloudflare-workers-stub.ts" } } }
+    : {}),
   env: {
     NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version || "0.1.0",
     NEXT_PUBLIC_COMMIT_SHA: getCommitSha(),

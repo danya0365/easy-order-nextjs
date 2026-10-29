@@ -120,6 +120,17 @@ export interface CrmSummary {
   outstandingPoints: number;
 }
 
+export interface CrmOverview {
+  summary: CrmSummary;
+  tabs: Record<CrmTab, number>;
+}
+
+export const CRM_PAGE_SIZES = [25, 50, 100] as const;
+export function normalizePageSize(v: unknown): number {
+  const n = Number(v);
+  return (CRM_PAGE_SIZES as readonly number[]).includes(n) ? n : 25;
+}
+
 export function summarize(rows: CrmCustomerRow[], now = Date.now()): CrmSummary {
   const ms = monthStartBangkok(now);
   return {
