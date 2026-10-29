@@ -612,5 +612,15 @@
     "orderTitle": "Order",
     "paid": "Paid",
     "unpaid": "Unpaid"
+  },
+  "promote": {
+    "ctaScanJoinLine": "Scan to join and order",
+    "qrModeLabel": "Poster QR",
+    "qrModeJoin": "Join / order online QR",
+    "qrModeShop": "Shop page QR",
+    "qrModeRotateNote": "If you rotate the join QR in member settings, reprint this poster — the old QR will stop working.",
+    "qrModeJoinOff": "The join QR is off, so the poster uses the shop page QR.",
+    "qrModeJoinOffLink": "Turn it on in member settings",
+    "ctaScanLine": "Scan to see the shop and order"
   }
 }

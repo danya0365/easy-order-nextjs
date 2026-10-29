@@ -955,7 +955,14 @@
     "aiVibeLabel": "โทน / บรรยากาศ",
     "aiPromptOutput": "พรอมต์ที่ได้",
     "copyPrompt": "คัดลอกพรอมต์",
-    "copied": "คัดลอกแล้ว"
+    "copied": "คัดลอกแล้ว",
+    "ctaScanJoinLine": "สแกนเพื่อสมัครสมาชิกและสั่งอาหาร",
+    "qrModeLabel": "QR บนโปสเตอร์",
+    "qrModeJoin": "QR สมัครสมาชิก/สั่งออนไลน์",
+    "qrModeShop": "QR หน้าร้าน",
+    "qrModeRotateNote": "ถ้าเปลี่ยน (หมุน) QR สมัครสมาชิกในตั้งค่าสมาชิก ต้องพิมพ์โปสเตอร์ใหม่ เพราะ QR เดิมจะใช้ไม่ได้",
+    "qrModeJoinOff": "QR สมัครสมาชิกยังไม่เปิด โปสเตอร์จะใช้ QR หน้าร้านแทน",
+    "qrModeJoinOffLink": "เปิดในตั้งค่าสมาชิก"
   },
   "analytics": {
     "ordersLabel": "ออเดอร์",
