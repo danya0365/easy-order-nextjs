@@ -1,6 +1,8 @@
 import "server-only";
 
 import { DrizzleUserRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleUserRepository";
+import { DrizzleAdminUserRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleAdminUserRepository";
+import type { IAdminUserRepository } from "@/src/application/repositories/IAdminUserRepository";
 import { DrizzleSessionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleSessionRepository";
 import { DrizzleSubscriptionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleSubscriptionRepository";
 import { DrizzlePaymentRepository } from "@/src/infrastructure/repositories/drizzle/DrizzlePaymentRepository";
@@ -101,6 +103,8 @@ function createTurnstile(): TurnstileVerifier {
 export class GenericContainer {
   // --- 🟢 generic repositories ---
   readonly userRepository: IUserRepository = new DrizzleUserRepository();
+  readonly adminUserRepository: IAdminUserRepository =
+    new DrizzleAdminUserRepository();
   readonly sessionRepository: ISessionRepository =
     new DrizzleSessionRepository();
   readonly subscriptionRepository: ISubscriptionRepository =

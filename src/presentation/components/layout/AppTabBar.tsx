@@ -49,6 +49,7 @@ type NavLabelKey =
   | "navSettings"
   | "navSecurity"
   | "navLoginLinks"
+  | "navUsers"
   | "navContactAdmin"
   | "navOverview"
   | "navLeads"
@@ -102,6 +103,7 @@ const NAVS = {
     { href: "/admin/analytics", label: "navAnalytics", icon: BarChart3 },
     { href: "/admin/leads", label: "navLeads", icon: MapPinned },
     { href: "/admin/security", label: "navSecurity", icon: ShieldAlert },
+    { href: "/admin/users", label: "navUsers", icon: Users },
     { href: "/admin/login-links", label: "navLoginLinks", icon: KeyRound },
     { href: "/admin/settings", label: "navPlatformSettings", icon: Settings },
   ],
