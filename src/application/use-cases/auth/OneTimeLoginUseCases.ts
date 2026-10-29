@@ -9,6 +9,7 @@ import {
   hashOneTimeLoginToken,
   hashesEqual,
   isWellFormedToken,
+  type OneTimeLinkInvalidReason,
 } from "@/src/domain/services/one-time-login";
 
 /** Accounts a one-time link may log in as: active, belongs to the shop, never admins. */
@@ -60,7 +61,7 @@ export class CreateOneTimeLoginLinkUseCase {
 }
 
 export type OneTimeLinkCheck =
-  | { kind: "invalid" }
+  | { kind: "invalid"; reason: OneTimeLinkInvalidReason }
   | { kind: "ok"; link: AdminLoginLink; shopName: string; accounts: User[] }
   | { kind: "admin"; link: AdminLoginLink; account: User };
 
@@ -108,38 +109,46 @@ export class ResolveOneTimeLoginLinkUseCase {
   ) {}
 
   async execute(token: unknown, now: Date = new Date()): Promise<OneTimeLinkCheck> {
-    if (!isWellFormedToken(token)) return { kind: "invalid" };
+    const bad = (reason: OneTimeLinkInvalidReason) => ({ kind: "invalid", reason }) as const;
+    if (!isWellFormedToken(token)) return bad("malformed");
     const hash = hashOneTimeLoginToken(token);
     const link = await this.links.findByTokenHash(hash);
-    if (
-      !link ||
-      !hashesEqual(link.tokenHash, hash) ||
-      link.usedAt ||
-      link.revokedAt ||
-      link.expiresAt <= now.toISOString()
-    ) {
-      return { kind: "invalid" };
-    }
+    if (!link || !hashesEqual(link.tokenHash, hash)) return bad("not_found");
+    // Order matters: a used link stays "used" even after its expiry passes.
+    if (link.usedAt) return bad("used");
+    if (link.revokedAt) return bad("revoked");
+    if (link.expiresAt <= now.toISOString()) return bad("expired");
     if (link.kind === "admin") {
       const admin = link.targetUserId
         ? await this.users.findById(link.targetUserId)
         : null;
       if (!admin || !admin.isActive || admin.role !== "platform_admin") {
-        return { kind: "invalid" };
+        return bad("no_account");
       }
       return { kind: "admin", link, account: admin };
     }
-    if (!link.shopId) return { kind: "invalid" };
+    if (!link.shopId) return bad("no_account");
     const shop = await this.shops.findById(link.shopId);
-    if (!shop) return { kind: "invalid" };
+    if (!shop) return bad("no_account");
     let accounts = eligibleAccounts(await this.users.listByShop(shop.id), shop.id);
     if (link.targetUserId) accounts = accounts.filter((u) => u.id === link.targetUserId);
-    if (accounts.length === 0) return { kind: "invalid" };
+    if (accounts.length === 0) return bad("no_account");
     return { kind: "ok", link, shopName: shop.name, accounts };
   }
 }
 
-/** Re-validate, check the chosen account, and atomically burn the link. */
+/** Thrown by Consume; `reason` drives the user-facing message. */
+export class OneTimeLoginError extends Error {
+  constructor(readonly reason: OneTimeLinkInvalidReason | "wrong_account") {
+    super(
+      reason === "wrong_account"
+        ? "ไม่สามารถเข้าสู่ระบบด้วยบัญชีนี้ได้"
+        : "ลิงก์ไม่ถูกต้อง หมดอายุ หรือถูกใช้ไปแล้ว",
+    );
+    this.name = "OneTimeLoginError";
+  }
+}
+
 export class ConsumeOneTimeLoginLinkUseCase {
   constructor(
     private readonly links: IAdminLoginLinkRepository,
@@ -157,12 +166,20 @@ export class ConsumeOneTimeLoginLinkUseCase {
       this.shops,
       this.users,
     ).execute(token, now);
-    if (check.kind === "invalid") throw new Error("ลิงก์ไม่ถูกต้อง หมดอายุ หรือถูกใช้ไปแล้ว");
+    if (check.kind === "invalid") throw new OneTimeLoginError(check.reason);
     const candidates = check.kind === "admin" ? [check.account] : check.accounts;
     const user = candidates.find((u) => u.id === userId);
-    if (!user) throw new Error("ไม่สามารถเข้าสู่ระบบด้วยบัญชีนี้ได้");
+    if (!user) throw new OneTimeLoginError("wrong_account");
     const won = await this.links.consume(check.link.id, user.id, now.toISOString());
-    if (!won) throw new Error("ลิงก์ไม่ถูกต้อง หมดอายุ หรือถูกใช้ไปแล้ว");
+    if (!won) {
+      // Lost the race (or state changed since the read): report the real state.
+      const after = await new ResolveOneTimeLoginLinkUseCase(
+        this.links,
+        this.shops,
+        this.users,
+      ).execute(token, now);
+      throw new OneTimeLoginError(after.kind === "invalid" ? after.reason : "used");
+    }
     return { user, link: check.link };
   }
 }

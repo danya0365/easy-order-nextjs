@@ -9,6 +9,7 @@ import {
   ResolveOneTimeLoginLinkUseCase,
   CreateAdminSelfLoginLinkUseCase,
   IssueAdminLoginLinkUseCase,
+  OneTimeLoginError,
 } from "./OneTimeLoginUseCases";
 import {
   hashOneTimeLoginToken,
@@ -193,5 +194,55 @@ describe("admin one-time login links", () => {
     const { shop } = await seedShop("otl-j");
     const sl = await create().execute({ shopId: shop.id, adminId, expiry: "1h", now });
     assert.equal(Date.parse(sl.link.expiresAt) - now.getTime(), 60 * 60_000);
+  });
+
+  it("viewing never consumes: resolve many times (any browser) leaves the link usable", async () => {
+    const { shop, ownerId } = await seedShop("otl-view");
+    const { token, link } = await create().execute({ shopId: shop.id, adminId, expiry: "15m" });
+    for (let i = 0; i < 5; i++) assert.equal((await resolve().execute(token)).kind, "ok");
+    const row = await container.adminLoginLinkRepository.findById(link.id);
+    assert.equal(row?.usedAt ?? null, null);
+    await consume().execute(token, ownerId);
+  });
+
+  it("distinct reasons: used / revoked / expired / not_found / malformed", async () => {
+    const reasonOf = async (p: Promise<unknown>) => {
+      try {
+        await p;
+        return "ok";
+      } catch (e) {
+        assert.ok(e instanceof OneTimeLoginError);
+        return (e as OneTimeLoginError).reason;
+      }
+    };
+    const { shop, ownerId } = await seedShop("otl-reasons");
+    const used = await create().execute({ shopId: shop.id, adminId, expiry: "15m" });
+    await consume().execute(used.token, ownerId);
+    assert.deepEqual(await resolve().execute(used.token), { kind: "invalid", reason: "used" });
+    assert.equal(await reasonOf(consume().execute(used.token, ownerId)), "used");
+
+    const rev = await create().execute({ shopId: shop.id, adminId, expiry: "15m" });
+    await container.adminLoginLinkRepository.revoke(rev.link.id, new Date().toISOString());
+    assert.equal(await reasonOf(consume().execute(rev.token, ownerId)), "revoked");
+
+    const exp = await create().execute({ shopId: shop.id, adminId, expiry: "15m" });
+    const later = new Date(Date.now() + 16 * 60_000);
+    assert.deepEqual(await resolve().execute(exp.token, later), { kind: "invalid", reason: "expired" });
+    assert.equal(await reasonOf(consume().execute(exp.token, ownerId, later)), "expired");
+
+    assert.equal(await reasonOf(consume().execute("A".repeat(43), ownerId)), "not_found");
+    assert.equal(await reasonOf(consume().execute("short", ownerId)), "malformed");
+    const ok = await create().execute({ shopId: shop.id, adminId, expiry: "15m" });
+    assert.equal(await reasonOf(consume().execute(ok.token, adminId)), "wrong_account");
+    assert.equal((await resolve().execute(ok.token)).kind, "ok");
+  });
+
+  it("concurrent confirms: exactly one wins", async () => {
+    const { shop, ownerId } = await seedShop("otl-race");
+    const { token } = await create().execute({ shopId: shop.id, adminId, expiry: "15m" });
+    const results = await Promise.allSettled(
+      Array.from({ length: 5 }, () => consume().execute(token, ownerId)),
+    );
+    assert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
   });
 });

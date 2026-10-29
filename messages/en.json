@@ -386,7 +386,17 @@
     "oneTimeInvalidDesc": "This link is invalid, expired, revoked or already used. Ask the platform admin for a new one.",
     "oneTimeAdminTitle": "Platform admin sign-in",
     "oneTimeAdminDesc": "Press the button below to confirm signing in as the platform admin",
-    "oneTimeAdminConfirm": "Confirm admin sign-in"
+    "oneTimeAdminConfirm": "Confirm admin sign-in",
+    "oneTimeErrUsed": "This link has already been used to sign in (single use). Ask the platform admin for a new one.",
+    "oneTimeErrRevoked": "This link was revoked by the platform admin. Ask for a new one.",
+    "oneTimeErrExpired": "This link has expired. Ask the platform admin for a new one.",
+    "oneTimeErrNotFound": "This link wasn't found — it may have been copied incompletely. Open it again from the original message or ask for a new one.",
+    "oneTimeErrNoAccount": "No usable account for this link. Contact the platform admin.",
+    "oneTimeErrWrongAccount": "Can't sign in as that account. Please choose again.",
+    "oneTimeErrRateLimited": "Too many attempts. Wait a moment and try again (the link is still valid).",
+    "oneTimeErrForbidden": "Request rejected. Reopen the link and confirm again (the link is still valid).",
+    "oneTimePreviewTitle": "One-time sign-in link",
+    "oneTimePreviewDesc": "Open this link in a browser to sign in."
   },
   "adminUsers": {
     "title": "All users",
