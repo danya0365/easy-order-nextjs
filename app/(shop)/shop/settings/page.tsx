@@ -14,6 +14,7 @@ import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopCo
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { OrderAccessQrCard } from "@/src/presentation/components/shop/OrderAccessQrCard";
 import { StaticJoinQrCard } from "@/src/presentation/components/shop/StaticJoinQrCard";
+import { StaticJoinControls } from "@/src/presentation/components/shop/StaticJoinControls";
 import { LoyaltyModuleForm } from "@/src/presentation/components/loyalty/LoyaltyModuleForm";
 import { PromotionsModuleForm } from "@/src/presentation/components/promotions/PromotionsModuleForm";
 import { SettingsTabs } from "@/src/presentation/components/settings/SettingsTabs";
@@ -70,10 +71,12 @@ export default async function ShopSettingsPage() {
     return renderQrDataUrl(url);
   })();
 
-  const staticJoinQr = await (async () => {
+  const staticJoin = await (async () => {
     if (!shop.onlineOrderingEnabled) return null;
-    const url = `${await getBaseUrl()}/s/${shop.slug}/join`;
-    return renderQrDataUrl(url);
+    const k = await container.shopRepository.getStaticJoinToken(shop.id);
+    if (!k) return null;
+    const url = `${await getBaseUrl()}/s/${shop.slug}/join?k=${encodeURIComponent(k)}`;
+    return { url, qr: await renderQrDataUrl(url) };
   })();
 
   const tabs = [
@@ -117,16 +120,20 @@ export default async function ShopSettingsPage() {
             </Card>
           )}
 
-          {staticJoinQr && (
+          {staticJoin && (
             <Card>
               <CardHeader
                 title={t("staticJoinQrTitle")}
                 subtitle={t("staticJoinQrSubtitle")}
               />
               <StaticJoinQrCard
-                qrDataUrl={staticJoinQr}
+                qrDataUrl={staticJoin.qr}
+                joinUrl={staticJoin.url}
                 shopName={shop.name}
               />
+              <div className="mt-4">
+                <StaticJoinControls paused={shop.memberSignupPaused} />
+              </div>
             </Card>
           )}
 

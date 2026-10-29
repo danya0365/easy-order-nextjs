@@ -281,4 +281,29 @@ export class DrizzleOrderRepository implements IOrderRepository {
       .where(eq(schema.orders.shopId, shopId));
     return c?.value ?? 0;
   }
+
+  async customerOrderStats(
+    shopId: string,
+    customerId: string,
+  ): Promise<{ open: number; finished: number }> {
+    const rows = await db
+      .select({
+        status: schema.orders.status,
+        paymentStatus: schema.orders.paymentStatus,
+      })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.shopId, shopId),
+          eq(schema.orders.customerId, customerId),
+        ),
+      );
+    let open = 0;
+    let finished = 0;
+    for (const r of rows) {
+      if (r.status === "completed" || r.paymentStatus === "paid") finished++;
+      else if (r.status !== "cancelled") open++;
+    }
+    return { open, finished };
+  }
 }

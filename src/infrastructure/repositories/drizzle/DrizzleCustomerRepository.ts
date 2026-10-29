@@ -1,6 +1,7 @@
 import "server-only";
 
-import { and, desc, eq, like, or } from "drizzle-orm";
+import { and, count, desc, eq, gte, like, lt, or } from "drizzle-orm";
+import { STATIC_JOIN_POLICY } from "@/src/domain/services/static-join-guard";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { Customer } from "@/src/domain/entities";
 import type { ICustomerRepository } from "@/src/application/repositories/ICustomerRepository";
@@ -10,7 +11,7 @@ import { cursorWhere, toPage } from "./_cursor";
 
 type Row = typeof schema.customers.$inferSelect;
 
-const STATUSES = new Set(["none", "pending", "approved", "rejected"]);
+const STATUSES = new Set(["none", "pending", "approved", "rejected", "expired"]);
 
 function toCustomer(r: Row): Customer {
   const status = STATUSES.has(r.onlineOrderStatus)
@@ -26,6 +27,7 @@ function toCustomer(r: Row): Customer {
     onlineOrderRequestedAt: r.onlineOrderRequestedAt ?? null,
     onlineOrderReviewedAt: r.onlineOrderReviewedAt ?? null,
     onlineOrderReviewedBy: r.onlineOrderReviewedBy ?? null,
+    onlineOrderRejectedAt: r.onlineOrderRejectedAt ?? null,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
@@ -146,6 +148,10 @@ export class DrizzleCustomerRepository implements ICustomerRepository {
   }
 
   async listPendingOnlineOrder(shopId: string): Promise<Customer[]> {
+    const cutoff = new Date(
+      Date.now() - STATIC_JOIN_POLICY.pendingTtlMs,
+    ).toISOString();
+    await this.expireStalePending(shopId, cutoff);
     const rows = await db.query.customers.findMany({
       where: and(
         eq(schema.customers.shopId, shopId),
@@ -157,6 +163,35 @@ export class DrizzleCustomerRepository implements ICustomerRepository {
       ],
     });
     return rows.map(toCustomer);
+  }
+
+  async expireStalePending(shopId: string, cutoffIso: string): Promise<number> {
+    const rows = await db
+      .update(schema.customers)
+      .set({ onlineOrderStatus: "expired" })
+      .where(
+        and(
+          eq(schema.customers.shopId, shopId),
+          eq(schema.customers.onlineOrderStatus, "pending"),
+          lt(schema.customers.onlineOrderRequestedAt, cutoffIso),
+        ),
+      )
+      .returning({ id: schema.customers.id });
+    return rows.length;
+  }
+
+  async countOpenPending(shopId: string, cutoffIso: string): Promise<number> {
+    const [c] = await db
+      .select({ value: count() })
+      .from(schema.customers)
+      .where(
+        and(
+          eq(schema.customers.shopId, shopId),
+          eq(schema.customers.onlineOrderStatus, "pending"),
+          gte(schema.customers.onlineOrderRequestedAt, cutoffIso),
+        ),
+      );
+    return c?.value ?? 0;
   }
 
   async requestOnlineOrderMembership(
@@ -194,6 +229,7 @@ export class DrizzleCustomerRepository implements ICustomerRepository {
       .update(schema.customers)
       .set({
         onlineOrderStatus: status,
+        ...(status === "rejected" ? { onlineOrderRejectedAt: nowIso } : {}),
         onlineOrderReviewedAt: nowIso,
         onlineOrderReviewedBy: reviewedBy,
         updatedAt: nowIso,

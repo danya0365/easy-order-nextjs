@@ -65,4 +65,12 @@ export interface IOrderRepository {
   markPaid(shopId: string, id: string): Promise<OrderWithItems>;
   /** Total orders ever placed at the shop (all statuses) — for billing thresholds. */
   countByShop(shopId: string): Promise<number>;
+  /**
+   * Customer order stats for new-member limits: `open` = pending/preparing/ready
+   * (not cancelled), `finished` = completed or paid.
+   */
+  customerOrderStats(
+    shopId: string,
+    customerId: string,
+  ): Promise<{ open: number; finished: number }>;
 }

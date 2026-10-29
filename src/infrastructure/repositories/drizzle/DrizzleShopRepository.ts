@@ -1,6 +1,7 @@
 import "server-only";
 
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
+import { generateStaticJoinToken } from "@/src/domain/services/static-join-guard";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { Shop } from "@/src/domain/entities";
 import type {
@@ -36,6 +37,7 @@ function toShop(r: Row): Shop {
     stampCardEnabled: r.stampCardEnabled,
     spendPointsEnabled: r.spendPointsEnabled,
     memberOtpEnabled: r.memberOtpEnabled,
+    memberSignupPaused: r.memberSignupPaused,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
@@ -126,6 +128,9 @@ export class DrizzleShopRepository implements IShopRepository {
         ...(input.memberOtpEnabled !== undefined
           ? { memberOtpEnabled: input.memberOtpEnabled }
           : {}),
+        ...(input.memberSignupPaused !== undefined
+          ? { memberSignupPaused: input.memberSignupPaused }
+          : {}),
       })
       .where(eq(schema.shops.id, id))
       .returning();
@@ -174,5 +179,36 @@ export class DrizzleShopRepository implements IShopRepository {
       columns: { kioskPinHash: true },
     });
     return r?.kioskPinHash ?? null;
+  }
+
+  async getStaticJoinToken(id: string): Promise<string | null> {
+    const r = await db.query.shops.findFirst({
+      where: eq(schema.shops.id, id),
+      columns: { staticJoinToken: true },
+    });
+    if (!r) return null;
+    if (r.staticJoinToken) return r.staticJoinToken;
+    // Lazy backfill (shops created before migration 0015 without a token).
+    const token = generateStaticJoinToken();
+    await db
+      .update(schema.shops)
+      .set({ staticJoinToken: token })
+      .where(and(eq(schema.shops.id, id), isNull(schema.shops.staticJoinToken)));
+    const again = await db.query.shops.findFirst({
+      where: eq(schema.shops.id, id),
+      columns: { staticJoinToken: true },
+    });
+    return again?.staticJoinToken ?? token;
+  }
+
+  async rotateStaticJoinToken(
+    id: string,
+    newToken: string,
+    nowIso: string,
+  ): Promise<void> {
+    await db
+      .update(schema.shops)
+      .set({ staticJoinToken: newToken, staticJoinTokenRotatedAt: nowIso })
+      .where(eq(schema.shops.id, id));
   }
 }

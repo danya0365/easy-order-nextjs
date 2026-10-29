@@ -5,11 +5,12 @@ import { useTranslations } from "next-intl";
 
 interface Props {
   qrDataUrl: string;
+  joinUrl: string;
   shopName: string;
 }
 
-/** Printable permanent Static QR for `/s/[slug]/join` (no expiring token). */
-export function StaticJoinQrCard({ qrDataUrl, shopName }: Props) {
+/** Printable static QR for `/s/[slug]/join?k=` (revocable via rotate, no expiry). */
+export function StaticJoinQrCard({ qrDataUrl, joinUrl, shopName }: Props) {
   const t = useTranslations("shopPages");
 
   return (
@@ -19,6 +20,9 @@ export function StaticJoinQrCard({ qrDataUrl, shopName }: Props) {
         {/* eslint-disable-next-line @next/next/no-img-element -- data URL from server */}
         <img src={qrDataUrl} alt={t("staticJoinQrAlt")} className="size-56" />
         <p className="text-center text-sm text-muted">{t("staticJoinQrDesc")}</p>
+        <p className="break-all text-center text-xs text-muted print:hidden">
+          {joinUrl}
+        </p>
       </div>
       <div className="print:hidden">
         <button

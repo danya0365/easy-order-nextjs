@@ -34,3 +34,4 @@ export * from "./loyalty-points-balances";
 export * from "./loyalty-points-rewards";
 export * from "./loyalty-points-transactions";
 export * from "./shop-promotions";
+export * from "./member-signup-guard";

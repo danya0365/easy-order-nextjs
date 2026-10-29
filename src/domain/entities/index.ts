@@ -217,6 +217,8 @@ export interface Shop {
   spendPointsEnabled: boolean;
   /** Shop toggle for OTP verification on static member registration. Default false. */
   memberOtpEnabled: boolean;
+  /** Pause NEW static-QR member signups (existing members unaffected). */
+  memberSignupPaused: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -370,13 +372,15 @@ export interface Customer {
   /** Opaque code embedded in the customer's QR (staff scan instead of typing). */
   publicCode: string;
   /** Online order membership status: 'none' | 'pending' | 'approved' | 'rejected'. */
-  onlineOrderStatus: "none" | "pending" | "approved" | "rejected";
+  onlineOrderStatus: "none" | "pending" | "approved" | "rejected" | "expired";
   /** ISO 8601 timestamp when the pending online-order request was created. */
   onlineOrderRequestedAt: string | null;
   /** ISO 8601 timestamp when the status was last reviewed by staff. */
   onlineOrderReviewedAt: string | null;
   /** User ID of the staff member who approved/rejected. */
   onlineOrderReviewedBy: string | null;
+  /** Last rejection time (kept across re-requests; drives the 30-day cooldown). */
+  onlineOrderRejectedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

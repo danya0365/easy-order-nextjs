@@ -1,7 +1,12 @@
 import type { Customer } from "@/src/domain/entities";
 import type { Page, PageOpts } from "./pagination";
 
-export type OnlineOrderStatus = "none" | "pending" | "approved" | "rejected";
+export type OnlineOrderStatus =
+  | "none"
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "expired";
 
 export interface ICustomerRepository {
   /** Resolve a customer by id, scoped to the shop (returns null cross-tenant). */
@@ -27,8 +32,15 @@ export interface ICustomerRepository {
     shopId: string,
     opts?: PageOpts & { search?: string },
   ): Promise<Page<Customer>>;
-  /** Customers awaiting shop approval for online ordering. */
+  /**
+   * Customers awaiting shop approval for online ordering. Requests older than
+   * the pending TTL are marked `expired` first and excluded.
+   */
   listPendingOnlineOrder(shopId: string): Promise<Customer[]>;
+  /** Mark pending requests requested before `cutoffIso` as expired. */
+  expireStalePending(shopId: string, cutoffIso: string): Promise<number>;
+  /** Count open (pending, requested at/after `cutoffIso`) requests for a shop. */
+  countOpenPending(shopId: string, cutoffIso: string): Promise<number>;
   /** Mark membership request as pending (static join register). */
   requestOnlineOrderMembership(
     shopId: string,

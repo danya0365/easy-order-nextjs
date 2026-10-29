@@ -10,13 +10,18 @@ import {
 import { Input } from "@/src/presentation/components/ui/Input";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { FormField } from "@/src/presentation/components/ui/FormField";
+import { TurnstileWidget } from "@/src/presentation/components/auth/TurnstileWidget";
 
 export function RegisterForm({
   slug,
+  joinKey,
   memberOtpEnabled,
+  turnstileSiteKey,
 }: {
   slug: string;
+  joinKey: string;
   memberOtpEnabled: boolean;
+  turnstileSiteKey?: string;
 }) {
   const t = useTranslations("shopPages");
   const [state, action, pending] = useActionState<
@@ -27,6 +32,7 @@ export function RegisterForm({
   return (
     <form action={action} className="flex flex-col gap-4">
       <input type="hidden" name="slug" value={slug} />
+      <input type="hidden" name="k" value={joinKey} />
       <FormField label={t("displayName")} htmlFor="displayName">
         <Input
           id="displayName"
@@ -43,7 +49,9 @@ export function RegisterForm({
           type="tel"
           inputMode="tel"
           required
-          placeholder="0812345678"
+          pattern="0[689][0-9]{8}"
+          maxLength={10}
+          placeholder="08xxxxxxxx"
           autoComplete="tel"
         />
       </FormField>
@@ -52,6 +60,7 @@ export function RegisterForm({
           <Input id="otpCode" name="otpCode" inputMode="numeric" required />
         </FormField>
       ) : null}
+      <TurnstileWidget siteKey={turnstileSiteKey} />
       {state.error ? (
         <p className="text-sm text-error">{state.error}</p>
       ) : null}
