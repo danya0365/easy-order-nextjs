@@ -37,6 +37,10 @@ export const AUDIT_ACTIONS = {
   customerErased: "customer_erased",
   customerOnlineApproved: "customer_online_approved",
   customerOnlineRejected: "customer_online_rejected",
+  staticJoinTokenRotated: "static_join_token_rotated",
+  memberSignupPausedSet: "member_signup_paused_set",
+  customerOnlineRejectedSuspicious: "customer_online_rejected_suspicious",
+  customerPhoneBlocked: "customer_phone_blocked",
   shopSelfServiceSet: "shop_self_service_set",
   platformSettingsUpdated: "platform_settings_updated",
 } as const;

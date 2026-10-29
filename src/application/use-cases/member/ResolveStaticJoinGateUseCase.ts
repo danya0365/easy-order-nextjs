@@ -1,6 +1,10 @@
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import type { ICustomerDeviceRepository } from "@/src/application/repositories/ICustomerDeviceRepository";
 import type { Customer } from "@/src/domain/entities";
+import {
+  isPendingExpired,
+  staticJoinTokenMatches,
+} from "@/src/domain/services/static-join-guard";
 
 export type StaticJoinGateKind =
   | "approved"
@@ -8,6 +12,8 @@ export type StaticJoinGateKind =
   | "rejected"
   | "needs_register"
   | "ordering_off"
+  | "invalid_qr"
+  | "signup_paused"
   | "not_found";
 
 export interface ResolveStaticJoinGateResult {
@@ -29,6 +35,8 @@ export class ResolveStaticJoinGateUseCase {
   async execute(
     slug: string,
     memberToken?: string | null,
+    joinKey?: string | null,
+    now: Date = new Date(),
   ): Promise<ResolveStaticJoinGateResult> {
     const shop = await this.shops.findBySlug(slug);
     if (!shop) {
@@ -40,19 +48,38 @@ export class ResolveStaticJoinGateUseCase {
         message: "ร้านยังไม่เปิดรับสั่งออนไลน์",
       };
     }
-    if (!memberToken) {
+    // New signups need the CURRENT revocable QR key + signups not paused.
+    // Existing members (valid eo_member cookie) pass regardless of `k`.
+    const registerGate = async (
+      customer?: Customer,
+    ): Promise<ResolveStaticJoinGateResult> => {
+      const expected = await this.shops.getStaticJoinToken(shop.id);
+      if (!staticJoinTokenMatches(expected, joinKey)) {
+        return {
+          kind: "invalid_qr",
+          customer,
+          message: "QR ไม่ถูกต้องหรือถูกยกเลิกแล้ว",
+        };
+      }
+      if (shop.memberSignupPaused) {
+        return {
+          kind: "signup_paused",
+          customer,
+          message: "ร้านปิดรับสมาชิกใหม่ชั่วคราว",
+        };
+      }
       return {
         kind: "needs_register",
-        message: "ยังไม่ได้ผูกสมาชิก กรุณาลงทะเบียน",
+        customer,
+        message: "กรุณาลงทะเบียนก่อนสั่งออนไลน์",
       };
-    }
+    };
+
+    if (!memberToken) return registerGate();
 
     const device = await this.devices.findByToken(memberToken);
     if (!device || device.customer.shopId !== shop.id) {
-      return {
-        kind: "needs_register",
-        message: "ไม่พบสมาชิกบนอุปกรณ์นี้ กรุณาลงทะเบียน",
-      };
+      return registerGate();
     }
 
     const customer = device.customer;
@@ -64,6 +91,9 @@ export class ResolveStaticJoinGateUseCase {
           message: "อนุมัติแล้ว — สั่งออนไลน์ได้",
         };
       case "pending":
+        if (isPendingExpired(customer.onlineOrderRequestedAt, now)) {
+          return registerGate(customer);
+        }
         return {
           kind: "pending",
           customer,
@@ -75,13 +105,10 @@ export class ResolveStaticJoinGateUseCase {
           customer,
           message: "คำขอถูกปฏิเสธ",
         };
+      case "expired":
       case "none":
       default:
-        return {
-          kind: "needs_register",
-          customer,
-          message: "กรุณาลงทะเบียนก่อนสั่งออนไลน์",
-        };
+        return registerGate(customer);
     }
   }
 }

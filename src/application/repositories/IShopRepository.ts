@@ -29,6 +29,8 @@ export interface UpdateShopSettingsInput {
   promotionsEnabled?: boolean;
   /** Shop toggle for OTP verification on static member registration. Default false. */
   memberOtpEnabled?: boolean;
+  /** Pause new static-QR member signups. */
+  memberSignupPaused?: boolean;
 }
 
 export interface IShopRepository {
@@ -46,4 +48,12 @@ export interface IShopRepository {
   setPromotionsAllowedByAdmin(id: string, on: boolean): Promise<Shop>;
   /** Returns the stored kiosk PIN hash (or null) — infra-only, for verification. */
   getKioskPinHash(id: string): Promise<string | null>;
+  /** Static-QR join secret (lazily generated if missing). Infra-only, never public. */
+  getStaticJoinToken(id: string): Promise<string | null>;
+  /** Replace the static-QR join secret; old printed QR stops working. */
+  rotateStaticJoinToken(
+    id: string,
+    newToken: string,
+    nowIso: string,
+  ): Promise<void>;
 }

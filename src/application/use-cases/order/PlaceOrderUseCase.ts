@@ -9,6 +9,7 @@ import type { IMenuItemRepository } from "@/src/application/repositories/IMenuIt
 import type { ICustomerRepository } from "@/src/application/repositories/ICustomerRepository";
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import { normalizePhone, isValidThaiPhone } from "@/src/domain/services/phone";
+import { NEW_MEMBER_ORDER_POLICY } from "@/src/domain/services/static-join-guard";
 
 export interface CartLine {
   menuItemId: string;
@@ -153,6 +154,31 @@ export class PlaceOrderUseCase {
       );
       customerId = customer.id;
       customerPhone = phone;
+
+      // New static-QR members (approved by the shop, no finished order yet):
+      // max 1 open order + order total cap. Dynamic-QR / kiosk customers
+      // never have onlineOrderStatus="approved", so they're unaffected.
+      if (channel === "online" && customer.onlineOrderStatus === "approved") {
+        const stats = await this.orders.customerOrderStats(
+          input.shopId,
+          customer.id,
+        );
+        if (stats.finished === 0) {
+          if (stats.open >= NEW_MEMBER_ORDER_POLICY.maxOpenOrders) {
+            throw new Error(
+              "สมาชิกใหม่สั่งได้ครั้งละ 1 ออเดอร์ จนกว่าออเดอร์แรกจะเสร็จ/ชำระแล้ว",
+            );
+          }
+          const total =
+            lines.reduce((s, l) => s + l.unitPriceSatang * l.quantity, 0) +
+            deliveryFeeSatang;
+          if (total > NEW_MEMBER_ORDER_POLICY.maxTotalSatang) {
+            throw new Error(
+              `สมาชิกใหม่สั่งได้ไม่เกิน ${(NEW_MEMBER_ORDER_POLICY.maxTotalSatang / 100).toFixed(0)} บาทต่อออเดอร์ จนกว่าออเดอร์แรกจะเสร็จ`,
+            );
+          }
+        }
+      }
     }
 
     return this.orders.create({

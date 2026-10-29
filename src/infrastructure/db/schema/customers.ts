@@ -27,6 +27,8 @@ export const customers = sqliteTable(
     onlineOrderRequestedAt: text(),
     onlineOrderReviewedAt: text(),
     onlineOrderReviewedBy: text(),
+    // Last time the shop rejected this phone (kept across re-requests; 30-day cooldown).
+    onlineOrderRejectedAt: text(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

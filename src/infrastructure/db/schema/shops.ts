@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 import { id, createdAt, updatedAt } from "./_shared";
 import { shopCategories } from "./shop-categories";
@@ -50,6 +51,13 @@ export const shops = sqliteTable(
     spendPointsEnabled: integer({ mode: "boolean" }).notNull().default(false),
     // Shop toggle for membership OTP verification (default OFF — no SMS cost yet).
     memberOtpEnabled: integer({ mode: "boolean" }).notNull().default(false),
+    // Revocable secret embedded in the permanent static QR (`/s/{slug}/join?k=`).
+    staticJoinToken: text().$defaultFn(() =>
+      randomBytes(24).toString("base64url"),
+    ),
+    staticJoinTokenRotatedAt: text(),
+    // Shop toggle: pause NEW static-QR member signups (existing members unaffected).
+    memberSignupPaused: integer({ mode: "boolean" }).notNull().default(false),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
