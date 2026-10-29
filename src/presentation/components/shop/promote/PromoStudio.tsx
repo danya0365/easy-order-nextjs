@@ -20,6 +20,7 @@ import { PosterSizeSwitcher } from "./PosterSizeSwitcher";
 import { TemplatePosterPanel } from "./TemplatePosterPanel";
 import { AiPromptPanel } from "./AiPromptPanel";
 import { UploadBgPanel } from "./UploadBgPanel";
+import { QrCardPanel } from "./QrCardPanel";
 import type {
   PromoPageSeed,
   PromoPath,
@@ -29,9 +30,10 @@ import type {
 
 const PATHS: {
   id: PromoPath;
-  labelKey: "pathTemplate" | "pathAiPrompt" | "pathUpload";
+  labelKey: "pathTemplate" | "pathCard" | "pathAiPrompt" | "pathUpload";
 }[] = [
   { id: "template", labelKey: "pathTemplate" },
+  { id: "card", labelKey: "pathCard" },
   { id: "ai_prompt", labelKey: "pathAiPrompt" },
   { id: "upload", labelKey: "pathUpload" },
 ];
@@ -143,7 +145,9 @@ export function PromoStudio({ seed: pageSeed }: { seed: PromoPageSeed }) {
         )}
       </div>
 
-      <PosterSizeSwitcher value={sizeId} onChange={setSizeId} />
+      {path !== "card" && (
+        <PosterSizeSwitcher value={sizeId} onChange={setSizeId} />
+      )}
 
       {/* Path tabs — dropdown on phones, pill toggle on sm+. */}
       <div className="sm:hidden">
@@ -180,6 +184,7 @@ export function PromoStudio({ seed: pageSeed }: { seed: PromoPageSeed }) {
         {path === "template" && (
           <TemplatePosterPanel size={size} copy={copy} seed={seed} />
         )}
+        {path === "card" && <QrCardPanel seed={seed} />}
         {path === "ai_prompt" && (
           <AiPromptPanel key={goal} goal={goal} size={sizeId} ctx={ctx} />
         )}

@@ -622,6 +622,20 @@
     "qrModeRotateNote": "If you rotate the join QR in member settings, reprint this poster — the old QR will stop working.",
     "qrModeJoinOff": "The join QR is off, so the poster uses the shop page QR.",
     "qrModeJoinOffLink": "Turn it on in member settings",
-    "ctaScanLine": "Scan to see the shop and order"
+    "ctaScanLine": "Scan to see the shop and order",
+    "pathCard": "QR card",
+    "cardCaption": "Caption under QR",
+    "cardCaptionDefault": "สแกนเพื่อสมัครสมาชิกและสั่งอาหาร",
+    "cardSubtitle": "Subtitle (optional)",
+    "cardSubtitlePlaceholder": "e.g. Open daily 10:00–20:00",
+    "cardColor": "Theme color",
+    "cardColor_ink": "Black",
+    "cardColor_orange": "Orange",
+    "cardColor_green": "Green",
+    "cardColor_blue": "Blue",
+    "cardColor_rose": "Rose",
+    "cardPaper": "Paper size",
+    "cardShowLogo": "Show shop logo",
+    "cardQrAlt": "Shop QR code"
   }
 }

@@ -62,7 +62,6 @@ export default async function ShopMemberSettingsPage() {
           <>
             <StaticJoinQrCard
               qrDataUrl={staticJoin.qr}
-              joinUrl={staticJoin.url}
               shopName={shop.name}
               logoDataUrl={logoDataUrl}
             />
