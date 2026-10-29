@@ -1,7 +1,10 @@
 import "server-only";
 
 import { and, count, desc, eq, gte, like, lt, or } from "drizzle-orm";
-import { STATIC_JOIN_POLICY } from "@/src/domain/services/static-join-guard";
+import {
+  HOUR_MS,
+  effectiveMemberPolicy,
+} from "@/src/domain/services/member-policy";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { Customer } from "@/src/domain/entities";
 import type { ICustomerRepository } from "@/src/application/repositories/ICustomerRepository";
@@ -148,9 +151,15 @@ export class DrizzleCustomerRepository implements ICustomerRepository {
   }
 
   async listPendingOnlineOrder(shopId: string): Promise<Customer[]> {
-    const cutoff = new Date(
-      Date.now() - STATIC_JOIN_POLICY.pendingTtlMs,
-    ).toISOString();
+    const shop = await db.query.shops.findFirst({
+      where: eq(schema.shops.id, shopId),
+      columns: { memberPendingExpiryHours: true },
+    });
+    const ttlMs =
+      effectiveMemberPolicy({
+        pendingExpiryHours: shop?.memberPendingExpiryHours ?? null,
+      }).pendingExpiryHours * HOUR_MS;
+    const cutoff = new Date(Date.now() - ttlMs).toISOString();
     await this.expireStalePending(shopId, cutoff);
     const rows = await db.query.customers.findMany({
       where: and(

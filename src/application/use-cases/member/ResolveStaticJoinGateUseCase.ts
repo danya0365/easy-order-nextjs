@@ -2,6 +2,10 @@ import type { IShopRepository } from "@/src/application/repositories/IShopReposi
 import type { ICustomerDeviceRepository } from "@/src/application/repositories/ICustomerDeviceRepository";
 import type { Customer } from "@/src/domain/entities";
 import {
+  HOUR_MS,
+  effectiveMemberPolicy,
+} from "@/src/domain/services/member-policy";
+import {
   isPendingExpired,
   staticJoinTokenMatches,
 } from "@/src/domain/services/static-join-guard";
@@ -91,7 +95,12 @@ export class ResolveStaticJoinGateUseCase {
           message: "อนุมัติแล้ว — สั่งออนไลน์ได้",
         };
       case "pending":
-        if (isPendingExpired(customer.onlineOrderRequestedAt, now)) {
+        if (isPendingExpired(
+            customer.onlineOrderRequestedAt,
+            now,
+            effectiveMemberPolicy(shop.memberPolicyOverrides)
+              .pendingExpiryHours * HOUR_MS,
+          )) {
           return registerGate(customer);
         }
         return {

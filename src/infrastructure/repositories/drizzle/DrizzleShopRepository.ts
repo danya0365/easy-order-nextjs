@@ -38,6 +38,14 @@ function toShop(r: Row): Shop {
     spendPointsEnabled: r.spendPointsEnabled,
     memberOtpEnabled: r.memberOtpEnabled,
     memberSignupPaused: r.memberSignupPaused,
+    memberPolicyOverrides: {
+      newMemberOrderCapThb: r.memberOrderCapThb ?? null,
+      newMemberMaxOpenOrders: r.memberMaxOpenOrders ?? null,
+      signupsPerDevicePerDay: r.memberSignupsPerDay ?? null,
+      maxPendingRequests: r.memberMaxPending ?? null,
+      pendingExpiryHours: r.memberPendingExpiryHours ?? null,
+      rejectCooldownDays: r.memberRejectCooldownDays ?? null,
+    },
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
@@ -127,6 +135,16 @@ export class DrizzleShopRepository implements IShopRepository {
           : {}),
         ...(input.memberOtpEnabled !== undefined
           ? { memberOtpEnabled: input.memberOtpEnabled }
+          : {}),
+        ...(input.memberPolicy
+          ? {
+              memberOrderCapThb: input.memberPolicy.newMemberOrderCapThb,
+              memberMaxOpenOrders: input.memberPolicy.newMemberMaxOpenOrders,
+              memberSignupsPerDay: input.memberPolicy.signupsPerDevicePerDay,
+              memberMaxPending: input.memberPolicy.maxPendingRequests,
+              memberPendingExpiryHours: input.memberPolicy.pendingExpiryHours,
+              memberRejectCooldownDays: input.memberPolicy.rejectCooldownDays,
+            }
           : {}),
         ...(input.memberSignupPaused !== undefined
           ? { memberSignupPaused: input.memberSignupPaused }

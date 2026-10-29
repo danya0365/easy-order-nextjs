@@ -41,6 +41,7 @@ export const AUDIT_ACTIONS = {
   memberSignupPausedSet: "member_signup_paused_set",
   customerOnlineRejectedSuspicious: "customer_online_rejected_suspicious",
   customerPhoneBlocked: "customer_phone_blocked",
+  memberSettingsUpdated: "member_settings_updated",
   shopSelfServiceSet: "shop_self_service_set",
   platformSettingsUpdated: "platform_settings_updated",
 } as const;

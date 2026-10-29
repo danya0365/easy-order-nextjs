@@ -9,7 +9,7 @@ import type { IMenuItemRepository } from "@/src/application/repositories/IMenuIt
 import type { ICustomerRepository } from "@/src/application/repositories/ICustomerRepository";
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import { normalizePhone, isValidThaiPhone } from "@/src/domain/services/phone";
-import { NEW_MEMBER_ORDER_POLICY } from "@/src/domain/services/static-join-guard";
+import { effectiveMemberPolicy } from "@/src/domain/services/member-policy";
 
 export interface CartLine {
   menuItemId: string;
@@ -163,18 +163,20 @@ export class PlaceOrderUseCase {
           input.shopId,
           customer.id,
         );
+        const policy = effectiveMemberPolicy(shop.memberPolicyOverrides);
         if (stats.finished === 0) {
-          if (stats.open >= NEW_MEMBER_ORDER_POLICY.maxOpenOrders) {
+          if (stats.open >= policy.newMemberMaxOpenOrders) {
             throw new Error(
-              "สมาชิกใหม่สั่งได้ครั้งละ 1 ออเดอร์ จนกว่าออเดอร์แรกจะเสร็จ/ชำระแล้ว",
+              `สมาชิกใหม่มีออเดอร์ค้างได้ไม่เกิน ${policy.newMemberMaxOpenOrders} ออเดอร์ (สั่งได้ครั้งละ ${policy.newMemberMaxOpenOrders} ออเดอร์) จนกว่าออเดอร์แรกจะเสร็จ/ชำระแล้ว`,
             );
           }
+          const capSatang = policy.newMemberOrderCapThb * 100;
           const total =
             lines.reduce((s, l) => s + l.unitPriceSatang * l.quantity, 0) +
             deliveryFeeSatang;
-          if (total > NEW_MEMBER_ORDER_POLICY.maxTotalSatang) {
+          if (capSatang > 0 && total > capSatang) {
             throw new Error(
-              `สมาชิกใหม่สั่งได้ไม่เกิน ${(NEW_MEMBER_ORDER_POLICY.maxTotalSatang / 100).toFixed(0)} บาทต่อออเดอร์ จนกว่าออเดอร์แรกจะเสร็จ`,
+              `สมาชิกใหม่สั่งได้ไม่เกิน ${policy.newMemberOrderCapThb} บาทต่อออเดอร์ จนกว่าออเดอร์แรกจะเสร็จ`,
             );
           }
         }

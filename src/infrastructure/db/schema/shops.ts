@@ -58,6 +58,13 @@ export const shops = sqliteTable(
     staticJoinTokenRotatedAt: text(),
     // Shop toggle: pause NEW static-QR member signups (existing members unaffected).
     memberSignupPaused: integer({ mode: "boolean" }).notNull().default(false),
+    // Per-shop membership policy overrides (NULL = default, see member-policy.ts).
+    memberOrderCapThb: integer(),
+    memberMaxOpenOrders: integer(),
+    memberSignupsPerDay: integer(),
+    memberMaxPending: integer(),
+    memberPendingExpiryHours: integer(),
+    memberRejectCooldownDays: integer(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

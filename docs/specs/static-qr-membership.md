@@ -117,3 +117,21 @@ Dynamic `/enter?t=` (HMAC, `order-access.ts`) is untouched by everything below.
 ## 10. OTP toggle — unchanged.
 
 Constants: `src/domain/services/static-join-guard.ts`. Tests: `static-membership.integration.test.ts`.
+
+## Per-shop member settings (`/shop/settings/members`)
+
+Owners (or impersonating admins, via `requireShopWrite`) can edit, with audit
+`member_settings_updated` (before/after). Stored as nullable `shops.member_*`
+columns (migration 0016); NULL = default.
+
+| Setting | Default | Range |
+|---|---|---|
+| New-member order cap (THB) | 1000 | 100–100000, 0 = no cap |
+| New-member max open orders | 1 | 1–5 |
+| Sign-ups per device/IP per day | 3 | 1–20 |
+| Max pending requests | 20 | 5–200 |
+| Pending expiry (hours) | 48 | 12–168 |
+| Reject cooldown (days) | 30 | 0–365 |
+
+Approval before first order is always on (not editable). The page also holds
+the static QR card, rotate button, pause toggle and OTP toggle.
