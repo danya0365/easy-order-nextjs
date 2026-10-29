@@ -31,5 +31,6 @@ export const auditLogs = sqliteTable(
     index("audit_shop_created_idx").on(t.shopId, t.createdAt),
     index("audit_actor_created_idx").on(t.actorUserId, t.createdAt),
     index("audit_action_created_idx").on(t.action, t.createdAt),
+    index("audit_target_idx").on(t.targetType, t.targetId, t.createdAt),
   ],
 );

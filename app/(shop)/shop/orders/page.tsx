@@ -13,6 +13,10 @@ export default async function ShopOrdersPage() {
     container.orderRepository.listActiveByShop(shopId),
     container.orderRepository.pageHistoryByShop(shopId, {}),
   ]);
+  const notes = await container.customerCrmRepository.notesFor(
+    shopId,
+    [...activeOrders, ...history.items].map((o) => o.customerId ?? "").filter(Boolean),
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -24,6 +28,7 @@ export default async function ShopOrdersPage() {
         activeOrders={activeOrders}
         historyInitial={history.items}
         historyCursor={history.nextCursor}
+        customerNotes={Object.fromEntries(notes)}
       />
     </div>
   );
