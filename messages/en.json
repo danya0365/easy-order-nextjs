@@ -159,7 +159,21 @@
     "otlCopied": "Copied",
     "otlActive": "Active links",
     "otlNoActive": "No active links",
-    "otlRevoke": "Revoke"
+    "otlRevoke": "Revoke",
+    "otlAdminTitle": "Admin one-time login link",
+    "otlAdminSubtitle": "Single-use; only a hash is stored and the URL is shown once",
+    "otlAdminAccount": "Admin account",
+    "otlSelf": "you",
+    "otlReauthPassword": "Your current password",
+    "otlReauthCode": "or 2FA code",
+    "otlReauthHint": "Re-authentication is required to create an admin link (max 10 per hour)",
+    "otlHistory": "Recent history (used/revoked)",
+    "otlNoHistory": "No history yet",
+    "otlUsedBy": "Used {at} by {user}",
+    "otlRevokedAt": "Revoked {at}",
+    "otlUsed": "Used",
+    "otlRevoked": "Revoked",
+    "otlCliNote": "Also available via CLI: node scripts/admin-login-link.mjs"
   },
   "adminPages": {
     "settingsTitle": "Platform settings",
@@ -175,7 +189,8 @@
     "navShopOrders": "My orders",
     "navLoyalty": "Loyalty",
     "navPromotions": "Promotions",
-    "moreMenuAria": "More menu"
+    "moreMenuAria": "More menu",
+    "navLoginLinks": "One-time login links"
   },
   "sell": {
     "heroTagline": "Put a tablet on the counter and turn it into a self-ordering station — customers tap to order, the shop manages one live queue.",

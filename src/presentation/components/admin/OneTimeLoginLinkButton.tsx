@@ -35,7 +35,7 @@ export function OneTimeLoginLinkButton({
   const [copied, setCopied] = useState(false);
   const [revoking, startRevoke] = useTransition();
   const [state, action, pending] = useActionState<OneTimeLinkState, FormData>(
-    createOneTimeLoginLinkAction.bind(null, shopId),
+    createOneTimeLoginLinkAction,
     {},
   );
 
@@ -53,6 +53,7 @@ export function OneTimeLoginLinkButton({
       <Modal open={open} onClose={() => setOpen(false)} title={t("otlButton")}>
         <div className="flex flex-col gap-4 text-sm">
           <form action={action} className="flex flex-col gap-3">
+            <input type="hidden" name="shopId" value={shopId} />
             <label className="flex flex-col gap-1">
               <span className="font-medium">{t("otlExpiry")}</span>
               <select name="expiry" defaultValue="15m" className="rounded-lg border border-border bg-surface px-3 py-2">

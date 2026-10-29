@@ -15,7 +15,9 @@ import {
 import {
   ConsumeOneTimeLoginLinkUseCase,
   CreateOneTimeLoginLinkUseCase,
+  IssueAdminLoginLinkUseCase,
 } from "@/src/application/use-cases/auth/OneTimeLoginUseCases";
+import { VerifyTwoFactorUseCase } from "@/src/application/use-cases/auth/VerifyTwoFactorUseCase";
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
 import { isOneTimeLoginExpiry } from "@/src/domain/services/one-time-login";
 import { ROLE_HOME } from "@/src/domain/types/roles";
@@ -38,13 +40,14 @@ const deps = () =>
 
 /** Platform admin: issue a one-time login link for a shop. */
 export async function createOneTimeLoginLinkAction(
-  shopId: string,
   _prev: OneTimeLinkState,
   formData: FormData,
 ): Promise<OneTimeLinkState> {
   try {
     const admin = await requireRole("platform_admin");
-    const expiry = formData.get("expiry") ?? "15m";
+    const shopId = String(formData.get("shopId") ?? "");
+    if (!shopId) throw new Error("ไม่พบร้านค้า");
+    const expiry = String(formData.get("expiry") ?? "") || "15m";
     if (!isOneTimeLoginExpiry(expiry)) throw new Error("ระยะเวลาหมดอายุไม่ถูกต้อง");
     const targetUserId = String(formData.get("targetUserId") ?? "") || null;
     const { token, link } = await new CreateOneTimeLoginLinkUseCase(...deps()).execute({
@@ -65,6 +68,7 @@ export async function createOneTimeLoginLinkAction(
       metadata: { expiry, expiresAt: link.expiresAt, targetUserId },
     });
     revalidatePath("/admin/shops");
+    revalidatePath("/admin/login-links");
     return {
       url: `${await getBaseUrl()}/login/one-time?t=${token}`,
       expiresAt: link.expiresAt,
@@ -95,6 +99,75 @@ export async function revokeOneTimeLoginLinkAction(linkId: string): Promise<void
     });
   }
   revalidatePath("/admin/shops");
+  revalidatePath("/admin/login-links");
+}
+
+/** Form variant (link id in a hidden field) for the login-links page. */
+export async function revokeOneTimeLoginLinkFormAction(formData: FormData): Promise<void> {
+  await revokeOneTimeLoginLinkAction(String(formData.get("linkId") ?? ""));
+}
+
+const CREATE_LIMIT = 10;
+const CREATE_WINDOW_MS = 60 * 60_000;
+
+/** Platform admin: issue an admin-kind link (re-auth with password or 2FA code). */
+export async function createAdminLoginLinkAction(
+  _prev: OneTimeLinkState,
+  formData: FormData,
+): Promise<OneTimeLinkState> {
+  try {
+    const admin = await requireRole("platform_admin");
+    const rl = await container.rateLimitRepository.hit(
+      `otl:create-admin:${admin.id}`,
+      CREATE_LIMIT,
+      CREATE_WINDOW_MS,
+    );
+    if (!rl.allowed) {
+      throw new Error(`สร้างลิงก์บ่อยเกินไป ลองใหม่ในอีก ${rl.retryAfterSec} วินาที`);
+    }
+    const expiry = String(formData.get("expiry") ?? "") || "15m";
+    if (!isOneTimeLoginExpiry(expiry)) throw new Error("ระยะเวลาหมดอายุไม่ถูกต้อง");
+    const targetAdminId = String(formData.get("targetUserId") ?? "") || admin.id;
+    const { token, link } = await new IssueAdminLoginLinkUseCase(
+      container.adminLoginLinkRepository,
+      container.userRepository,
+      {
+        verifyPassword: async (id, pw) => {
+          const u = await container.userRepository.findByIdWithSecret(id);
+          return !!u && (await container.passwordHasher.compare(pw, u.passwordHash));
+        },
+        verifyTwoFactor: (id, code) =>
+          new VerifyTwoFactorUseCase(
+            container.userRepository,
+            container.totp,
+            container.passwordHasher,
+          ).execute(id, code),
+      },
+    ).execute({
+      actorId: admin.id,
+      targetAdminId,
+      expiry,
+      password: String(formData.get("password") ?? ""),
+      code: String(formData.get("code") ?? ""),
+    });
+    await container.auditLogger.record({
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: AUDIT_ACTIONS.oneTimeLoginLinkCreated,
+      targetType: "admin_login_link",
+      targetId: link.id,
+      ip: await getClientIp(),
+      userAgent: await getUserAgent(),
+      metadata: { kind: "admin", expiry, expiresAt: link.expiresAt, targetUserId: targetAdminId },
+    });
+    revalidatePath("/admin/login-links");
+    return {
+      url: `${await getBaseUrl()}/login/one-time?t=${token}`,
+      expiresAt: link.expiresAt,
+    };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
 }
 
 export interface ConsumeState {

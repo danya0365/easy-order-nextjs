@@ -72,7 +72,10 @@ export class CreateAdminSelfLoginLinkUseCase {
   ) {}
 
   async execute(input: {
+    /** The platform admin the link logs in as. */
     adminUserId: string;
+    /** Who issued it (defaults to the target, e.g. CLI self-issue). */
+    createdBy?: string;
     expiry: OneTimeLoginExpiry;
     now?: Date;
   }): Promise<{ token: string; link: AdminLoginLink }> {
@@ -88,7 +91,7 @@ export class CreateAdminSelfLoginLinkUseCase {
       kind: "admin",
       shopId: null,
       tokenHash: hashOneTimeLoginToken(token),
-      createdBy: admin.id,
+      createdBy: input.createdBy ?? admin.id,
       targetUserId: admin.id,
       expiresAt: new Date(now.getTime() + ttl).toISOString(),
     });
@@ -161,5 +164,51 @@ export class ConsumeOneTimeLoginLinkUseCase {
     const won = await this.links.consume(check.link.id, user.id, now.toISOString());
     if (!won) throw new Error("ลิงก์ไม่ถูกต้อง หมดอายุ หรือถูกใช้ไปแล้ว");
     return { user, link: check.link };
+  }
+}
+
+export interface ReauthDeps {
+  verifyPassword(userId: string, password: string): Promise<boolean>;
+  verifyTwoFactor(userId: string, code: string): Promise<boolean>;
+}
+
+/**
+ * Admin UI: a platform admin issues an admin-kind link (for self or another
+ * active platform admin) after re-authenticating — current password, or a valid
+ * 2FA code when the actor has 2FA enabled.
+ */
+export class IssueAdminLoginLinkUseCase {
+  constructor(
+    private readonly links: IAdminLoginLinkRepository,
+    private readonly users: IUserRepository,
+    private readonly reauth: ReauthDeps,
+  ) {}
+
+  async execute(input: {
+    actorId: string;
+    targetAdminId?: string | null;
+    expiry: OneTimeLoginExpiry;
+    password?: string;
+    code?: string;
+    now?: Date;
+  }): Promise<{ token: string; link: AdminLoginLink }> {
+    const actor = await this.users.findById(input.actorId);
+    if (!actor || !actor.isActive || actor.role !== "platform_admin") {
+      throw new Error("เฉพาะผู้ดูแลระบบเท่านั้น");
+    }
+    const pw = input.password?.trim() ?? "";
+    const code = input.code?.trim() ?? "";
+    let ok = false;
+    if (pw) ok = await this.reauth.verifyPassword(actor.id, pw);
+    if (!ok && code && actor.totpEnabled) {
+      ok = await this.reauth.verifyTwoFactor(actor.id, code);
+    }
+    if (!ok) throw new Error("ยืนยันตัวตนไม่สำเร็จ (รหัสผ่านหรือรหัส 2FA ไม่ถูกต้อง)");
+    return new CreateAdminSelfLoginLinkUseCase(this.links, this.users).execute({
+      adminUserId: input.targetAdminId || actor.id,
+      createdBy: actor.id,
+      expiry: input.expiry,
+      now: input.now,
+    });
   }
 }
