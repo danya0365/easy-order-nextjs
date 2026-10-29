@@ -1,28 +1,31 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ShieldCheck, Store, UserRound } from "lucide-react";
 
-import {
-  consumeOneTimeLoginAction,
-  type ConsumeState,
-} from "@/src/presentation/actions/one-time-login-actions";
-
+/**
+ * Native form POST to /login/one-time/confirm — works before hydration and
+ * without JS, is never prefetched, and is the only thing that consumes a link.
+ */
 export function OneTimeLoginChooser({
   token,
   accounts,
+  error,
 }: {
   token: string;
   accounts: { id: string; email: string; role: string }[];
+  error?: string;
 }) {
   const t = useTranslations("auth");
-  const [state, action, pending] = useActionState<ConsumeState, FormData>(
-    consumeOneTimeLoginAction,
-    {},
-  );
+  const [pending, setPending] = useState(false);
   return (
-    <form action={action} className="flex flex-col gap-2">
+    <form
+      method="post"
+      action="/login/one-time/confirm"
+      onSubmit={() => setPending(true)}
+      className="flex flex-col gap-2"
+    >
       <input type="hidden" name="t" value={token} />
       {accounts.map((a) => (
         <button
@@ -30,8 +33,8 @@ export function OneTimeLoginChooser({
           type="submit"
           name="userId"
           value={a.id}
-          disabled={pending}
-          className="flex items-center gap-3 rounded-xl border border-border px-4 py-3 text-left transition hover:border-brand-500 hover:bg-brand-50 disabled:opacity-60"
+          aria-disabled={pending}
+          className="flex items-center gap-3 rounded-xl border border-border px-4 py-3 text-left transition hover:border-brand-500 hover:bg-brand-50 aria-disabled:opacity-60"
         >
           {a.role === "platform_admin" ? (
             <ShieldCheck className="size-5 text-brand-500" />
@@ -52,7 +55,7 @@ export function OneTimeLoginChooser({
           </span>
         </button>
       ))}
-      {state.error && <p className="text-sm text-error">{state.error}</p>}
+      {error && <p className="text-sm text-error">{error}</p>}
       <p className="text-xs text-muted">{t("oneTimeSingleUseNote")}</p>
     </form>
   );
