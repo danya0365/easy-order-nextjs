@@ -33,6 +33,16 @@ export default async function ShopMemberSettingsPage() {
     return { url, qr: await renderQrDataUrl(url) };
   })();
 
+  // Shop logo for the printed QR card (inlined so the print iframe needs no fetch).
+  const logoDataUrl = await (async () => {
+    if (!staticJoin) return null;
+    const profile = await container.shopImageRepository.findProfile(shop.id);
+    if (!profile) return null;
+    const file = await container.slipStorage.read(profile.storageKey);
+    if (!file) return null;
+    return `data:${file.contentType};base64,${Buffer.from(file.bytes).toString("base64")}`;
+  })();
+
   return (
     <div className="flex flex-col gap-4">
       <Link
@@ -54,6 +64,7 @@ export default async function ShopMemberSettingsPage() {
               qrDataUrl={staticJoin.qr}
               joinUrl={staticJoin.url}
               shopName={shop.name}
+              logoDataUrl={logoDataUrl}
             />
             <div className="mt-4">
               <StaticJoinControls

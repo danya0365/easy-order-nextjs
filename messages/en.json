@@ -134,7 +134,8 @@
     "memberPolicy_signupsPerDevicePerDay": "Sign-ups per device/IP per day",
     "memberPolicy_maxPendingRequests": "Max pending requests per shop",
     "memberPolicy_pendingExpiryHours": "Pending request expiry (hours)",
-    "memberPolicy_rejectCooldownDays": "Rejected phone cooldown (days)"
+    "memberPolicy_rejectCooldownDays": "Rejected phone cooldown (days)",
+    "staticJoinQrPrintCaption": "Scan to join and order"
   },
   "admin": {
     "settingsBillingUiLabel": "Show monthly billing UI",

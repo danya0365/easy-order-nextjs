@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, Printer } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useReactToPrint } from "react-to-print";
 
 import type {
   PosterDimensions,
@@ -11,8 +12,9 @@ import type {
 import { Button } from "@/src/presentation/components/ui/Button";
 import {
   exportPosterPng,
-  printPosterPng,
+  renderPosterPng,
 } from "@/src/presentation/lib/poster-export";
+import { POSTER_PAGE_STYLE } from "@/src/presentation/components/print/QrPrintCard";
 import { PosterPreview, type PosterDesign } from "./PosterPreview";
 import type { PromoSeedData } from "./types";
 
@@ -40,6 +42,19 @@ export function PosterExportArea({
   const nodeRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Print path: rasterize the poster node → show it in a hidden print-only
+  // element → react-to-print prints ONLY that element (never the whole page).
+  const printRef = useRef<HTMLDivElement>(null);
+  const [printSrc, setPrintSrc] = useState<string | null>(null);
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: fileName,
+    pageStyle: POSTER_PAGE_STYLE,
+    onAfterPrint: () => setPrintSrc(null),
+  });
+  useEffect(() => {
+    if (printSrc) handlePrint();
+  }, [printSrc, handlePrint]);
 
   async function run(action: (node: HTMLElement) => Promise<void>) {
     if (!nodeRef.current) return;
@@ -74,13 +89,28 @@ export function PosterExportArea({
           <Download className="size-4" />
           {busy ? t("exporting") : t("downloadPng")}
         </Button>
-        <Button disabled={busy} onClick={() => run(printPosterPng)}>
+        <Button disabled={busy} onClick={() =>
+            run(async (n) => setPrintSrc(await renderPosterPng(n)))
+          }>
           <Printer className="size-4" />
           {t("print")}
         </Button>
       </div>
 
       {error && <p className="text-sm text-error">{error}</p>}
+
+      <div style={{ display: "none" }}>
+        <div ref={printRef} data-testid="poster-print-sheet">
+          {printSrc && (
+            // eslint-disable-next-line @next/next/no-img-element -- data URL
+            <img
+              src={printSrc}
+              alt=""
+              style={{ display: "block", width: "100%", height: "auto" }}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
