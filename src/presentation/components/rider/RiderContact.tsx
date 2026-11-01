@@ -13,6 +13,7 @@ export interface RiderContactInfo {
   lineId: string | null;
   available: boolean;
   openJobs: number;
+  avatarUrl?: string | null;
 }
 
 /** Availability badge (ว่าง/ไม่ว่าง) + open-job count. */

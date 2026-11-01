@@ -684,6 +684,8 @@ export interface Rider {
   /** Rider self-reported availability (ว่าง/ไม่ว่าง). */
   available: boolean;
   availableUpdatedAt: string | null;
+  /** Storage key of the profile photo, or null. */
+  avatarUrl: string | null;
   /** Whether a personal link is currently issued (the hash itself never leaves the repo). */
   hasLink: boolean;
   createdAt: string;

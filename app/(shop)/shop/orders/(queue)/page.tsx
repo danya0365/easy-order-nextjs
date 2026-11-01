@@ -40,6 +40,7 @@ export default async function ShopOrdersPage() {
             lineId: r.lineId,
             available: r.available,
             openJobs: r.openJobs,
+            avatarUrl: r.avatarUrl,
           }))}
       />
     </div>

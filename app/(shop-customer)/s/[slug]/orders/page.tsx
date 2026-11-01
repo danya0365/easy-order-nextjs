@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Bike, Phone, Smartphone, Store, TriangleAlert } from "lucide-react";
 import { riderFirstName } from "@/src/domain/services/rider";
+import { RiderAvatar } from "@/src/presentation/components/rider/RiderAvatar";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -135,8 +136,12 @@ export default async function ShopCustomerOrdersPage({
                         if (!rider || o.status === "cancelled") return null;
                         return (
                           <span className="flex flex-col items-end gap-1 text-xs" data-testid="customer-rider">
-                            <span className="inline-flex items-center gap-1 font-semibold text-brand-700">
-                              <Bike className="size-3.5" /> {tRider("custEnRoute", { name: riderFirstName(rider.name) })}
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-brand-700">
+                              {rider.avatarUrl ? (
+                                <RiderAvatar rider={{ id: rider.id, name: riderFirstName(rider.name), avatarUrl: rider.avatarUrl }} size={28} />
+                              ) : (
+                                <Bike className="size-3.5" />
+                              )} {tRider("custEnRoute", { name: riderFirstName(rider.name) })}
                             </span>
                             <a
                               href={`tel:${rider.phone}`}

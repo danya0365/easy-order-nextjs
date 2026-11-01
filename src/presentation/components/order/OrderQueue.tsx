@@ -36,6 +36,7 @@ import {
   RiderStatusBadges,
   type RiderContactInfo,
 } from "@/src/presentation/components/rider/RiderContact";
+import { RiderAvatar } from "@/src/presentation/components/rider/RiderAvatar";
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { Card } from "@/src/presentation/components/ui/Card";
 import { Button } from "@/src/presentation/components/ui/Button";
@@ -306,7 +307,10 @@ export function OrderCard({
                   return (
                     <li key={r.id} className="flex flex-col gap-1.5 py-2" data-testid="rider-option">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="min-w-0 truncate font-medium text-foreground">{r.name}</span>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <RiderAvatar rider={r} size={32} />
+                          <span className="truncate font-medium text-foreground">{r.name}</span>
+                        </span>
                         {current ? (
                           <Badge tone="success">{tr("current")}</Badge>
                         ) : (
@@ -329,7 +333,10 @@ export function OrderCard({
               const r = riders.find((x) => x.id === order.riderId);
               return r ? (
                 <div className="flex flex-wrap items-center justify-between gap-1.5">
-                  <span className="font-medium text-foreground">{r.name}</span>
+                  <span className="flex items-center gap-2 font-medium text-foreground">
+                    <RiderAvatar rider={r} size={28} />
+                    {r.name}
+                  </span>
                   <RiderContactButtons rider={r} />
                 </div>
               ) : null;
