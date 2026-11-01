@@ -7,6 +7,7 @@ import {
   MessageCircle,
   Navigation,
   Phone,
+  QrCode,
 } from "lucide-react";
 
 import { getTranslations } from "next-intl/server";
@@ -45,18 +46,21 @@ function ContactLink({
 export async function ShopDetails({
   profile,
   branch,
+  acceptsPromptPay = false,
 }: {
   profile: ShopProfile | null;
   branch: Branch | null;
+  /** Shop has a PromptPay target → show an "accepts PromptPay" chip. */
+  acceptsPromptPay?: boolean;
 }) {
   const tr = await getTranslations("shop");
   const hasContacts =
-    !!profile &&
+    (!!profile &&
     (profile.phone ||
       profile.lineUrl ||
       profile.facebookUrl ||
       profile.instagramUrl ||
-      profile.websiteUrl);
+      profile.websiteUrl)) || acceptsPromptPay;
   const hasLocation =
     branch &&
     (branch.address || (branch.latitude !== null && branch.longitude !== null));
@@ -111,6 +115,15 @@ export async function ShopDetails({
                   icon={<Link2 className="size-4" />}
                   label="Instagram"
                 />
+              )}
+              {acceptsPromptPay && (
+                <span
+                  data-testid="shop-accepts-promptpay"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-sm text-brand-700"
+                >
+                  <QrCode className="size-4" />
+                  {tr("detailsAcceptsPromptPay")}
+                </span>
               )}
               {profile?.websiteUrl && (
                 <ContactLink

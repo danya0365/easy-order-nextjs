@@ -3,9 +3,11 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Pencil, Star, Trash2 } from "lucide-react";
+import { ListPlus, Pencil, Star, Trash2 } from "lucide-react";
 
-import type { MenuCategory, MenuItem } from "@/src/domain/entities";
+import { createContext, useContext } from "react";
+import type { MenuCategory, MenuItem, MenuOptionGroup } from "@/src/domain/entities";
+import { MenuOptionsEditor } from "@/src/presentation/components/menu/MenuOptionsEditor";
 import {
   createCategoryAction,
   renameCategoryAction,
@@ -33,14 +35,26 @@ import { Modal } from "@/src/presentation/components/ui/Modal";
 import { useConfirm } from "@/src/presentation/components/ui/ConfirmDialog";
 import { useToast } from "@/src/presentation/components/ui/Toast";
 
+/** Menu-options context: null when the feature is not effective for the shop. */
+const OptionsCtx = createContext<Map<string, MenuOptionGroup[]> | null>(null);
+
 export function MenuManager({
   categories,
   items,
+  optionGroups = null,
 }: {
   categories: MenuCategory[];
   items: MenuItem[];
+  /** Option groups for all items — pass only when menu options are effective. */
+  optionGroups?: MenuOptionGroup[] | null;
 }) {
   const t = useTranslations("menu");
+  const optionsByItem = optionGroups
+    ? optionGroups.reduce((m, g) => {
+        m.set(g.menuItemId, [...(m.get(g.menuItemId) ?? []), g]);
+        return m;
+      }, new Map<string, MenuOptionGroup[]>())
+    : null;
   const itemsByCategory = new Map<string, MenuItem[]>();
   for (const item of items) {
     const list = itemsByCategory.get(item.categoryId) ?? [];
@@ -49,6 +63,7 @@ export function MenuManager({
   }
 
   return (
+    <OptionsCtx.Provider value={optionsByItem}>
     <div className="flex flex-col gap-4">
       <AddCategoryForm />
 
@@ -71,6 +86,7 @@ export function MenuManager({
         <AddItemForm categories={categories} />
       )}
     </div>
+    </OptionsCtx.Provider>
   );
 }
 
@@ -253,6 +269,10 @@ function ItemRow({ item }: { item: MenuItem }) {
   const confirm = useConfirm();
   const [pending, start] = useTransition();
   const [editing, setEditing] = useState(false);
+  const optionsByItem = useContext(OptionsCtx);
+  const tOpt = useTranslations("menuOptions");
+  const [editingOptions, setEditingOptions] = useState(false);
+  const itemGroups = optionsByItem?.get(item.id) ?? [];
 
   function toggleAvail() {
     start(async () => {
@@ -311,6 +331,19 @@ function ItemRow({ item }: { item: MenuItem }) {
         </div>
       </div>
       <span className="flex shrink-0 items-center gap-1">
+        {optionsByItem && (
+          <button
+            type="button"
+            onClick={() => setEditingOptions(true)}
+            data-testid="item-options-button"
+            title={tOpt("button")}
+            aria-label={tOpt("button")}
+            className="inline-flex h-8 items-center justify-center gap-1 rounded-lg px-2 text-xs text-muted transition hover:bg-muted-surface hover:text-foreground"
+          >
+            <ListPlus className="size-4" />
+            {itemGroups.length > 0 && <span>{itemGroups.length}</span>}
+          </button>
+        )}
         <button
           type="button"
           onClick={toggleRecommend}
@@ -359,6 +392,15 @@ function ItemRow({ item }: { item: MenuItem }) {
         </button>
       </span>
 
+      {optionsByItem && editingOptions && (
+        <MenuOptionsEditor
+          open={editingOptions}
+          onClose={() => setEditingOptions(false)}
+          itemId={item.id}
+          itemName={item.name}
+          groups={itemGroups}
+        />
+      )}
       <EditItemModal
         open={editing}
         onClose={() => setEditing(false)}

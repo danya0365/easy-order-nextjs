@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { MenuManager } from "@/src/presentation/components/menu/MenuManager";
+import { isMenuOptionsEnabledForShop } from "@/src/application/use-cases/menu/MenuOptionUseCases";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,14 @@ export default async function ShopMenuPage() {
     container.menuCategoryRepository.listByShop(shopId),
     container.menuItemRepository.listByShop(shopId),
   ]);
+  const optionsOn = await isMenuOptionsEnabledForShop(
+    container.platformSettingsRepository,
+    container.shopRepository,
+    shopId,
+  );
+  const optionGroups = optionsOn
+    ? await container.menuOptionRepository.listByItems(shopId, items.map((i) => i.id))
+    : null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -23,7 +32,7 @@ export default async function ShopMenuPage() {
           {t("halalOnlyNotice")}
         </p>
       </div>
-      <MenuManager categories={categories} items={items} />
+      <MenuManager categories={categories} items={items} optionGroups={optionGroups} />
     </div>
   );
 }

@@ -43,6 +43,8 @@ export const shops = sqliteTable(
     // Admin-only; null = platform default. Not part of the Shop entity so owner
     // settings can never write it.
     billingCutoffTime: text(),
+    // Admin per-shop switch for menu options/add-ons (effective = platform && this).
+    menuOptionsAllowedByAdmin: integer({ mode: "boolean" }).notNull().default(false),
     // Platform admin must allow loyalty before the shop can enable the module.
     loyaltyAllowedByAdmin: integer({ mode: "boolean" }).notNull().default(false),
     // Shop-level module toggle. Effective = loyaltyAllowedByAdmin && loyaltyEnabled.

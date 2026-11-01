@@ -1,3 +1,4 @@
+import { normalizePromptPayTarget } from "@/src/domain/services/shop-contact";
 import type { Branch, Shop } from "@/src/domain/entities";
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import type { IUserRepository } from "@/src/application/repositories/IUserRepository";
@@ -68,7 +69,7 @@ export class CreateShopUseCase {
       name: input.name.trim(),
       slug,
       categoryId: input.categoryId ?? null,
-      promptpayTarget: input.promptpayTarget ?? null,
+      promptpayTarget: normalizePromptPayTarget(input.promptpayTarget),
     });
 
     const now = Date.now();

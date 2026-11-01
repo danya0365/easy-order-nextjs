@@ -1,5 +1,7 @@
 import "server-only";
 
+import { parseOrderLineOptions } from "@/src/domain/services/menu-options";
+
 import { and, asc, count, desc, eq, gte, inArray, lt, ne } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type {
@@ -32,6 +34,7 @@ function toItem(r: ItemRow): OrderItem {
     unitPriceSatang: r.unitPriceSatang,
     quantity: r.quantity,
     lineTotalSatang: r.lineTotalSatang,
+    options: parseOrderLineOptions(r.optionsJson),
   };
 }
 
@@ -168,6 +171,7 @@ export class DrizzleOrderRepository implements IOrderRepository {
           unitPriceSatang: l.unitPriceSatang,
           quantity: l.quantity,
           lineTotalSatang: l.lineTotalSatang,
+          optionsJson: l.options?.length ? JSON.stringify(l.options) : null,
         })),
       )
       .returning();

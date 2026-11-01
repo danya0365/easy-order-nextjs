@@ -1,3 +1,7 @@
+import {
+  normalizeFacebookUrl,
+  normalizeLineContact,
+} from "@/src/domain/services/shop-contact";
 import type { ShopProfile } from "@/src/domain/entities";
 import type {
   IShopProfileRepository,
@@ -49,8 +53,8 @@ export class UpdateShopProfileUseCase {
       description: normalizeText(input.description, MAX_DESCRIPTION, "คำอธิบาย"),
       openingHours: normalizeText(input.openingHours, MAX_HOURS, "เวลาทำการ"),
       phone: normalizeText(input.phone, MAX_FIELD, "เบอร์โทร"),
-      lineUrl: normalizeUrl(input.lineUrl),
-      facebookUrl: normalizeUrl(input.facebookUrl),
+      lineUrl: normalizeLineContact(input.lineUrl),
+      facebookUrl: normalizeFacebookUrl(input.facebookUrl),
       instagramUrl: normalizeUrl(input.instagramUrl),
       websiteUrl: normalizeUrl(input.websiteUrl),
     };

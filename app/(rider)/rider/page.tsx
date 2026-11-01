@@ -1,5 +1,6 @@
 import { Banknote, CheckCircle2, Navigation, Package, Phone, Store } from "lucide-react";
 
+import { formatOrderLineOptions } from "@/src/domain/services/menu-options";
 import { orderNavigationUrl } from "@/src/domain/services/delivery-location";
 import { getTranslations } from "next-intl/server";
 
@@ -87,7 +88,7 @@ export default async function RiderJobsPage({
               </div>
               <ul className="text-base text-foreground">
                 {o.items.map((it) => (
-                  <li key={it.id}>{it.nameSnapshot} ×{it.quantity}</li>
+                  <li key={it.id}>{it.nameSnapshot} ×{it.quantity}{it.options?.length ? ` · ${formatOrderLineOptions(it.options)}` : ""}</li>
                 ))}
               </ul>
               {o.note && <p className="text-sm text-muted">{t("rpNote", { note: o.note })}</p>}
