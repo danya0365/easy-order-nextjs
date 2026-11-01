@@ -428,7 +428,34 @@ export interface PlatformSettings {
   orderThresholdCount: number;
   /** Off = overdue shops keep working (warn-only); admin suspension still applies. */
   shopSuspensionEnabled: boolean;
+  /** Order-threshold daily fee billing. */
+  dailyFeeBillingEnabled: boolean;
+  dailyOrderThreshold: number;
+  dailyFeeSatang: number;
+  /** "HH:MM" Asia/Bangkok. */
+  defaultCutoffTime: string;
   updatedAt: string;
+}
+
+export type DailyFeeChargeStatus = "none" | "due" | "paid";
+
+/** One closed business day for a shop, with the terms snapshotted at its start. */
+export interface DailyFeeCharge {
+  id: string;
+  shopId: string;
+  businessDate: string;
+  periodStart: string;
+  periodEnd: string;
+  orderCount: number;
+  enabled: boolean;
+  threshold: number;
+  feeSatang: number;
+  cutoffTime: string;
+  amountSatang: number;
+  status: DailyFeeChargeStatus;
+  paidAt: string | null;
+  paidBy: string | null;
+  createdAt: string;
 }
 
 export interface Subscription {

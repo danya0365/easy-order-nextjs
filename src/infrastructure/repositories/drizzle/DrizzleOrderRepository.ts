@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, count, desc, eq, gte, inArray, ne } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, lt, ne } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type {
   DeliveryStatus,
@@ -286,6 +286,25 @@ export class DrizzleOrderRepository implements IOrderRepository {
     if (!r) throw new Error("ไม่พบออเดอร์ในร้านนี้");
     const items = await loadItems([r.id]);
     return toOrder(r, items.get(r.id) ?? []);
+  }
+
+  async countBillableBetween(
+    shopId: string,
+    fromISO: string,
+    toISO: string,
+  ): Promise<number> {
+    const [c] = await db
+      .select({ value: count() })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.shopId, shopId),
+          ne(schema.orders.status, "cancelled"),
+          gte(schema.orders.createdAt, fromISO),
+          lt(schema.orders.createdAt, toISO),
+        ),
+      );
+    return c?.value ?? 0;
   }
 
   async countByShop(shopId: string): Promise<number> {

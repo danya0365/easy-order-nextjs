@@ -5,6 +5,10 @@ export interface UpdatePlatformSettingsInput {
   orderThresholdBillingEnabled?: boolean;
   orderThresholdCount?: number;
   shopSuspensionEnabled?: boolean;
+  dailyFeeBillingEnabled?: boolean;
+  dailyOrderThreshold?: number;
+  dailyFeeSatang?: number;
+  defaultCutoffTime?: string;
 }
 
 /**

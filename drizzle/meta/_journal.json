@@ -183,6 +183,13 @@
       "when": 1797100000000,
       "tag": "0025_delivery_pin",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1797200000000,
+      "tag": "0026_daily_fee_billing",
+      "breakpoints": true
     }
   ]
 }

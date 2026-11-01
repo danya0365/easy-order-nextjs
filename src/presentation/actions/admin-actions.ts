@@ -11,6 +11,11 @@ import {
   stopImpersonation,
   getImpersonation,
 } from "@/src/infrastructure/auth/session";
+import {
+  MarkDailyFeePaidUseCase,
+  SetShopBillingCutoffUseCase,
+  UpdatePlatformBillingSettingsUseCase,
+} from "@/src/application/use-cases/billing/DailyFeeUseCases";
 import { VerifyPaymentUseCase } from "@/src/application/use-cases/billing/VerifyPaymentUseCase";
 import { CreateShopUseCase } from "@/src/application/use-cases/shop/CreateShopUseCase";
 import { PauseShopUseCase } from "@/src/application/use-cases/billing/PauseShopUseCase";
@@ -40,17 +45,24 @@ export async function updatePlatformSettingsAction(
 ): Promise<AdminFormState> {
   try {
     const admin = await requireRole("platform_admin");
-    const thresholdRaw = Number(formData.get("orderThresholdCount") ?? 0);
-    const count = Number.isInteger(thresholdRaw) && thresholdRaw > 0
-      ? thresholdRaw
-      : 1;
-    await container.platformSettingsRepository.update({
-      billingUiEnabled: formData.get("billingUiEnabled") === "on",
-      orderThresholdBillingEnabled:
-        formData.get("orderThresholdBillingEnabled") === "on",
-      orderThresholdCount: count,
-      shopSuspensionEnabled: formData.get("shopSuspensionEnabled") === "on",
-    });
+    const threshold = Number(formData.get("dailyOrderThreshold") ?? "");
+    const feeBaht = Number(formData.get("dailyFeeBaht") ?? "");
+    if (!Number.isFinite(feeBaht)) throw new Error("ค่าธรรมเนียมรายวันไม่ถูกต้อง");
+    // Legacy order-threshold top-up flags are retired; leave their columns as-is.
+    await new UpdatePlatformBillingSettingsUseCase(
+      container.platformSettingsRepository,
+      container.dailyFeeRepository,
+    ).execute(
+      {
+        billingUiEnabled: formData.get("billingUiEnabled") === "on",
+        shopSuspensionEnabled: formData.get("shopSuspensionEnabled") === "on",
+        dailyFeeBillingEnabled: formData.get("dailyFeeBillingEnabled") === "on",
+        dailyOrderThreshold: threshold,
+        dailyFeeSatang: bahtToSatang(feeBaht),
+        defaultCutoffTime: String(formData.get("defaultCutoffTime") ?? "").trim(),
+      },
+      admin.id,
+    );
     await container.auditLogger.record({
       actorUserId: admin.id,
       actorRole: admin.role,
@@ -391,4 +403,55 @@ export async function adminResetOwnerPasswordAction(
   } catch (e) {
     return { error: (e as Error).message };
   }
+}
+
+/** Admin: set / clear a shop's business-day cutoff override (next day on). */
+export async function setShopBillingCutoffAction(
+  _prev: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  try {
+    const admin = await requireRole("platform_admin");
+    const shopId = String(formData.get("shopId") ?? "");
+    const cutoff = String(formData.get("billingCutoffTime") ?? "").trim() || null;
+    await new SetShopBillingCutoffUseCase(
+      container.dailyFeeRepository,
+      container.shopRepository,
+    ).execute(shopId, cutoff, admin.id);
+    await container.auditLogger.record({
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: AUDIT_ACTIONS.shopBillingCutoffChanged,
+      targetType: "shop",
+      targetId: shopId,
+      ip: await getClientIp(),
+      metadata: { cutoff },
+    });
+    revalidatePath(`/admin/shops/${shopId}/billing`);
+    return { success: "บันทึกเวลาตัดรอบแล้ว" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+/** Admin: mark one due daily-fee charge paid (manual; no auto-debit). */
+export async function markDailyFeePaidAction(formData: FormData): Promise<void> {
+  const admin = await requireRole("platform_admin");
+  const shopId = String(formData.get("shopId") ?? "");
+  const chargeId = String(formData.get("chargeId") ?? "");
+  await new MarkDailyFeePaidUseCase(container.dailyFeeRepository).execute(
+    shopId,
+    chargeId,
+    admin.id,
+  );
+  await container.auditLogger.record({
+    actorUserId: admin.id,
+    actorRole: admin.role,
+    action: AUDIT_ACTIONS.dailyFeePaid,
+    targetType: "shop",
+    targetId: shopId,
+    ip: await getClientIp(),
+    metadata: { chargeId },
+  });
+  revalidatePath(`/admin/shops/${shopId}/billing`);
 }

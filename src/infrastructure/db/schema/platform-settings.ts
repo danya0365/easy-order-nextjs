@@ -18,5 +18,12 @@ export const platformSettings = sqliteTable("platform_settings", {
   orderThresholdCount: integer().notNull().default(50),
   /** Soft-launch: off = overdue shops keep working (warn-only), admin suspend still applies. */
   shopSuspensionEnabled: integer({ mode: "boolean" }).notNull().default(false),
+  /** Order-threshold DAILY FEE billing (replaces day-based top-up billing). */
+  dailyFeeBillingEnabled: integer({ mode: "boolean" }).notNull().default(false),
+  /** A business day with billable orders STRICTLY greater than this is charged. */
+  dailyOrderThreshold: integer().notNull().default(50),
+  dailyFeeSatang: integer().notNull().default(500),
+  /** Business-day cutoff "HH:MM" Asia/Bangkok (per-shop override on shops). */
+  defaultCutoffTime: text().notNull().default("04:00"),
   updatedAt: updatedAt(),
 });

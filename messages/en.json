@@ -140,7 +140,10 @@
     "memberPolicy_maxPendingRequests": "Max pending requests per shop",
     "memberPolicy_pendingExpiryHours": "Pending request expiry (hours)",
     "memberPolicy_rejectCooldownDays": "Rejected phone cooldown (days)",
-    "staticJoinQrPrintCaption": "Scan to join and order"
+    "staticJoinQrPrintCaption": "Scan to join and order",
+    "dailyFeeNag": "Outstanding daily fees ฿{amount} — view details",
+    "legacyBillingTitle": "Legacy top-up history",
+    "legacyBillingSubtitle": "The day-based top-up system is retired; shown for reference only."
   },
   "admin": {
     "settingsBillingUiLabel": "Show monthly billing UI",
@@ -181,13 +184,21 @@
     "otlRevokedAt": "Revoked {at}",
     "otlUsed": "Used",
     "otlRevoked": "Revoked",
-    "otlCliNote": "Also available via CLI: node scripts/admin-login-link.mjs"
+    "otlCliNote": "Also available via CLI: node scripts/admin-login-link.mjs",
+    "settingsDailyFeeLabel": "Enable order-threshold daily fee",
+    "settingsDailyFeeHint": "Days with more non-cancelled orders than the threshold incur the fee. No auto-debit.",
+    "settingsDailyThresholdLabel": "Daily order threshold (charged when exceeded)",
+    "settingsDailyFeeBahtLabel": "Daily fee (THB)",
+    "settingsCutoffLabel": "Default cutoff time (Bangkok)",
+    "settingsNextDayHint": "Changes apply from the next business day; past days are never recomputed.",
+    "settingsSuspensionNagHint": "Daily fees are nag-only; shops are never suspended for a balance."
   },
   "adminPages": {
     "settingsTitle": "Platform settings",
     "settingsSubtitle": "Whole-system billing and suspension switches",
     "billingUiOffNote": "Billing UI is off (shops don't see the billing page) — price submissions still arrive normally",
-    "leadsSellGuide": "Sales playbook"
+    "leadsSellGuide": "Sales playbook",
+    "dailyFeeLink": "Daily fees"
   },
   "layout": {
     "navMore": "More",
@@ -642,5 +653,34 @@
     "cardPaper": "Paper size",
     "cardShowLogo": "Show shop logo",
     "cardQrAlt": "Shop QR code"
+  },
+  "dailyFee": {
+    "todayTitle": "Today",
+    "todaySubtitle": "Business day {date}",
+    "disabledNote": "Daily fee billing is off",
+    "todayCount": "Orders today",
+    "countVsThreshold": "{count} / threshold {threshold}",
+    "projected": "Projected fee today",
+    "rule": "Rule",
+    "ruleText": "Over {threshold} orders: ฿{fee}",
+    "closesAt": "Closes at",
+    "upcoming": "From next business day: {enabled}, threshold {threshold}, ฿{fee}, cutoff {cutoff}",
+    "on": "on",
+    "off": "off",
+    "outstandingTitle": "Outstanding balance",
+    "noAutoDebit": "No auto-debit; contact the admin to pay",
+    "historyTitle": "Daily charge history",
+    "noCharges": "No charges yet",
+    "chargeLine": "{count} orders · threshold {threshold} · cutoff {cutoff}",
+    "statusDue": "Due",
+    "statusPaid": "Paid",
+    "statusNone": "No fee",
+    "markPaid": "Mark paid",
+    "backToShops": "Back to shops",
+    "adminShopTitle": "Daily fees · {name}",
+    "cutoffOverrideTitle": "Shop cutoff override",
+    "cutoffOverrideLabel": "Cutoff (blank = default {def})",
+    "cutoffOverrideHint": "Applies from the next business day; owners cannot edit this.",
+    "saveCutoff": "Save cutoff"
   }
 }
