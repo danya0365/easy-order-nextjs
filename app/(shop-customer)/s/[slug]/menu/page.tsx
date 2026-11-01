@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ChevronRight, ShoppingBag, Store, UtensilsCrossed } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, ShoppingBag, Store, UtensilsCrossed } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { getOrderAccess } from "@/src/infrastructure/auth/order-access";
@@ -75,6 +75,13 @@ export default async function PublicMenuPage({
     <div className="flex flex-wrap items-center gap-2 print:hidden">
       <MenuViewSwitch slug={slug} current={view} />
       <div className="flex-1" />
+      <Link
+        href={`/s/${slug}/menu/print`}
+        className="inline-flex items-center gap-1.5 rounded-xl bg-card px-3 py-2 text-sm font-semibold text-foreground ring-1 ring-border transition hover:bg-muted-surface"
+        data-testid="menu-compact-link"
+      >
+        <FileText className="size-4" /> {t("compactEntry")}
+      </Link>
       <MenuPrintButton />
       {canOrder && (
         <Link

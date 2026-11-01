@@ -9,6 +9,7 @@ import { getBaseUrl } from "@/src/presentation/lib/base-url";
 import { CopyLinkButton } from "@/src/presentation/components/public-menu/CopyLinkButton";
 import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
 import { publicMenuUrl } from "@/src/domain/services/public-menu";
+import { CompactPreviewCard } from "@/src/presentation/components/public-menu/CompactPreviewCard";
 import { MenuQrCardPanel, type MenuQrSeed } from "@/src/presentation/components/public-menu/MenuQrCardPanel";
 import { isMenuOptionsEnabledForShop } from "@/src/application/use-cases/menu/MenuOptionUseCases";
 
@@ -80,6 +81,7 @@ export default async function ShopMenuPage() {
         </div>
       )}
       {qrSeed && <MenuQrCardPanel seed={qrSeed} />}
+      {menuPath && <CompactPreviewCard path={`${menuPath}/print`} />}
       <MenuManager categories={categories} items={items} optionGroups={optionGroups} />
     </div>
   );

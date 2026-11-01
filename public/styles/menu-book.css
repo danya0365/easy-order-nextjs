@@ -438,3 +438,230 @@
     break-inside: avoid;
   }
 }
+
+/* ============================================
+   Compact one-sheet print menu (/s/[slug]/menu/print).
+   Sized in mm (true paper size) and scaled on screen by CompactFit; type
+   scale comes from --fit (auto-fit). Named page `compact` → own @page size.
+   ============================================ */
+@layer components {
+  .compact-preview {
+    width: 100%;
+  }
+  .compact-scaler {
+    margin: 0 auto;
+    overflow: hidden;
+    box-shadow: 0 10px 30px -12px color-mix(in oklab, var(--foreground) 55%, var(--background));
+  }
+  .compact-sheet {
+    --fit: 1;
+    --base: 9.5pt;
+    transform-origin: top left;
+    background-color: var(--card);
+    color: var(--foreground);
+    font-size: calc(var(--base) * var(--fit));
+    line-height: 1.3;
+    page: compact;
+  }
+  .compact-sheet:has(.compact-a3) {
+    --base: 12pt;
+  }
+  .compact-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9em;
+    padding: 0;
+  }
+  .compact-head {
+    display: flex;
+    align-items: center;
+    gap: 0.9em;
+    padding-bottom: 0.7em;
+    border-bottom: 0.25em solid var(--brand-500);
+  }
+  .compact-logo {
+    width: 4.2em;
+    height: 4.2em;
+    border-radius: 9999px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .compact-logo-empty {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--brand-50);
+    color: var(--brand-600);
+  }
+  .compact-logo-empty svg {
+    width: 50%;
+    height: 50%;
+  }
+  .compact-kicker {
+    font-size: 0.85em;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    color: var(--brand-700);
+  }
+  .compact-name {
+    font-family: var(--font-heading-family);
+    font-size: 2.1em;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+  .compact-halal {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.3em 0.8em;
+    border-radius: 9999px;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--brand-700);
+    border: 1px solid var(--brand-300);
+  }
+  .compact-halal svg,
+  .compact-contact svg {
+    width: 1.1em;
+    height: 1.1em;
+  }
+  .compact-cols {
+    column-gap: 1.8em;
+    column-rule: 1px dotted var(--border);
+    column-fill: balance;
+  }
+  .compact-cat {
+    break-inside: avoid-column;
+    margin-bottom: 0.9em;
+  }
+  .compact-cat-title {
+    break-after: avoid;
+    break-inside: avoid;
+    margin-bottom: 0.35em;
+    padding-bottom: 0.15em;
+    font-family: var(--font-heading-family);
+    font-size: 1.3em;
+    font-weight: 800;
+    color: var(--brand-700);
+    border-bottom: 1px solid var(--brand-200);
+  }
+  .compact-item {
+    display: flex;
+    gap: 0.6em;
+    align-items: flex-start;
+    padding: 0.22em 0;
+    break-inside: avoid;
+  }
+  .compact-thumb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.8em;
+    height: 2.8em;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 0.35em;
+    background-color: var(--muted-surface);
+    color: var(--muted);
+  }
+  .compact-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .compact-thumb svg {
+    width: 45%;
+    height: 45%;
+    opacity: 0.5;
+  }
+  .compact-item-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+  }
+  .compact-line {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35em;
+  }
+  .compact-item-name {
+    font-weight: 600;
+  }
+  .compact-leader {
+    flex: 1 1 1em;
+    min-width: 1em;
+    border-bottom: 1.5px dotted var(--muted);
+    opacity: 0.6;
+    translate: 0 -0.25em;
+  }
+  .compact-price {
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--brand-700);
+    white-space: nowrap;
+  }
+  .compact-desc {
+    font-size: 0.82em;
+    line-height: 1.25;
+    color: var(--muted);
+  }
+  .compact-empty {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    color: var(--muted);
+  }
+  .compact-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1em;
+    padding-top: 0.6em;
+    border-top: 1px solid var(--border);
+    break-inside: avoid;
+    font-size: 0.9em;
+  }
+  .compact-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4em 1.4em;
+  }
+  .compact-contact span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+  }
+  .compact-qr {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    font-size: 0.8em;
+    color: var(--muted);
+  }
+  .compact-qr img {
+    width: 5.5em;
+    height: 5.5em;
+  }
+  /* embedded preview (dashboard iframe): hide the customer shell */
+  body:has(.compact-embed) header,
+  body:has(.compact-embed) nav,
+  body:has(.compact-embed) .compact-page ~ * {
+    display: none;
+  }
+}
+@media print {
+  .compact-page {
+    display: block !important;
+  }
+  .compact-scaler {
+    width: auto !important;
+    height: auto !important;
+    overflow: visible;
+    box-shadow: none;
+  }
+  .compact-sheet {
+    transform: none !important;
+    min-height: 0 !important;
+  }
+}

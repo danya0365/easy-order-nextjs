@@ -2041,6 +2041,27 @@
     "qrCaptionDefault": "สแกนดูเมนู",
     "qrOpens": "เปิดเป็น",
     "qrShowLink": "แสดงลิงก์ใต้ QR",
-    "qrAlt": "QR สำหรับดูเมนูร้าน"
+    "qrAlt": "QR สำหรับดูเมนูร้าน",
+    "compactEntry": "เมนูแผ่นเดียว",
+    "compactMetaTitle": "เมนูแผ่นเดียว · {name}",
+    "compactTitle": "พิมพ์เมนูแผ่นเดียว",
+    "compactDesc": "รวมทุกเมนูที่เปิดขายใน 1–2 แผ่น สำหรับพิมพ์เคลือบวางโต๊ะ — ปรับขนาดตัวอักษรให้พอดีหน้าอัตโนมัติ",
+    "optPaper": "กระดาษ",
+    "optOrient": "แนว",
+    "optPortrait": "แนวตั้ง",
+    "optLandscape": "แนวนอน",
+    "optCols": "คอลัมน์",
+    "optThumbs": "รูปเล็ก",
+    "optDesc": "คำอธิบาย",
+    "optFooter": "ส่วนท้าย (ติดต่อ + QR)",
+    "optShow": "แสดง",
+    "optHide": "ซ่อน",
+    "fitInfo": "พอดี {sheets} แผ่น · ขนาดตัวอักษร {pct}%",
+    "fitting": "กำลังจัดหน้า…",
+    "printNow": "พิมพ์",
+    "openPreview": "เปิดตัวอย่างเต็ม",
+    "menuHeading": "เมนู",
+    "footerScan": "สแกนดูเมนูออนไลน์",
+    "previewTitle": "ตัวอย่างเมนูแผ่นเดียว"
   }
 }
