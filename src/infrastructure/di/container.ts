@@ -64,6 +64,8 @@ import { DrizzleAdminLoginLinkRepository } from "@/src/infrastructure/repositori
 import type { IAdminLoginLinkRepository } from "@/src/application/repositories/IAdminLoginLinkRepository";
 import { DrizzleMemberSignupGuardRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMemberSignupGuardRepository";
 import type { IMemberSignupGuardRepository } from "@/src/application/repositories/IMemberSignupGuardRepository";
+import { DrizzleRiderRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleRiderRepository";
+import type { IRiderRepository } from "@/src/application/repositories/IRiderRepository";
 import type { IShopPromotionRepository } from "@/src/application/repositories/IShopPromotionRepository";
 
 /**
@@ -133,6 +135,7 @@ class Container extends GenericContainer {
     new DrizzleMemberSignupGuardRepository();
   readonly adminLoginLinkRepository: IAdminLoginLinkRepository =
     new DrizzleAdminLoginLinkRepository();
+  readonly riderRepository: IRiderRepository = new DrizzleRiderRepository();
 }
 
 const globalForContainer = globalThis as unknown as {

@@ -4,14 +4,27 @@ import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { RefreshCw, StickyNote } from "lucide-react";
+import { Bike, RefreshCw, StickyNote } from "lucide-react";
 
 import type {
   OrderChannel,
   FulfillmentType,
   OrderStatus,
   OrderWithItems,
+  DeliveryStatus,
 } from "@/src/domain/entities";
+
+/** Minimal rider option for the assign dropdown. */
+export interface RiderOption {
+  id: string;
+  name: string;
+}
+
+const DELIVERY_LABEL: Record<DeliveryStatus, string> = {
+  assigned: "มอบหมายไรเดอร์แล้ว",
+  picked_up: "ไรเดอร์รับของแล้ว · กำลังไปส่ง",
+  delivered: "ส่งถึงแล้ว",
+};
 
 /** Order card data: the order plus the customer's shop-internal CRM note. */
 export type QueueOrder = OrderWithItems & { customerNote?: string | null };
@@ -20,6 +33,7 @@ import {
   confirmOrderPaymentAction,
   loadMoreOrderHistoryAction,
 } from "@/src/presentation/actions/order-actions";
+import { assignRiderAction } from "@/src/presentation/actions/rider-actions";
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { Card } from "@/src/presentation/components/ui/Card";
 import { Button } from "@/src/presentation/components/ui/Button";
@@ -72,10 +86,12 @@ export function OrderQueue({
   activeOrders,
   historyInitial,
   historyCursor,
+  riders = [],
 }: {
   activeOrders: QueueOrder[];
   historyInitial: QueueOrder[];
   historyCursor: string | null;
+  riders?: RiderOption[];
 }) {
   const t = useTranslations("order");
   const router = useRouter();
@@ -114,7 +130,7 @@ export function OrderQueue({
                 {t(`status${cap(status)}` as StatusKey)} ({orders.length})
               </h2>
               {orders.map((order) => (
-                <OrderCard key={order.id} order={order} />
+                <OrderCard key={order.id} order={order} riders={riders} />
               ))}
             </section>
           );
@@ -140,7 +156,13 @@ function cap(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-export function OrderCard({ order }: { order: QueueOrder }) {
+export function OrderCard({
+  order,
+  riders = [],
+}: {
+  order: QueueOrder;
+  riders?: RiderOption[];
+}) {
   const t = useTranslations("order");
   const customerNote = order.customerNote;
   const router = useRouter();
@@ -175,6 +197,18 @@ export function OrderCard({ order }: { order: QueueOrder }) {
       if (res.error) toast.error(res.error || t("actionError"));
       else {
         setCancelOpen(false);
+        router.refresh();
+      }
+    });
+  }
+
+  function assignRider(riderId: string) {
+    if (!riderId) return;
+    start(async () => {
+      const res = await assignRiderAction(order.id, riderId);
+      if (res.error) toast.error(res.error || t("actionError"));
+      else {
+        toast.success("มอบหมายไรเดอร์แล้ว");
         router.refresh();
       }
     });
@@ -248,6 +282,38 @@ export function OrderCard({ order }: { order: QueueOrder }) {
         <p className="mt-2 rounded-lg bg-muted-surface px-3 py-2 text-sm text-foreground">
           {t("deliveryAddressLabel")}: {order.deliveryAddress}
         </p>
+      )}
+
+      {order.fulfillmentType === "delivery" && order.status !== "cancelled" && (
+        <div className="mt-2 flex flex-col gap-1 rounded-lg border border-border px-3 py-2 text-sm">
+          <span className="flex items-center gap-2 font-medium text-foreground">
+            <Bike className="size-4 shrink-0" />
+            {order.deliveryStatus ? DELIVERY_LABEL[order.deliveryStatus] : "ยังไม่ได้มอบหมายไรเดอร์"}
+            {order.codCollected && <Badge tone="success">เก็บเงินแล้ว</Badge>}
+          </span>
+          {(order.deliveryStatus === null || order.deliveryStatus === "assigned") &&
+            (riders.length === 0 ? (
+              <Link href="/shop/riders" className="text-xs text-brand-700 underline">
+                เพิ่มไรเดอร์ของร้าน
+              </Link>
+            ) : (
+              <select
+                aria-label="เลือกไรเดอร์"
+                data-testid="assign-rider"
+                className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-foreground"
+                value={order.riderId ?? ""}
+                disabled={pending}
+                onChange={(e) => assignRider(e.target.value)}
+              >
+                <option value="">— เลือกไรเดอร์ —</option>
+                {riders.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+            ))}
+        </div>
       )}
 
       <p className="mt-2 text-xs text-muted">

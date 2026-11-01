@@ -81,6 +81,15 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/:path*", headers: SECURITY_HEADERS },
+      // Rider personal links carry a secret token in the path.
+      {
+        source: "/r/:path*",
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          { key: "Cache-Control", value: "no-store" },
+        ],
+      },
       // One-time login links carry a secret in the query string.
       {
         source: "/login/one-time",

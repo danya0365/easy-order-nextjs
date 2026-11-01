@@ -3,6 +3,9 @@ import { id, createdAt, updatedAt } from "./_shared";
 import { shops } from "./shops";
 import { customers } from "./customers";
 import { users } from "./users";
+import { riders } from "./riders";
+
+export const DELIVERY_STATUSES = ["assigned", "picked_up", "delivered"] as const;
 
 export const ORDER_STATUSES = [
   "pending",
@@ -60,6 +63,15 @@ export const orders = sqliteTable(
      * survives. For staff accountability — also audit-logged at placement.
      */
     performedBy: text().references(() => users.id, { onDelete: "set null" }),
+    /** Shop-owned rider assigned to a delivery order (phase 1). */
+    riderId: text().references(() => riders.id, { onDelete: "set null" }),
+    deliveryStatus: text({ enum: DELIVERY_STATUSES }),
+    assignedAt: text(),
+    pickedUpAt: text(),
+    deliveredAt: text(),
+    codCollected: integer({ mode: "boolean" }).notNull().default(false),
+    /** Rider commission snapshot (satang) taken at assign time. */
+    riderCommissionSatang: integer(),
     paidAt: text(),
     readyAt: text(),
     completedAt: text(),
@@ -71,5 +83,6 @@ export const orders = sqliteTable(
     index("orders_shop_status_idx").on(t.shopId, t.status),
     // Per-customer CRM aggregates / history.
     index("orders_shop_customer_idx").on(t.shopId, t.customerId, t.createdAt),
+    index("orders_shop_rider_idx").on(t.shopId, t.riderId, t.deliveryStatus),
   ],
 );

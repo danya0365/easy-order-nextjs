@@ -10,9 +10,10 @@ export const dynamic = "force-dynamic";
 export default async function ShopOrdersPage() {
   const { shopId } = await requireShopAccess();
   const t = await getTranslations("order");
-  const [activeOrders, history] = await Promise.all([
+  const [activeOrders, history, riders] = await Promise.all([
     container.orderRepository.listActiveByShop(shopId),
     container.orderRepository.pageHistoryByShop(shopId, {}),
+    container.riderRepository.listByShop(shopId),
   ]);
   const [active, hist] = await Promise.all([
     withCustomerNotes(shopId, activeOrders),
@@ -29,6 +30,9 @@ export default async function ShopOrdersPage() {
         activeOrders={active}
         historyInitial={hist}
         historyCursor={history.nextCursor}
+        riders={riders
+          .filter((r) => r.active)
+          .map((r) => ({ id: r.id, name: r.name }))}
       />
     </div>
   );
