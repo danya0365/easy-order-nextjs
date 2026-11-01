@@ -590,7 +590,14 @@
     "addressPlaceholderOptional": "ที่อยู่ / จุดสังเกต (ไม่บังคับ)",
     "notPinned": "ยังไม่ได้ปักหมุด",
     "clearPin": "ล้างหมุด",
-    "saveLocation": "บันทึกตำแหน่ง"
+    "saveLocation": "บันทึกตำแหน่ง",
+    "useCurrentLocation": "ใช้ตำแหน่งปัจจุบัน",
+    "searchPlace": "ค้นหาสถานที่ / ถนน / หมู่บ้าน",
+    "gpsUnavailable": "อุปกรณ์นี้ไม่รองรับการระบุตำแหน่ง",
+    "gpsDenied": "ระบุตำแหน่งไม่ได้ — ลากหมุดบนแผนที่แทนได้",
+    "pinHint": "แตะแผนที่หรือลากหมุดไปยังจุดส่งของ",
+    "pinSet": "ปักหมุดแล้ว ({lat}, {lng})",
+    "navigate": "นำทาง"
   },
   "channels": {
     "connected": "เชื่อมแล้ว",
@@ -1196,7 +1203,12 @@
     "resultHistoryLink": "ดูประวัติการสั่งของฉัน",
     "resultBackToShop": "กลับหน้าร้าน",
     "cancelKeep": "ไม่ยกเลิก",
-    "cancelReasonPlaceholder": "เหตุผลที่ยกเลิก (จำเป็น)"
+    "cancelReasonPlaceholder": "เหตุผลที่ยกเลิก (จำเป็น)",
+    "deliveryPinTitle": "ปักหมุดตำแหน่งจัดส่ง",
+    "deliveryPinRequired": "กรุณาปักหมุดตำแหน่งจัดส่งก่อนสั่ง",
+    "deliveryLandmarkPlaceholder": "จุดสังเกต (เช่น ตึกสีฟ้า ข้างเซเว่น)",
+    "deliveryLandmarkLabel": "จุดสังเกต",
+    "navigate": "นำทาง"
   },
   "kiosk": {
     "kioskPinTitle": "PIN หน้าร้าน",
@@ -1848,6 +1860,8 @@
     "avatarTooBig": "ไฟล์ใหญ่เกิน 4MB",
     "avatarType": "รองรับเฉพาะรูป JPG/PNG/WEBP",
     "meA2HS": "เพิ่มลงหน้าจอโฮม: เปิดเมนูเบราว์เซอร์ แล้วเลือก “เพิ่มไปยังหน้าจอหลัก” เพื่อเปิดแอปไรเดอร์ได้ทันที",
-    "custDelivered": "ส่งถึงแล้ว"
+    "custDelivered": "ส่งถึงแล้ว",
+    "navigate": "นำทาง",
+    "landmark": "จุดสังเกต"
   }
 }

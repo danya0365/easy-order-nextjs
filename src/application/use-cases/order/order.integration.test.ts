@@ -390,12 +390,30 @@ test("online orders enforce shop guards and the delivery fee", async () => {
     /ชื่อและเบอร์/,
   );
 
+  // Online delivery requires a map pin.
+  await assert.rejects(
+    new PlaceOrderUseCase(orders(), items(), customers(), shops()).execute({
+      shopId: shop.id,
+      channel: "online",
+      fulfillmentType: "delivery",
+      deliveryAddress: "123 ถนนสุขุมวิท",
+      paymentMethod: "cash",
+      customerName: "ซี",
+      customerPhone: "0811111111",
+      cart: [{ menuItemId: menu.espresso.id, quantity: 3 }],
+    }),
+    /ปักหมุด/,
+  );
+
   // A valid online delivery order: fee added to the total, no operator stamp.
   const order = await new PlaceOrderUseCase(orders(), items(), customers(), shops()).execute({
     shopId: shop.id,
     channel: "online",
     fulfillmentType: "delivery",
     deliveryAddress: "123 ถนนสุขุมวิท",
+    deliveryLat: 13.73651234,
+    deliveryLng: 100.5603,
+    deliveryLandmark: "  ตึกสีฟ้า  ",
     paymentMethod: "cash",
     customerName: "ซี",
     customerPhone: "0811111111",
@@ -407,4 +425,15 @@ test("online orders enforce shop guards and the delivery fee", async () => {
   assert.equal(order.subtotalSatang, 5000 * 3);
   assert.equal(order.totalSatang, 5000 * 3 + 3000, "delivery fee added");
   assert.equal(order.performedBy, null);
+  // Pin saved on the order (rounded 6dp) + remembered on the customer.
+  assert.equal(order.deliveryLat, 13.736512);
+  assert.equal(order.deliveryLng, 100.5603);
+  assert.equal(order.deliveryLandmark, "ตึกสีฟ้า");
+  const reloaded = await orders().findById(shop.id, order.id);
+  assert.equal(reloaded?.deliveryLat, 13.736512);
+  const cust = await customers().findByPhone(shop.id, "0811111111");
+  assert.equal(cust?.lastDeliveryLat, 13.736512);
+  assert.equal(cust?.lastDeliveryLng, 100.5603);
+  assert.equal(cust?.lastDeliveryAddress, "123 ถนนสุขุมวิท");
+  assert.equal(cust?.lastDeliveryLandmark, "ตึกสีฟ้า");
 });

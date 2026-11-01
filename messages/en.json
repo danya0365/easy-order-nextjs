@@ -32,7 +32,12 @@
     "resultHistoryLink": "View my order history",
     "resultBackToShop": "Back to shop",
     "cancelKeep": "Keep order",
-    "cancelReasonPlaceholder": "Reason for cancelling (required)"
+    "cancelReasonPlaceholder": "Reason for cancelling (required)",
+    "deliveryPinTitle": "Pin delivery location",
+    "deliveryPinRequired": "Please pin the delivery location first",
+    "deliveryLandmarkPlaceholder": "Landmark (e.g. blue building next to 7-Eleven)",
+    "deliveryLandmarkLabel": "Landmark",
+    "navigate": "Navigate"
   },
   "publicPages": {
     "onlineOrderMetaTitle": "Order online · {name}",

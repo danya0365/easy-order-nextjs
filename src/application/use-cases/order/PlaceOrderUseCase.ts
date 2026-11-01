@@ -1,3 +1,8 @@
+import {
+  normalizeDeliveryPin,
+  normalizeLandmark,
+  type DeliveryPin,
+} from "@/src/domain/services/delivery-location";
 import type {
   OrderChannel,
   OrderPaymentMethod,
@@ -31,6 +36,11 @@ export interface PlaceOrderInput {
   fulfillmentType?: FulfillmentType;
   /** Drop-off address — required for online delivery orders. */
   deliveryAddress?: string | null;
+  /** Customer map pin (required for online delivery). */
+  deliveryLat?: number | null;
+  deliveryLng?: number | null;
+  /** Optional free-text landmark (จุดสังเกต). */
+  deliveryLandmark?: string | null;
   cart: CartLine[];
 }
 
@@ -93,6 +103,8 @@ export class PlaceOrderUseCase {
     const channel: OrderChannel = input.channel ?? "kiosk";
     const fulfillmentType: FulfillmentType = input.fulfillmentType ?? "pickup";
     let deliveryAddress: string | null = null;
+    let deliveryPin: DeliveryPin | null = null;
+    let deliveryLandmark: string | null = null;
     let deliveryFeeSatang = 0;
 
     if (channel === "online") {
@@ -112,6 +124,9 @@ export class PlaceOrderUseCase {
           throw new Error("ที่อยู่ยาวเกินไป");
         }
         deliveryAddress = addr;
+        deliveryPin = normalizeDeliveryPin(input.deliveryLat, input.deliveryLng);
+        if (!deliveryPin) throw new Error("กรุณาปักหมุดตำแหน่งจัดส่งบนแผนที่");
+        deliveryLandmark = normalizeLandmark(input.deliveryLandmark);
         deliveryFeeSatang = shop.deliveryFeeSatang;
       } else if (!shop.pickupEnabled) {
         throw new Error("ร้านยังไม่เปิดให้สั่งแบบมารับเอง");
@@ -190,6 +205,14 @@ export class PlaceOrderUseCase {
       }
     }
 
+    if (customerId && deliveryPin) {
+      await this.customers.setLastDeliveryLocation(input.shopId, customerId, {
+        ...deliveryPin,
+        address: deliveryAddress,
+        landmark: deliveryLandmark,
+      });
+    }
+
     return this.orders.create({
       shopId: input.shopId,
       paymentMethod: input.paymentMethod,
@@ -202,6 +225,9 @@ export class PlaceOrderUseCase {
       channel,
       fulfillmentType,
       deliveryAddress,
+      deliveryLat: deliveryPin?.lat ?? null,
+      deliveryLng: deliveryPin?.lng ?? null,
+      deliveryLandmark,
       deliveryFeeSatang,
       items: lines,
     });

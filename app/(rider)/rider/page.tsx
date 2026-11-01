@@ -1,4 +1,6 @@
-import { Banknote, CheckCircle2, MapPin, Package, Phone, Store } from "lucide-react";
+import { Banknote, CheckCircle2, Navigation, Package, Phone, Store } from "lucide-react";
+
+import { orderNavigationUrl } from "@/src/domain/services/delivery-location";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -92,11 +94,25 @@ export default async function RiderJobsPage({
               <div className="text-base text-foreground">
                 <p className="font-semibold">{o.customerName ?? t("rpCustomer")}</p>
                 {o.deliveryAddress && <p>{o.deliveryAddress}</p>}
+                {o.deliveryLandmark && (
+                  <p className="text-sm text-muted">{t("landmark")}: {o.deliveryLandmark}</p>
+                )}
               </div>
               <p className="text-base font-semibold text-foreground">
                 {t("rpTotal", { amount: satangToBaht(o.totalSatang) })} ·{" "}
                 {o.paymentStatus === "paid" ? t("rpPaid") : o.paymentMethod === "cash" ? t("rpCod") : t("rpUnpaidTransfer")}
               </p>
+              {orderNavigationUrl(o) && (
+                <a
+                  href={orderNavigationUrl(o) as string}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid="rider-navigate"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3.5 text-lg font-bold text-white shadow transition hover:bg-blue-700"
+                >
+                  <Navigation className="size-5" /> {t("navigate")}
+                </a>
+              )}
               <div className="flex gap-2">
                 {o.customerPhone && (
                   <a href={`tel:${o.customerPhone}`} className={linkBtn} data-testid="rider-call-customer">
@@ -106,16 +122,6 @@ export default async function RiderJobsPage({
                 {shopPhone && (
                   <a href={`tel:${shopPhone}`} className={linkBtn}>
                     <Store className="size-4" /> {t("callShop")}
-                  </a>
-                )}
-                {o.deliveryAddress && (
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.deliveryAddress)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={linkBtn}
-                  >
-                    <MapPin className="size-4" /> Maps
                   </a>
                 )}
               </div>

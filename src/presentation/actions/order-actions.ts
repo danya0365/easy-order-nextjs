@@ -180,6 +180,9 @@ export interface PlaceOnlineOrderActionInput extends PlaceOrderActionInput {
   /** pickup or delivery (dine_in is kiosk-only and rejected by the use case). */
   fulfillmentType: FulfillmentType;
   deliveryAddress?: string | null;
+  deliveryLat?: number | null;
+  deliveryLng?: number | null;
+  deliveryLandmark?: string | null;
 }
 
 export interface PlaceOnlineOrderResult extends PlaceOrderResult {
@@ -238,6 +241,9 @@ export async function placeOnlineOrderAction(
       performedBy: null,
       fulfillmentType: input.fulfillmentType,
       deliveryAddress: input.deliveryAddress ?? null,
+      deliveryLat: typeof input.deliveryLat === "number" ? input.deliveryLat : null,
+      deliveryLng: typeof input.deliveryLng === "number" ? input.deliveryLng : null,
+      deliveryLandmark: input.deliveryLandmark ?? null,
       cart: input.cart,
     });
 
