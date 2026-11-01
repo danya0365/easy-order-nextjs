@@ -39,3 +39,4 @@ export * from "./shop-promotions";
 export * from "./member-signup-guard";
 export * from "./admin-login-links";
 export * from "./daily-fees";
+export * from "./demo-data";
