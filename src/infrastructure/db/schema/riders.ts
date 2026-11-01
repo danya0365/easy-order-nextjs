@@ -22,6 +22,11 @@ export const riders = sqliteTable(
     /** satang for per_trip; percent (0–100) for percent_fee; ignored for full_fee. */
     commissionValue: integer().notNull().default(0),
     active: integer({ mode: "boolean" }).notNull().default(true),
+    /** Optional LINE ID for a chat deep link. */
+    lineId: text(),
+    /** Rider self-reported availability (ว่าง/ไม่ว่าง). Busy riders stay assignable. */
+    available: integer({ mode: "boolean" }).notNull().default(true),
+    availableUpdatedAt: text(),
     accessTokenHash: text(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

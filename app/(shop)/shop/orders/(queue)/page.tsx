@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { withCustomerNotes } from "@/src/presentation/lib/order-notes";
+import { ListRidersWithLoadUseCase } from "@/src/application/use-cases/rider/RiderUseCases";
 import { OrderQueue } from "@/src/presentation/components/order/OrderQueue";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ export default async function ShopOrdersPage() {
   const [activeOrders, history, riders] = await Promise.all([
     container.orderRepository.listActiveByShop(shopId),
     container.orderRepository.pageHistoryByShop(shopId, {}),
-    container.riderRepository.listByShop(shopId),
+    new ListRidersWithLoadUseCase(container.riderRepository, container.orderRepository).execute(shopId),
   ]);
   const [active, hist] = await Promise.all([
     withCustomerNotes(shopId, activeOrders),
@@ -32,7 +33,14 @@ export default async function ShopOrdersPage() {
         historyCursor={history.nextCursor}
         riders={riders
           .filter((r) => r.active)
-          .map((r) => ({ id: r.id, name: r.name }))}
+          .map((r) => ({
+            id: r.id,
+            name: r.name,
+            phone: r.phone,
+            lineId: r.lineId,
+            available: r.available,
+            openJobs: r.openJobs,
+          }))}
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Banknote, Bike, CheckCircle2, MapPin, Package, Phone } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
 import { GetRiderDashboardUseCase } from "@/src/application/use-cases/rider/RiderUseCases";
@@ -7,15 +8,14 @@ import { satangToBaht } from "@/src/presentation/lib/money";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "งานส่งของ",
-  robots: { index: false, follow: false },
-  referrer: "no-referrer",
-};
-
-const ERR: Record<string, string> = {
-  failed: "ทำรายการไม่สำเร็จ กรุณาลองใหม่",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("rider");
+  return {
+    title: t("rpTitle"),
+    robots: { index: false, follow: false },
+    referrer: "no-referrer",
+  };
+}
 
 /** Rider's personal job page — no login; the URL token is the credential. */
 export default async function RiderPage({
@@ -27,6 +27,7 @@ export default async function RiderPage({
 }) {
   const { token } = await params;
   const { e } = await searchParams;
+  const t = await getTranslations("rider");
   const dash = await new GetRiderDashboardUseCase(
     container.riderRepository,
     container.orderRepository,
@@ -37,8 +38,8 @@ export default async function RiderPage({
     return (
       <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-2 px-4 text-center">
         <Bike className="size-10 text-muted" />
-        <h1 className="text-lg font-bold text-foreground">ลิงก์ไม่ถูกต้องหรือถูกยกเลิกแล้ว</h1>
-        <p className="text-sm text-muted">กรุณาขอลิงก์ใหม่จากร้าน</p>
+        <h1 className="text-lg font-bold text-foreground">{t("rpInvalidTitle")}</h1>
+        <p className="text-sm text-muted">{t("rpInvalidDesc")}</p>
       </main>
     );
   }
@@ -50,31 +51,41 @@ export default async function RiderPage({
       <header>
         <p className="text-xs text-muted">{shop?.name}</p>
         <h1 className="flex items-center gap-2 text-lg font-bold text-foreground">
-          <Bike className="size-5" /> งานส่งของ · {dash.rider.name}
+          <Bike className="size-5" /> {t("rpHeader", { name: dash.rider.name })}
         </h1>
+        <form method="post" action={`/r/${token}/availability`} className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-card px-3 py-2 ring-1 ring-border" data-testid="rider-availability">
+          <span className="flex items-center gap-2 text-sm text-foreground">
+            <span className={`size-2.5 rounded-full bg-current ${dash.rider.available ? "text-success" : "text-muted"}`} />
+            {t("rpStatusLabel", { status: dash.rider.available ? t("available") : t("busy") })}
+          </span>
+          <input type="hidden" name="available" value={dash.rider.available ? "0" : "1"} />
+          <button className="rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-foreground">
+            {dash.rider.available ? t("rpSetBusy") : t("rpSetAvailable")}
+          </button>
+        </form>
       </header>
 
-      {e && ERR[e] && (
-        <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{ERR[e]}</p>
+      {e === "failed" && (
+        <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{t("rpFailed")}</p>
       )}
 
       <section className="grid grid-cols-3 gap-2 rounded-xl bg-card p-3 text-center ring-1 ring-border" data-testid="rider-today">
         <div>
-          <p className="text-xs text-muted">ส่งวันนี้</p>
+          <p className="text-xs text-muted">{t("rpTodayTrips")}</p>
           <p className="text-lg font-bold text-foreground">{dash.today.trips}</p>
         </div>
         <div>
-          <p className="text-xs text-muted">รายได้วันนี้</p>
+          <p className="text-xs text-muted">{t("rpTodayEarn")}</p>
           <p className="text-lg font-bold text-foreground">{satangToBaht(dash.today.commissionSatang)}</p>
         </div>
         <div>
-          <p className="text-xs text-muted">เงินสดที่เก็บ</p>
+          <p className="text-xs text-muted">{t("rpTodayCash")}</p>
           <p className="text-lg font-bold text-foreground">{satangToBaht(dash.today.codCollectedSatang)}</p>
         </div>
       </section>
 
       {dash.jobs.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted">ยังไม่มีงานที่ต้องส่ง</p>
+        <p className="py-10 text-center text-sm text-muted">{t("rpNoJobs")}</p>
       ) : (
         dash.jobs.map((o) => {
           const cod = o.paymentMethod === "cash" && o.paymentStatus !== "paid";
@@ -83,7 +94,7 @@ export default async function RiderPage({
               <div className="flex items-center justify-between">
                 <p className="text-xl font-bold text-foreground">#{o.orderNo}</p>
                 <span className="rounded-full bg-muted-surface px-2 py-0.5 text-xs text-foreground">
-                  {o.deliveryStatus === "picked_up" ? "กำลังไปส่ง" : "รอรับของที่ร้าน"}
+                  {o.deliveryStatus === "picked_up" ? t("rpEnRoute") : t("rpWaitPickup")}
                 </span>
               </div>
               <ul className="text-sm text-foreground">
@@ -93,9 +104,9 @@ export default async function RiderPage({
                   </li>
                 ))}
               </ul>
-              {o.note && <p className="text-sm text-muted">หมายเหตุ: {o.note}</p>}
+              {o.note && <p className="text-sm text-muted">{t("rpNote", { note: o.note })}</p>}
               <div className="text-sm text-foreground">
-                <p>{o.customerName ?? "ลูกค้า"}</p>
+                <p>{o.customerName ?? t("rpCustomer")}</p>
                 {o.customerPhone && (
                   <a href={`tel:${o.customerPhone}`} className="inline-flex items-center gap-1 font-medium text-brand-700 underline">
                     <Phone className="size-4" /> {o.customerPhone}
@@ -111,13 +122,13 @@ export default async function RiderPage({
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 font-medium text-brand-700 underline"
                   >
-                    <MapPin className="size-4" /> เปิดใน Google Maps
+                    <MapPin className="size-4" /> {t("rpMaps")}
                   </a>
                 </div>
               )}
               <p className="text-sm font-semibold text-foreground">
-                ยอด {satangToBaht(o.totalSatang)} ·{" "}
-                {o.paymentStatus === "paid" ? "จ่ายแล้ว" : o.paymentMethod === "cash" ? "เก็บเงินปลายทาง" : "ยังไม่จ่าย (โอน)"}
+                {t("rpTotal", { amount: satangToBaht(o.totalSatang) })} ·{" "}
+                {o.paymentStatus === "paid" ? t("rpPaid") : o.paymentMethod === "cash" ? t("rpCod") : t("rpUnpaidTransfer")}
               </p>
               <div className="flex flex-wrap gap-2">
                 {o.deliveryStatus === "assigned" && (
@@ -125,7 +136,7 @@ export default async function RiderPage({
                     <input type="hidden" name="orderId" value={o.id} />
                     <input type="hidden" name="do" value="picked_up" />
                     <button className="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-4 py-2.5 font-semibold text-on-brand">
-                      <Package className="size-4" /> รับของแล้ว
+                      <Package className="size-4" /> {t("rpPickedUp")}
                     </button>
                   </form>
                 )}
@@ -134,7 +145,7 @@ export default async function RiderPage({
                     <input type="hidden" name="orderId" value={o.id} />
                     <input type="hidden" name="do" value="delivered" />
                     <button className="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-4 py-2.5 font-semibold text-on-brand">
-                      <CheckCircle2 className="size-4" /> ส่งแล้ว
+                      <CheckCircle2 className="size-4" /> {t("rpDelivered")}
                     </button>
                   </form>
                 )}
@@ -143,13 +154,13 @@ export default async function RiderPage({
                     <input type="hidden" name="orderId" value={o.id} />
                     <input type="hidden" name="do" value="cod" />
                     <button className="inline-flex items-center gap-1 rounded-lg border border-border px-4 py-2.5 font-semibold text-foreground">
-                      <Banknote className="size-4" /> เก็บเงินแล้ว
+                      <Banknote className="size-4" /> {t("rpCodBtn")}
                     </button>
                   </form>
                 )}
                 {o.codCollected && (
                   <span className="inline-flex items-center gap-1 text-sm text-foreground">
-                    <Banknote className="size-4" /> เก็บเงินแล้ว
+                    <Banknote className="size-4" /> {t("codCollected")}
                   </span>
                 )}
               </div>

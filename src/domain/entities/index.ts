@@ -680,6 +680,10 @@ export interface Rider {
   /** satang for per_trip; percent for percent_fee; ignored for full_fee. */
   commissionValue: number;
   active: boolean;
+  lineId: string | null;
+  /** Rider self-reported availability (ว่าง/ไม่ว่าง). */
+  available: boolean;
+  availableUpdatedAt: string | null;
   /** Whether a personal link is currently issued (the hash itself never leaves the repo). */
   hasLink: boolean;
   createdAt: string;

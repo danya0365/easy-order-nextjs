@@ -89,6 +89,8 @@ export interface IOrderRepository {
   ): Promise<OrderWithItems>;
   /** Rider confirms COD cash collected. */
   markCodCollected(shopId: string, id: string): Promise<OrderWithItems>;
+  /** Open job count (assigned/picked_up, not cancelled) per rider id. */
+  openJobCountsByRider(shopId: string): Promise<Record<string, number>>;
   /** A rider's open jobs (assigned/picked_up, not cancelled), oldest first. */
   listRiderActive(shopId: string, riderId: string): Promise<OrderWithItems[]>;
   /** A rider's delivered orders since an ISO instant. */

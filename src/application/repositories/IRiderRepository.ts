@@ -5,6 +5,7 @@ export interface RiderInput {
   phone: string;
   commissionType: RiderCommissionType;
   commissionValue: number;
+  lineId?: string | null;
 }
 
 export interface IRiderRepository {
@@ -16,6 +17,7 @@ export interface IRiderRepository {
   findActiveByTokenHash(hash: string): Promise<Rider | null>;
   /** Replace (or clear with null) the personal-link token hash. */
   setTokenHash(shopId: string, id: string, hash: string | null): Promise<void>;
+  setAvailable(shopId: string, id: string, available: boolean): Promise<Rider>;
   /** Delivered trips per rider within [fromISO, toISO). */
   payoutSummary(shopId: string, fromISO: string, toISO: string): Promise<RiderPayoutRow[]>;
 }

@@ -14,16 +14,13 @@ import type {
   DeliveryStatus,
 } from "@/src/domain/entities";
 
-/** Minimal rider option for the assign dropdown. */
-export interface RiderOption {
-  id: string;
-  name: string;
-}
+/** Rider option for the assign picker (availability + load + contact). */
+export type RiderOption = RiderContactInfo;
 
-const DELIVERY_LABEL: Record<DeliveryStatus, string> = {
-  assigned: "มอบหมายไรเดอร์แล้ว",
-  picked_up: "ไรเดอร์รับของแล้ว · กำลังไปส่ง",
-  delivered: "ส่งถึงแล้ว",
+const DELIVERY_KEY: Record<DeliveryStatus, "deliveryAssigned" | "deliveryPickedUp" | "deliveryDelivered"> = {
+  assigned: "deliveryAssigned",
+  picked_up: "deliveryPickedUp",
+  delivered: "deliveryDelivered",
 };
 
 /** Order card data: the order plus the customer's shop-internal CRM note. */
@@ -34,6 +31,11 @@ import {
   loadMoreOrderHistoryAction,
 } from "@/src/presentation/actions/order-actions";
 import { assignRiderAction } from "@/src/presentation/actions/rider-actions";
+import {
+  RiderContactButtons,
+  RiderStatusBadges,
+  type RiderContactInfo,
+} from "@/src/presentation/components/rider/RiderContact";
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { Card } from "@/src/presentation/components/ui/Card";
 import { Button } from "@/src/presentation/components/ui/Button";
@@ -164,6 +166,7 @@ export function OrderCard({
   riders?: RiderOption[];
 }) {
   const t = useTranslations("order");
+  const tr = useTranslations("rider");
   const customerNote = order.customerNote;
   const router = useRouter();
   const toast = useToast();
@@ -208,7 +211,7 @@ export function OrderCard({
       const res = await assignRiderAction(order.id, riderId);
       if (res.error) toast.error(res.error || t("actionError"));
       else {
-        toast.success("มอบหมายไรเดอร์แล้ว");
+        toast.success(tr("assigned"));
         router.refresh();
       }
     });
@@ -288,31 +291,50 @@ export function OrderCard({
         <div className="mt-2 flex flex-col gap-1 rounded-lg border border-border px-3 py-2 text-sm">
           <span className="flex items-center gap-2 font-medium text-foreground">
             <Bike className="size-4 shrink-0" />
-            {order.deliveryStatus ? DELIVERY_LABEL[order.deliveryStatus] : "ยังไม่ได้มอบหมายไรเดอร์"}
-            {order.codCollected && <Badge tone="success">เก็บเงินแล้ว</Badge>}
+            {order.deliveryStatus ? tr(DELIVERY_KEY[order.deliveryStatus]) : tr("deliveryNone")}
+            {order.codCollected && <Badge tone="success">{tr("codCollected")}</Badge>}
           </span>
-          {(order.deliveryStatus === null || order.deliveryStatus === "assigned") &&
-            (riders.length === 0 ? (
+          {(order.deliveryStatus === null || order.deliveryStatus === "assigned") ? (
+            riders.length === 0 ? (
               <Link href="/shop/riders" className="text-xs text-brand-700 underline">
-                เพิ่มไรเดอร์ของร้าน
+                {tr("addRiderLink")}
               </Link>
             ) : (
-              <select
-                aria-label="เลือกไรเดอร์"
-                data-testid="assign-rider"
-                className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-foreground"
-                value={order.riderId ?? ""}
-                disabled={pending}
-                onChange={(e) => assignRider(e.target.value)}
-              >
-                <option value="">— เลือกไรเดอร์ —</option>
-                {riders.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-            ))}
+              <ul className="flex flex-col divide-y divide-border" data-testid="assign-rider" aria-label={tr("pickRider")}>
+                {riders.map((r) => {
+                  const current = order.riderId === r.id;
+                  return (
+                    <li key={r.id} className="flex flex-col gap-1.5 py-2" data-testid="rider-option">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="min-w-0 truncate font-medium text-foreground">{r.name}</span>
+                        {current ? (
+                          <Badge tone="success">{tr("current")}</Badge>
+                        ) : (
+                          <Button size="sm" variant="outline" disabled={pending} onClick={() => assignRider(r.id)} data-testid="assign-rider-btn">
+                            {tr("assign")}
+                          </Button>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-1.5">
+                        <RiderStatusBadges rider={r} />
+                        <RiderContactButtons rider={r} />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )
+          ) : (
+            (() => {
+              const r = riders.find((x) => x.id === order.riderId);
+              return r ? (
+                <div className="flex flex-wrap items-center justify-between gap-1.5">
+                  <span className="font-medium text-foreground">{r.name}</span>
+                  <RiderContactButtons rider={r} />
+                </div>
+              ) : null;
+            })()
+          )}
         </div>
       )}
 

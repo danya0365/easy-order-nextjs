@@ -3,6 +3,7 @@
  * transitions, and the personal-link token hashing. No I/O.
  */
 import { createHash, randomBytes } from "node:crypto";
+export { lineChatUrl } from "./rider-contact";
 
 export const RIDER_COMMISSION_TYPES = ["per_trip", "percent_fee", "full_fee"] as const;
 export type RiderCommissionType = (typeof RIDER_COMMISSION_TYPES)[number];
@@ -66,6 +67,14 @@ export function hashRiderToken(token: string): string {
 /** Plausible token shape (reject junk before hitting the DB). */
 export function isRiderTokenShape(token: string): boolean {
   return /^[A-Za-z0-9_-]{40,64}$/.test(token);
+}
+
+/** Normalise an optional LINE ID ("" → null). Throws on invalid characters. */
+export function normalizeLineId(input: string | null | undefined): string | null {
+  const v = (input ?? "").trim().replace(/^~/, "");
+  if (!v) return null;
+  if (!/^[A-Za-z0-9._@-]{1,50}$/.test(v)) throw new Error("LINE ID ไม่ถูกต้อง");
+  return v;
 }
 
 /** Customer-facing first name only. */
