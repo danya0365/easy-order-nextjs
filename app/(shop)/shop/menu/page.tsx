@@ -7,6 +7,9 @@ import { container } from "@/src/infrastructure/di/container";
 import { MenuManager } from "@/src/presentation/components/menu/MenuManager";
 import { getBaseUrl } from "@/src/presentation/lib/base-url";
 import { CopyLinkButton } from "@/src/presentation/components/public-menu/CopyLinkButton";
+import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
+import { publicMenuUrl } from "@/src/domain/services/public-menu";
+import { MenuQrCardPanel, type MenuQrSeed } from "@/src/presentation/components/public-menu/MenuQrCardPanel";
 import { isMenuOptionsEnabledForShop } from "@/src/application/use-cases/menu/MenuOptionUseCases";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +20,30 @@ export default async function ShopMenuPage() {
   const tMenu = await getTranslations("publicMenu");
   const shop = await container.shopRepository.findById(shopId);
   const menuPath = shop ? `/s/${shop.slug}/menu` : null;
-  const menuUrl = menuPath ? `${await getBaseUrl()}${menuPath}` : null;
+  const baseUrl = await getBaseUrl();
+  const menuUrl = shop ? publicMenuUrl(baseUrl, shop.slug) : null;
+  let qrSeed: MenuQrSeed | null = null;
+  if (shop) {
+    // Static, token-free public URLs only (read-only menu; cannot place orders).
+    const bookUrl = publicMenuUrl(baseUrl, shop.slug, "book");
+    const [normalQr, bookQr, profile] = await Promise.all([
+      renderQrDataUrl(menuUrl!),
+      renderQrDataUrl(bookUrl),
+      container.shopImageRepository.findProfile(shopId),
+    ]);
+    // Inline the logo as a data URL so PNG export doesn't taint the canvas.
+    let logoDataUrl: string | null = null;
+    if (profile) {
+      const file = await container.slipStorage.read(profile.storageKey);
+      if (file) logoDataUrl = `data:${file.contentType};base64,${Buffer.from(file.bytes).toString("base64")}`;
+    }
+    qrSeed = {
+      shopName: shop.name,
+      logoDataUrl,
+      normal: { url: menuUrl!, qrDataUrl: normalQr },
+      book: { url: bookUrl, qrDataUrl: bookQr },
+    };
+  }
   const [categories, items] = await Promise.all([
     container.menuCategoryRepository.listByShop(shopId),
     container.menuItemRepository.listByShop(shopId),
@@ -53,6 +79,7 @@ export default async function ShopMenuPage() {
           </Link>
         </div>
       )}
+      {qrSeed && <MenuQrCardPanel seed={qrSeed} />}
       <MenuManager categories={categories} items={items} optionGroups={optionGroups} />
     </div>
   );

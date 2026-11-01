@@ -124,3 +124,13 @@ export function buildBookPages(
   pages.push({ kind: "back" });
   return pages;
 }
+
+/**
+ * Plain public menu URL for the static menu QR — no token, read-only. Distinct
+ * from the ordering QR (HMAC order-access session). Base trailing slash trimmed.
+ */
+export function publicMenuUrl(baseUrl: string, slug: string, view: MenuView = "normal"): string {
+  const base = baseUrl.replace(/\/+$/, "");
+  const path = `${base}/s/${encodeURIComponent(slug)}/menu`;
+  return view === "book" ? `${path}?view=book` : path;
+}

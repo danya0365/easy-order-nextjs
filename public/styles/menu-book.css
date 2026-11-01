@@ -407,9 +407,14 @@
     overflow: visible;
     gap: 5mm;
   }
-  .menuprint .menuitem-sheet .menuitem-img {
-    width: 32mm;
-    height: 32mm;
+  /* fixed physical size regardless of mode/viewport (beats size-20 utility,
+     flex shrink and any responsive class) */
+  .menuprint .menuitem-img {
+    flex: 0 0 32mm !important;
+    width: 32mm !important;
+    height: 32mm !important;
+    min-width: 32mm !important;
+    max-width: 32mm !important;
   }
   .menuprint .menuitem-sheet {
     padding-bottom: 4mm;
