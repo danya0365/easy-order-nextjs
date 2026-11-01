@@ -133,28 +133,20 @@ test("platform settings row resolves to defaults (get creates it if missing)", a
   assert.equal(settings.shopSuspensionEnabled, false);
 });
 
-test("orderThresholdBillingEnabled keeps shops under the threshold free", async () => {
+test("retired top-up billing never suspends or duns an overdue shop", async () => {
   const { shop } = await seedShop("bill-threshold");
   await makeOverdue(shop.id);
-
-  // Threshold off → an overdue shop truly blocks access (suspension ON).
-  await container.platformSettingsRepository.update({ shopSuspensionEnabled: true });
-  const before = await billing().execute(shop.id);
-  assert.equal(before.status.isSuspended, true);
-
+  // Even with every legacy flag at its harshest, the old logic stays inert.
   await container.platformSettingsRepository.update({
+    shopSuspensionEnabled: true,
     orderThresholdBillingEnabled: true,
+    orderThresholdCount: 0,
   });
   try {
     const state = await billing().execute(shop.id);
-    assert.equal(state.status.isSuspended, false, "under threshold = no billing block");
+    assert.equal(state.status.isSuspended, false);
     assert.equal(state.status.state, "active");
     assert.equal(state.status.bannerLevel, 0);
-
-    // Past the threshold → the overdue state comes back.
-    await container.platformSettingsRepository.update({ orderThresholdCount: 0 });
-    const after = await billing().execute(shop.id);
-    assert.equal(after.status.isSuspended, true);
   } finally {
     await container.platformSettingsRepository.update({
       orderThresholdBillingEnabled: false,
@@ -179,29 +171,13 @@ test("billingUiEnabled off suppresses dunning banners and overdue suspension", a
   }
 });
 
-test("shopSuspensionEnabled=false keeps overdue shops working (warn-only)", async () => {
+test("admin suspension still blocks after the old billing is retired", async () => {
   const { shop } = await seedShop("bill-warn-only");
   await makeOverdue(shop.id);
-
-  // When the flag is ON (default in the pure function), billing wins.
   await container.platformSettingsRepository.update({ shopSuspensionEnabled: true });
   try {
-    const enforced = await billing().execute(shop.id);
-    assert.equal(enforced.status.isSuspended, true);
-    assert.equal(enforced.status.suspendReason, "overdue");
-
-    // OFF (default): reads are allowed — only state/banner nags.
-    await container.platformSettingsRepository.update({ shopSuspensionEnabled: false });
-    const warnOnly = await billing().execute(shop.id);
-    assert.equal(warnOnly.shopSuspensionEnabled, false);
-    assert.equal(
-      warnOnly.status.isSuspended,
-      false,
-      "overdue shop keeps access while suspension enforcement is off",
-    );
-    assert.equal(warnOnly.status.bannerLevel > 0, true, "the nag banner stays");
-
-    // Admin suspension still blocks in warn-only mode.
+    const overdue = await billing().execute(shop.id);
+    assert.equal(overdue.status.isSuspended, false, "overdue alone never suspends");
     await container.shopRepository.setStatus(shop.id, "suspended_by_admin");
     const admin = await billing().execute(shop.id);
     assert.equal(admin.status.isSuspended, true);

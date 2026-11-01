@@ -17,6 +17,8 @@ export const AUDIT_ACTIONS = {
   shopPaused: "shop_paused",
   shopResumed: "shop_resumed",
   paymentVerified: "payment_verified",
+  dailyFeePaid: "daily_fee_paid",
+  shopBillingCutoffChanged: "shop_billing_cutoff_changed",
   sessionsRevoked: "sessions_revoked",
   forceLogout: "force_logout",
   impersonationStarted: "impersonation_started",

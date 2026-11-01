@@ -536,7 +536,14 @@
     "otlRevokedAt": "ยกเลิกเมื่อ {at}",
     "otlUsed": "ใช้แล้ว",
     "otlRevoked": "ยกเลิกแล้ว",
-    "otlCliNote": "สร้างผ่าน CLI ได้ด้วย: node scripts/admin-login-link.mjs"
+    "otlCliNote": "สร้างผ่าน CLI ได้ด้วย: node scripts/admin-login-link.mjs",
+    "settingsDailyFeeLabel": "เปิดค่าธรรมเนียมรายวันตามจำนวนออเดอร์",
+    "settingsDailyFeeHint": "วันไหนออเดอร์ (ไม่นับที่ยกเลิก) มากกว่าเกณฑ์ จะถูกคิดค่าธรรมเนียมวันนั้น ไม่มีตัดเงินอัตโนมัติ",
+    "settingsDailyThresholdLabel": "เกณฑ์ออเดอร์ต่อวัน (เกินกว่านี้จึงคิดเงิน)",
+    "settingsDailyFeeBahtLabel": "ค่าธรรมเนียมต่อวัน (บาท)",
+    "settingsCutoffLabel": "เวลาตัดรอบเริ่มต้น (เวลาไทย)",
+    "settingsNextDayHint": "การเปลี่ยนแปลงมีผลตั้งแต่วันทำการถัดไป วันที่ผ่านมาแล้วจะไม่ถูกคำนวณใหม่",
+    "settingsSuspensionNagHint": "ค่าธรรมเนียมรายวันใช้แจ้งเตือนเท่านั้น ระบบจะไม่ระงับร้านจากยอดค้าง"
   },
   "layout": {
     "navDashboard": "แดชบอร์ด",
@@ -819,7 +826,10 @@
     "memberPolicy_maxPendingRequests": "คำขอรออนุมัติสูงสุดของร้าน",
     "memberPolicy_pendingExpiryHours": "คำขอหมดอายุหลัง (ชั่วโมง)",
     "memberPolicy_rejectCooldownDays": "เบอร์ที่ถูกปฏิเสธสมัครใหม่ได้หลัง (วัน)",
-    "staticJoinQrPrintCaption": "สแกนเพื่อสมัครสมาชิกและสั่งอาหาร"
+    "staticJoinQrPrintCaption": "สแกนเพื่อสมัครสมาชิกและสั่งอาหาร",
+    "dailyFeeNag": "มียอดค่าธรรมเนียมรายวันค้างชำระ ฿{amount} — ดูรายละเอียด",
+    "legacyBillingTitle": "ประวัติระบบเติมวันเดิม",
+    "legacyBillingSubtitle": "ระบบเติมวันใช้งานถูกยกเลิกแล้ว แสดงไว้เพื่ออ้างอิงเท่านั้น"
   },
   "adminPages": {
     "overviewTitle": "ภาพรวมระบบ",
@@ -899,7 +909,8 @@
     "settingsTitle": "ตั้งค่าแพลตฟอร์ม",
     "settingsSubtitle": "สวิตช์การคิดเงินและการระงับร้าน (ระดับทั้งระบบ)",
     "billingUiOffNote": "UI ค่าบริการถูกปิดอยู่ (ร้านไม่เห็นหน้าค่าบริการ) — คำสั่งชำระเงินยังเข้ามาตามปกติ",
-    "leadsSellGuide": "คู่มือขาย"
+    "leadsSellGuide": "คู่มือขาย",
+    "dailyFeeLink": "ค่าธรรมเนียมรายวัน"
   },
   "staffPages": {
     "roleStaff": "พนักงาน",
@@ -1863,5 +1874,34 @@
     "custDelivered": "ส่งถึงแล้ว",
     "navigate": "นำทาง",
     "landmark": "จุดสังเกต"
+  },
+  "dailyFee": {
+    "todayTitle": "วันนี้",
+    "todaySubtitle": "วันทำการ {date}",
+    "disabledNote": "ยังไม่เปิดใช้ค่าธรรมเนียมรายวัน",
+    "todayCount": "ออเดอร์วันนี้",
+    "countVsThreshold": "{count} / เกณฑ์ {threshold}",
+    "projected": "ค่าธรรมเนียมคาดการณ์วันนี้",
+    "rule": "เงื่อนไข",
+    "ruleText": "เกิน {threshold} ออเดอร์ คิด ฿{fee}",
+    "closesAt": "ปิดรอบ",
+    "upcoming": "ตั้งแต่วันทำการถัดไป: {enabled}, เกณฑ์ {threshold}, ฿{fee}, ตัดรอบ {cutoff}",
+    "on": "เปิด",
+    "off": "ปิด",
+    "outstandingTitle": "ยอดค้างชำระ",
+    "noAutoDebit": "ไม่มีการตัดเงินอัตโนมัติ กรุณาติดต่อแอดมินเพื่อชำระ",
+    "historyTitle": "ประวัติค่าธรรมเนียมรายวัน",
+    "noCharges": "ยังไม่มีรายการ",
+    "chargeLine": "{count} ออเดอร์ · เกณฑ์ {threshold} · ตัดรอบ {cutoff}",
+    "statusDue": "ค้างชำระ",
+    "statusPaid": "ชำระแล้ว",
+    "statusNone": "ไม่มีค่าธรรมเนียม",
+    "markPaid": "ทำเครื่องหมายว่าชำระแล้ว",
+    "backToShops": "กลับไปหน้าร้านค้า",
+    "adminShopTitle": "ค่าธรรมเนียมรายวัน · {name}",
+    "cutoffOverrideTitle": "เวลาตัดรอบของร้านนี้",
+    "cutoffOverrideLabel": "เวลาตัดรอบ (เว้นว่าง = ค่าเริ่มต้น {def})",
+    "cutoffOverrideHint": "มีผลตั้งแต่วันทำการถัดไป เจ้าของร้านแก้ไขไม่ได้",
+    "saveCutoff": "บันทึกเวลาตัดรอบ"
   }
 }

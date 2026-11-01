@@ -21,9 +21,11 @@ export default async function AdminSettingsPage() {
         />
         <PlatformSettingsForm
           billingUiEnabled={settings.billingUiEnabled}
-          orderThresholdBillingEnabled={settings.orderThresholdBillingEnabled}
-          orderThresholdCount={settings.orderThresholdCount}
           shopSuspensionEnabled={settings.shopSuspensionEnabled}
+          dailyFeeBillingEnabled={settings.dailyFeeBillingEnabled}
+          dailyOrderThreshold={settings.dailyOrderThreshold}
+          dailyFeeSatang={settings.dailyFeeSatang}
+          defaultCutoffTime={settings.defaultCutoffTime}
         />
       </Card>
     </div>

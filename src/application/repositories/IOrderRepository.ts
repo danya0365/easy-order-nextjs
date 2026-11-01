@@ -67,6 +67,8 @@ export interface IOrderRepository {
   ): Promise<OrderWithItems>;
   /** Mark the order paid (stamps paidAt). */
   markPaid(shopId: string, id: string): Promise<OrderWithItems>;
+  /** Billable (non-cancelled) orders created in [fromISO, toISO). */
+  countBillableBetween(shopId: string, fromISO: string, toISO: string): Promise<number>;
   /** Total orders ever placed at the shop (all statuses) — for billing thresholds. */
   countByShop(shopId: string): Promise<number>;
   /**
