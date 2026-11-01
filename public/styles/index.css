@@ -13,6 +13,9 @@
 @import "./themes/minimal.css";
 @import "./themes/retro.css";
 
+/* Public menu book + A4 print book */
+@import "./menu-book.css";
+
 @layer base {
   body {
     background-color: var(--background);
