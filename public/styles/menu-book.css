@@ -20,7 +20,7 @@
     container-type: inline-size;
     background-color: var(--paper);
     color: var(--foreground);
-    padding: 1.75rem 1.5rem 2.75rem;
+    padding: 1.75rem 1.5rem 1rem;
     overflow: hidden;
   }
   .menubook-head {
@@ -46,9 +46,14 @@
   .menubook-items {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 1rem 1.5rem;
+    align-content: start;
+    gap: 0.875rem 1.5rem;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
   }
-  @container (min-width: 520px) {
+  /* very wide single sheet (tablet portrait) → two columns */
+  @container (min-width: 760px) {
     .menubook-items {
       grid-template-columns: 1fr 1fr;
     }
@@ -80,8 +85,8 @@
     flex: 0 1 auto;
   }
   .menubook-folio {
-    position: absolute;
-    inset: auto 1.5rem 0.9rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
     display: flex;
     justify-content: space-between;
     gap: 1rem;
@@ -394,6 +399,28 @@
     break-inside: avoid;
     border-radius: 0;
     box-shadow: none;
+  }
+  .menuprint .menubook-page {
+    padding: 10mm 10mm 6mm;
+  }
+  .menuprint .menubook-items {
+    overflow: visible;
+    gap: 5mm;
+  }
+  .menuprint .menuitem-sheet .menuitem-img {
+    width: 32mm;
+    height: 32mm;
+  }
+  .menuprint .menuitem-sheet {
+    padding-bottom: 4mm;
+  }
+  .menuprint .menuitem-name,
+  .menuprint .menuitem-price {
+    font-size: 1.1rem;
+  }
+  .menuprint .menuitem-desc {
+    font-size: 0.9rem;
+    -webkit-line-clamp: 3;
   }
   .menuprint .menubook-page:last-child {
     break-after: auto;
