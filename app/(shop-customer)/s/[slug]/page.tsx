@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { History, PauseCircle, Pencil, ShoppingBag, Smartphone } from "lucide-react";
+import { BookOpen, History, PauseCircle, Pencil, ShoppingBag, Smartphone } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -54,10 +54,11 @@ export default async function CustomerShopPage({
   searchParams: Promise<{ bind?: string }>;
 }) {
   const { slug } = await params;
-  const [{ bind }, t, tOrder, shop] = await Promise.all([
+  const [{ bind }, t, tOrder, tMenu, shop] = await Promise.all([
     searchParams,
     getTranslations("publicPages"),
     getTranslations("order"),
+    getTranslations("publicMenu"),
     container.shopRepository.findBySlug(slug),
   ]);
   if (!shop) notFound();
@@ -209,6 +210,15 @@ export default async function CustomerShopPage({
         hasOrderAccess={hasOrderAccess}
         onlineOrderingEnabled={shop.onlineOrderingEnabled}
       />
+
+      <Link
+        href={`/s/${slug}/menu`}
+        className="flex items-center justify-center gap-2 rounded-2xl bg-card px-4 py-3 text-sm font-semibold text-brand-700 shadow-sm ring-1 ring-border transition hover:ring-brand-300"
+        data-testid="shop-public-menu-link"
+      >
+        <BookOpen className="size-5" />
+        {tMenu("shopMenuLink")}
+      </Link>
 
       {history ? (
         <Card>
