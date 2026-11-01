@@ -66,6 +66,10 @@ export const AUDIT_ACTIONS = {
   memberSettingsUpdated: "member_settings_updated",
   shopSelfServiceSet: "shop_self_service_set",
   platformSettingsUpdated: "platform_settings_updated",
+  shopContactUpdatedByAdmin: "shop_contact_updated_by_admin",
+  shopFeatureToggledByAdmin: "shop_feature_toggled_by_admin",
+  demoDataSeeded: "demo_data_seeded",
+  demoDataCleared: "demo_data_cleared",
 } as const;
 
 /**

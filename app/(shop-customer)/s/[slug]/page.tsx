@@ -259,7 +259,7 @@ export default async function CustomerShopPage({
         />
       )}
 
-      <ShopDetails profile={profile} branch={primaryBranch} />
+      <ShopDetails profile={profile} branch={primaryBranch} acceptsPromptPay={!!shop.promptpayTarget} />
 
       <ShopReviewsSection
         slug={slug}

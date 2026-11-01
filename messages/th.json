@@ -408,7 +408,8 @@
     "setDeliveryNotesLabel": "หมายเหตุการจัดส่ง",
     "setDeliveryNotesPlaceholder": "เช่น พื้นที่ให้บริการ, เวลาส่ง (ไม่บังคับ)",
     "setMinOrderLabel": "ยอดขั้นต่ำของออเดอร์ (บาท)",
-    "setMinOrderHint": "เว้นว่าง = ไม่กำหนดยอดขั้นต่ำ"
+    "setMinOrderHint": "เว้นว่าง = ไม่กำหนดยอดขั้นต่ำ",
+    "detailsAcceptsPromptPay": "รับชำระ PromptPay"
   },
   "admin": {
     "auditLoginSucceeded": "เข้าสู่ระบบสำเร็จ",
@@ -1903,5 +1904,24 @@
     "backToShops": "กลับไปหน้าร้านค้า",
     "adminShopTitle": "ค่าธรรมเนียมรายวัน · {name}",
     "cutoffOverrideTitle": "เวลาตัดรอบของร้านนี้"
+  },
+  "adminConfig": {
+    "backToShops": "กลับไปรายชื่อร้าน",
+    "shopTitle": "ตั้งค่าร้าน: {name}",
+    "billingLink": "ค่าบริการรายวัน",
+    "manageLink": "ตั้งค่าร้าน",
+    "contactTitle": "ติดต่อร้าน & การชำระเงิน",
+    "contactSubtitle": "แสดงบนหน้าร้านของลูกค้า — ช่องที่เว้นว่างจะถูกซ่อน",
+    "contactPhone": "เบอร์โทรร้าน",
+    "contactPhoneHint": "9–10 หลัก ขึ้นต้นด้วย 0",
+    "contactPromptpay": "PromptPay",
+    "contactPromptpayHint": "เบอร์มือถือ (10 หลัก) / เลขบัตรประชาชนหรือเลขผู้เสียภาษี (13 หลัก ตรวจ checksum) / e-Wallet (15 หลัก) — ตั้งแล้วลูกค้าจะเห็น QR ตอนจ่าย",
+    "contactLine": "LINE",
+    "contactLineHint": "ใส่ LINE ID, @บัญชีทางการ หรือลิงก์ line.me / lin.ee",
+    "contactFacebook": "Facebook",
+    "contactFacebookHint": "ลิงก์เพจ facebook.com หรือ fb.me",
+    "contactEmptyHidden": "เว้นว่าง = ไม่แสดงบนหน้าร้าน",
+    "save": "บันทึก",
+    "saved": "บันทึกแล้ว"
   }
 }

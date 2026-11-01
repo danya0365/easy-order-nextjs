@@ -23,6 +23,7 @@ export async function getClientMessages() {
     billing: messages.billing,
     shop: messages.shop,
     admin: messages.admin,
+    adminConfig: messages.adminConfig,
     adminUsers: messages.adminUsers,
     customersCrm: messages.customersCrm,
     customerDetail: messages.customerDetail,
