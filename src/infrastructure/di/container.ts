@@ -14,6 +14,7 @@ import { DrizzleLeadVisitLogRepository } from "@/src/infrastructure/repositories
 import { DrizzleBranchRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleBranchRepository";
 import { DrizzleMenuCategoryRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMenuCategoryRepository";
 import { DrizzleMenuItemRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMenuItemRepository";
+import { DrizzleDemoDataRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleDemoDataRepository";
 import { DrizzleMenuOptionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMenuOptionRepository";
 import { DrizzleOrderRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleOrderRepository";
 import { DrizzleCustomerRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleCustomerRepository";
@@ -47,6 +48,7 @@ import type { ILeadVisitLogRepository } from "@/src/application/repositories/ILe
 import type { IBranchRepository } from "@/src/application/repositories/IBranchRepository";
 import type { IMenuCategoryRepository } from "@/src/application/repositories/IMenuCategoryRepository";
 import type { IMenuItemRepository } from "@/src/application/repositories/IMenuItemRepository";
+import type { IDemoDataRepository } from "@/src/application/repositories/IDemoDataRepository";
 import type { IMenuOptionRepository } from "@/src/application/repositories/IMenuOptionRepository";
 import type { IOrderRepository } from "@/src/application/repositories/IOrderRepository";
 import type { ICustomerRepository } from "@/src/application/repositories/ICustomerRepository";
@@ -102,6 +104,8 @@ class Container extends GenericContainer {
     new DrizzleMenuCategoryRepository();
   readonly menuOptionRepository: IMenuOptionRepository =
     new DrizzleMenuOptionRepository();
+  readonly demoDataRepository: IDemoDataRepository =
+    new DrizzleDemoDataRepository();
   readonly menuItemRepository: IMenuItemRepository =
     new DrizzleMenuItemRepository();
   readonly orderRepository: IOrderRepository = new DrizzleOrderRepository();

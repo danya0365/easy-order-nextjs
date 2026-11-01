@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { container } from "@/src/infrastructure/di/container";
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
+import { DemoDataUseCase } from "@/src/application/use-cases/admin/DemoDataUseCase";
 import { AdminUpdateShopContactUseCase } from "@/src/application/use-cases/shop/AdminUpdateShopContactUseCase";
 import { getClientIp } from "@/src/presentation/lib/request-ip";
 
@@ -105,6 +106,71 @@ export async function setShopMenuOptionsAllowedAction(
     revalidatePath(`/admin/shops/${shopId}`);
     revalidatePath("/shop/menu");
     return { success: "saved" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+function demoUseCase() {
+  return new DemoDataUseCase(
+    container.demoDataRepository,
+    container.menuItemRepository,
+    container.shopRepository,
+  );
+}
+
+/** Platform admin: seed labelled demo orders / members / rider history for a shop. */
+export async function seedDemoDataAction(
+  _prev: AdminConfigState,
+  formData: FormData,
+): Promise<AdminConfigState> {
+  try {
+    const admin = await requireRole("platform_admin");
+    const shopId = String(formData.get("shopId") ?? "");
+    const num = (k: string) => Number(formData.get(k) ?? 0) || 0;
+    const res = await demoUseCase().seed(shopId, {
+      orders: num("orders"),
+      customers: num("customers"),
+      riders: num("riders"),
+    });
+    await container.auditLogger.record({
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: AUDIT_ACTIONS.demoDataSeeded,
+      targetType: "shop",
+      targetId: shopId,
+      shopId,
+      ip: await getClientIp(),
+      metadata: { batchId: res.batchId, orders: res.orders, customers: res.customers, riders: res.riders },
+    });
+    revalidatePath(`/admin/shops/${shopId}`);
+    return { success: "seeded" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+/** Platform admin: remove ONLY rows created by the demo tool for a shop. */
+export async function clearDemoDataAction(
+  _prev: AdminConfigState,
+  formData: FormData,
+): Promise<AdminConfigState> {
+  try {
+    const admin = await requireRole("platform_admin");
+    const shopId = String(formData.get("shopId") ?? "");
+    const res = await demoUseCase().clear(shopId);
+    await container.auditLogger.record({
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: AUDIT_ACTIONS.demoDataCleared,
+      targetType: "shop",
+      targetId: shopId,
+      shopId,
+      ip: await getClientIp(),
+      metadata: { orders: res.orders, customers: res.customers, riders: res.riders },
+    });
+    revalidatePath(`/admin/shops/${shopId}`);
+    return { success: "cleared" };
   } catch (e) {
     return { error: (e as Error).message };
   }

@@ -7,6 +7,7 @@ import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { AdminShopContactForm } from "@/src/presentation/components/admin/AdminShopContactForm";
+import { AdminDemoDataTools } from "@/src/presentation/components/admin/AdminDemoDataTools";
 import { ShopMenuOptionsToggle } from "@/src/presentation/components/admin/ShopMenuOptionsToggle";
 
 export const dynamic = "force-dynamic";
@@ -18,9 +19,10 @@ export default async function AdminShopConfigPage({ params }: { params: Promise<
   const t = await getTranslations("adminConfig");
   const shop = await container.shopRepository.findById(shopId);
   if (!shop) notFound();
-  const [profile, settings] = await Promise.all([
+  const [profile, settings, demoCounts] = await Promise.all([
     container.shopProfileRepository.get(shopId),
     container.platformSettingsRepository.get(),
+    container.demoDataRepository.counts(shopId),
   ]);
 
   return (
@@ -54,6 +56,10 @@ export default async function AdminShopConfigPage({ params }: { params: Promise<
           allowed={shop.menuOptionsAllowedByAdmin}
           platformEnabled={settings.menuOptionsEnabled}
         />
+      </Card>
+      <Card>
+        <CardHeader title={t("demoTitle")} />
+        <AdminDemoDataTools shopId={shop.id} counts={demoCounts} />
       </Card>
     </div>
   );
