@@ -30,14 +30,16 @@ export function AdminDemoDataTools({
   const [riders, setRiders] = useState("1");
   const [pending, start] = useTransition();
 
-  function run(kind: "seed" | "clear") {
+  async function run(kind: "seed" | "clear") {
+    // Confirm OUTSIDE the transition: a dialog opened inside an async
+    // transition would never commit while the transition awaits it.
+    const ok = await confirm({
+      title: kind === "seed" ? t("demoSeedConfirmTitle") : t("demoClearConfirmTitle"),
+      message: kind === "seed" ? t("demoSeedConfirmMsg") : t("demoClearConfirmMsg"),
+      tone: kind === "clear" ? "danger" : "default",
+    });
+    if (!ok) return;
     start(async () => {
-      const ok = await confirm({
-        title: kind === "seed" ? t("demoSeedConfirmTitle") : t("demoClearConfirmTitle"),
-        message: kind === "seed" ? t("demoSeedConfirmMsg") : t("demoClearConfirmMsg"),
-        tone: kind === "clear" ? "danger" : "default",
-      });
-      if (!ok) return;
       const fd = new FormData();
       fd.set("shopId", shopId);
       fd.set("orders", orders);
