@@ -1,3 +1,4 @@
+import { normalizePromptPayTarget } from "@/src/domain/services/shop-contact";
 import type { Shop } from "@/src/domain/entities";
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 
@@ -48,17 +49,7 @@ export class UpdateShopSettingsUseCase {
     }
 
     if (input.promptpayTarget !== undefined) {
-      const raw = (input.promptpayTarget ?? "").trim();
-      if (raw === "") {
-        patch.promptpayTarget = null;
-      } else {
-        const digits = raw.replace(/[^0-9]/g, "");
-        // PromptPay target = mobile (10) / national or tax id (13) / e-wallet (15).
-        if (![10, 13, 15].includes(digits.length)) {
-          throw new Error("PromptPay ต้องเป็นเบอร์มือถือ เลขบัตรประชาชน หรือเลขภาษี");
-        }
-        patch.promptpayTarget = digits;
-      }
+      patch.promptpayTarget = normalizePromptPayTarget(input.promptpayTarget);
     }
 
     if (input.onlineOrderingEnabled !== undefined) {

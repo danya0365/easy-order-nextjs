@@ -28,6 +28,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminShopsPage() {
   await requireRole("platform_admin");
   const t = await getTranslations("adminPages");
+  const tc = await getTranslations("adminConfig");
   const shops = await container.shopRepository.list();
   const billing = new GetBillingStateUseCase(
     container.shopRepository,
@@ -76,6 +77,13 @@ export default async function AdminShopsPage() {
                       className="text-xs text-brand-600 hover:underline"
                     >
                       /s/{shop.slug}
+                    </Link>
+                    <Link
+                      href={`/admin/shops/${shop.id}`}
+                      data-testid="shop-config-link"
+                      className="ml-3 text-xs text-brand-600 hover:underline"
+                    >
+                      {tc("manageLink")}
                     </Link>
                     <Link
                       href={`/admin/shops/${shop.id}/billing`}
