@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { ArrowLeft, BookOpen, QrCode, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
@@ -17,15 +18,20 @@ export const dynamic = "force-dynamic";
 
 type Params = Promise<{ slug: string; itemId: string }>;
 
-const loadItem = async (shopId: string, itemId: string) =>
-  new GetPublicMenuItemUseCase(container.menuCategoryRepository, container.menuItemRepository).execute(shopId, itemId);
+const loadItem = cache((shopId: string, itemId: string) =>
+  new GetPublicMenuItemUseCase(container.menuCategoryRepository, container.menuItemRepository).execute(shopId, itemId),
+);
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug, itemId } = await params;
   const data = await loadPublicMenuShop(slug);
-  if (!data) return {};
+  // notFound() here (not only in the page): the [slug] loading.tsx Suspense
+  // boundary commits a 200 before the page body runs, so a page-level 404
+  // would render the not-found UI with status 200.
+  if (!data) notFound();
   const [found, t] = await Promise.all([loadItem(data.shop.id, itemId), getTranslations("publicMenu")]);
-  return found ? { title: t("metaItemTitle", { item: found.item.name, name: data.shop.name }) } : {};
+  if (!found) notFound();
+  return { title: t("metaItemTitle", { item: found.item.name, name: data.shop.name }) };
 }
 
 /** Read-only item detail (no add-to-cart; ordering stays behind the shop QR gate). */
