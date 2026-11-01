@@ -48,6 +48,9 @@ function toOrder(r: OrderRow, items: OrderItem[]): OrderWithItems {
     channel: r.channel,
     fulfillmentType: r.fulfillmentType,
     deliveryAddress: r.deliveryAddress,
+    deliveryLat: r.deliveryLat ?? null,
+    deliveryLng: r.deliveryLng ?? null,
+    deliveryLandmark: r.deliveryLandmark ?? null,
     note: r.note,
     customerId: r.customerId,
     customerName: r.customerName,
@@ -148,6 +151,9 @@ export class DrizzleOrderRepository implements IOrderRepository {
         channel: input.channel ?? "kiosk",
         fulfillmentType: input.fulfillmentType ?? "pickup",
         deliveryAddress: input.deliveryAddress ?? null,
+        deliveryLat: input.deliveryLat ?? null,
+        deliveryLng: input.deliveryLng ?? null,
+        deliveryLandmark: input.deliveryLandmark ?? null,
       })
       .returning();
 

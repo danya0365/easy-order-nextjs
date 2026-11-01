@@ -17,6 +17,12 @@ export interface ICustomerRepository {
    * The synthetic values are unique per customer so the unique constraints hold.
    */
   anonymize(id: string): Promise<void>;
+  /** Remember the delivery pin this customer last used (shop-scoped). */
+  setLastDeliveryLocation(
+    shopId: string,
+    id: string,
+    loc: { lat: number; lng: number; address: string | null; landmark: string | null },
+  ): Promise<void>;
   findByPhone(shopId: string, phone: string): Promise<Customer | null>;
   /** Resolve a customer from the opaque QR code, scoped to the shop. */
   findByPublicCode(shopId: string, code: string): Promise<Customer | null>;

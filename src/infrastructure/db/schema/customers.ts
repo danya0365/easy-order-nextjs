@@ -1,4 +1,4 @@
-import { sqliteTable, text, index, unique } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, real, index, unique } from "drizzle-orm/sqlite-core";
 import { nanoid } from "nanoid";
 import { id, createdAt, updatedAt } from "./_shared";
 import { shops } from "./shops";
@@ -38,6 +38,11 @@ export const customers = sqliteTable(
     blockedBy: text(),
     // Shop lifted the new-member order cap early.
     newMemberClearedAt: text(),
+    // Last delivery pin this customer used (prefilled on their next checkout).
+    lastDeliveryLat: real(),
+    lastDeliveryLng: real(),
+    lastDeliveryAddress: text(),
+    lastDeliveryLandmark: text(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

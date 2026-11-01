@@ -24,6 +24,10 @@ function toCustomer(r: CustomerRow): Customer {
     onlineOrderReviewedAt: r.onlineOrderReviewedAt ?? null,
     onlineOrderReviewedBy: r.onlineOrderReviewedBy ?? null,
     onlineOrderRejectedAt: r.onlineOrderRejectedAt ?? null,
+    lastDeliveryLat: r.lastDeliveryLat ?? null,
+    lastDeliveryLng: r.lastDeliveryLng ?? null,
+    lastDeliveryAddress: r.lastDeliveryAddress ?? null,
+    lastDeliveryLandmark: r.lastDeliveryLandmark ?? null,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };

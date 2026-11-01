@@ -4,7 +4,9 @@ import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Bike, RefreshCw, StickyNote } from "lucide-react";
+import { Bike, Navigation, RefreshCw, StickyNote } from "lucide-react";
+
+import { orderNavigationUrl } from "@/src/domain/services/delivery-location";
 
 import type {
   OrderChannel,
@@ -285,8 +287,27 @@ export function OrderCard({
       {order.deliveryAddress && (
         <p className="mt-2 rounded-lg bg-muted-surface px-3 py-2 text-sm text-foreground">
           {t("deliveryAddressLabel")}: {order.deliveryAddress}
+          {order.deliveryLandmark && (
+            <span className="block text-muted">
+              {t("deliveryLandmarkLabel")}: {order.deliveryLandmark}
+            </span>
+          )}
         </p>
       )}
+
+      {order.fulfillmentType === "delivery" &&
+        order.status !== "cancelled" &&
+        orderNavigationUrl(order) && (
+          <a
+            href={orderNavigationUrl(order) as string}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-testid="order-navigate"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-base font-bold text-white transition hover:bg-blue-700"
+          >
+            <Navigation className="size-5" /> {t("navigate")}
+          </a>
+        )}
 
       {order.fulfillmentType === "delivery" && order.status !== "cancelled" && (
         <div className="mt-2 flex flex-col gap-1 rounded-lg border border-border px-3 py-2 text-sm">

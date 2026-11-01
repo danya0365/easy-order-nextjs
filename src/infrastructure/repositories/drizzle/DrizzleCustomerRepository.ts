@@ -45,12 +45,32 @@ export function toCustomer(r: Row): Customer {
     blockedAt: r.blockedAt ?? null,
     blockedBy: r.blockedBy ?? null,
     newMemberClearedAt: r.newMemberClearedAt ?? null,
+    lastDeliveryLat: r.lastDeliveryLat ?? null,
+    lastDeliveryLng: r.lastDeliveryLng ?? null,
+    lastDeliveryAddress: r.lastDeliveryAddress ?? null,
+    lastDeliveryLandmark: r.lastDeliveryLandmark ?? null,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
 }
 
 export class DrizzleCustomerRepository implements ICustomerRepository {
+  async setLastDeliveryLocation(
+    shopId: string,
+    id: string,
+    loc: { lat: number; lng: number; address: string | null; landmark: string | null },
+  ): Promise<void> {
+    await db
+      .update(schema.customers)
+      .set({
+        lastDeliveryLat: loc.lat,
+        lastDeliveryLng: loc.lng,
+        lastDeliveryAddress: loc.address,
+        lastDeliveryLandmark: loc.landmark,
+      })
+      .where(and(eq(schema.customers.shopId, shopId), eq(schema.customers.id, id)));
+  }
+
   async findById(shopId: string, id: string): Promise<Customer | null> {
     const r = await db.query.customers.findFirst({
       where: and(

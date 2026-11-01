@@ -31,6 +31,9 @@ export interface CreateOrderInput {
   fulfillmentType?: FulfillmentType;
   /** Drop-off address for delivery orders; null otherwise. */
   deliveryAddress?: string | null;
+  deliveryLat?: number | null;
+  deliveryLng?: number | null;
+  deliveryLandmark?: string | null;
   /** Delivery charge (satang) the repo adds to the total. */
   deliveryFeeSatang?: number;
   items: CreateOrderItemInput[];

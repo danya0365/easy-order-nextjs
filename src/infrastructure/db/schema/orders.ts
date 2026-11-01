@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
 import { id, createdAt, updatedAt } from "./_shared";
 import { shops } from "./shops";
 import { customers } from "./customers";
@@ -46,6 +46,10 @@ export const orders = sqliteTable(
       .default("pickup"),
     /** Drop-off address for delivery orders; null otherwise. */
     deliveryAddress: text(),
+    /** Customer-dragged map pin (WGS84) + free-text landmark, delivery only. */
+    deliveryLat: real(),
+    deliveryLng: real(),
+    deliveryLandmark: text(),
     subtotalSatang: integer().notNull(),
     totalSatang: integer().notNull(),
     note: text(),

@@ -341,6 +341,10 @@ export interface Order {
   fulfillmentType: FulfillmentType;
   /** Drop-off address for delivery orders; null otherwise. */
   deliveryAddress: string | null;
+  /** Customer map pin for delivery (null for legacy/no pin). */
+  deliveryLat: number | null;
+  deliveryLng: number | null;
+  deliveryLandmark: string | null;
   note: string | null;
   /** Optional customer who placed the order (null for anonymous walk-ins). */
   customerId: string | null;
@@ -405,6 +409,11 @@ export interface Customer {
   blockedBy?: string | null;
   /** CRM: new-member order cap lifted early. */
   newMemberClearedAt?: string | null;
+  /** Last delivery pin used (prefills checkout). */
+  lastDeliveryLat?: number | null;
+  lastDeliveryLng?: number | null;
+  lastDeliveryAddress?: string | null;
+  lastDeliveryLandmark?: string | null;
   createdAt: string;
   updatedAt: string;
 }
