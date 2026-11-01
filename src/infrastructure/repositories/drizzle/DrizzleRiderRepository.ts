@@ -19,6 +19,9 @@ function toRider(r: Row): Rider {
     commissionType: r.commissionType,
     commissionValue: r.commissionValue,
     active: !!r.active,
+    lineId: r.lineId ?? null,
+    available: r.available ?? true,
+    availableUpdatedAt: r.availableUpdatedAt ?? null,
     hasLink: !!r.accessTokenHash,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
@@ -80,6 +83,16 @@ export class DrizzleRiderRepository implements IRiderRepository {
       .where(and(eq(schema.riders.shopId, shopId), eq(schema.riders.id, id)))
       .returning({ id: schema.riders.id });
     if (!r) throw new Error("ไม่พบไรเดอร์ในร้านนี้");
+  }
+
+  async setAvailable(shopId: string, id: string, available: boolean): Promise<Rider> {
+    const [r] = await db
+      .update(schema.riders)
+      .set({ available, availableUpdatedAt: new Date().toISOString() })
+      .where(and(eq(schema.riders.shopId, shopId), eq(schema.riders.id, id)))
+      .returning();
+    if (!r) throw new Error("ไม่พบไรเดอร์ในร้านนี้");
+    return toRider(r);
   }
 
   async payoutSummary(

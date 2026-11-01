@@ -61,6 +61,7 @@ export default async function ShopCustomerOrdersPage({
   const { bind } = await searchParams;
   const t = await getTranslations("publicPages");
   const tOrder = await getTranslations("order");
+  const tRider = await getTranslations("rider");
 
   const shop = await container.shopRepository.findBySlug(slug);
   if (!shop) notFound();
@@ -135,13 +136,13 @@ export default async function ShopCustomerOrdersPage({
                         return (
                           <span className="flex flex-col items-end gap-1 text-xs" data-testid="customer-rider">
                             <span className="inline-flex items-center gap-1 font-semibold text-brand-700">
-                              <Bike className="size-3.5" /> กำลังไปส่ง · {riderFirstName(rider.name)}
+                              <Bike className="size-3.5" /> {tRider("custEnRoute", { name: riderFirstName(rider.name) })}
                             </span>
                             <a
                               href={`tel:${rider.phone}`}
                               className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-foreground"
                             >
-                              <Phone className="size-3.5" /> โทรหาไรเดอร์
+                              <Phone className="size-3.5" /> {tRider("custCall")}
                             </a>
                           </span>
                         );

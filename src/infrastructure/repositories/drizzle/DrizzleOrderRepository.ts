@@ -369,6 +369,23 @@ export class DrizzleOrderRepository implements IOrderRepository {
     return this.one(r);
   }
 
+  async openJobCountsByRider(shopId: string): Promise<Record<string, number>> {
+    const rows = await db
+      .select({ riderId: schema.orders.riderId, n: count() })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.shopId, shopId),
+          inArray(schema.orders.deliveryStatus, ["assigned", "picked_up"]),
+          ne(schema.orders.status, "cancelled"),
+        ),
+      )
+      .groupBy(schema.orders.riderId);
+    const out: Record<string, number> = {};
+    for (const r of rows) if (r.riderId) out[r.riderId] = r.n;
+    return out;
+  }
+
   async listRiderActive(shopId: string, riderId: string): Promise<OrderWithItems[]> {
     const rows = await db.query.orders.findMany({
       where: and(

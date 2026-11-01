@@ -129,3 +129,56 @@ test("tenant isolation: cannot assign other shop's rider; rider sees only own jo
   const re = await assign.execute(a.id, oa.id, ra2.id);
   assert.equal(re.riderId, ra2.id);
 });
+
+test("availability toggle via link, lineId, open-job counts", async () => {
+  const { SetRiderAvailabilityUseCase, ListRidersWithLoadUseCase } = await import("./RiderUseCases");
+  const { shop } = await seedShop("rider-avail");
+  const { shop: other } = await seedShop("rider-avail-other");
+  const r1 = await new CreateRiderUseCase(riders()).execute(shop.id, {
+    name: "หนึ่ง", phone: "0811112222", commissionType: "per_trip", commissionValue: 2000, lineId: " ~one.line ",
+  });
+  const r2 = await new CreateRiderUseCase(riders()).execute(shop.id, {
+    name: "สอง", phone: "0811113333", commissionType: "per_trip", commissionValue: 2000,
+  });
+  assert.equal(r1.lineId, "one.line");
+  assert.equal(r2.lineId, null);
+  assert.equal(r1.available, true);
+  await assert.rejects(async () =>
+    new CreateRiderUseCase(riders()).execute(shop.id, {
+      name: "x", phone: "0811112222", commissionType: "per_trip", commissionValue: 0, lineId: "bad id!",
+    }),
+    /LINE/,
+  );
+
+  const token = await new RegenerateRiderLinkUseCase(riders()).execute(shop.id, r1.id);
+  const off = await new SetRiderAvailabilityUseCase(riders()).execute(token, false);
+  assert.equal(off.available, false);
+  assert.ok(off.availableUpdatedAt);
+  await assert.rejects(async () => new SetRiderAvailabilityUseCase(riders()).execute("y".repeat(43), true), /ลิงก์/);
+
+  // busy rider is still assignable
+  const assign = new AssignRiderUseCase(orders(), riders());
+  const o1 = await deliveryOrder(shop.id);
+  const o2 = await deliveryOrder(shop.id);
+  const o3 = await deliveryOrder(shop.id);
+  await assign.execute(shop.id, o1.id, r1.id);
+  await assign.execute(shop.id, o2.id, r1.id);
+  await assign.execute(shop.id, o3.id, r2.id);
+  await new RiderUpdateJobUseCase(riders(), orders()).execute(token, o1.id, "picked_up");
+  const t2 = await new RegenerateRiderLinkUseCase(riders()).execute(shop.id, r2.id);
+  const upd = new RiderUpdateJobUseCase(riders(), orders());
+  await upd.execute(t2, o3.id, "picked_up");
+  await upd.execute(t2, o3.id, "delivered");
+  // other shop's orders never count
+  const ro = await new CreateRiderUseCase(riders()).execute(other.id, {
+    name: "o", phone: "0811114444", commissionType: "full_fee", commissionValue: 0,
+  });
+  await assign.execute(other.id, (await deliveryOrder(other.id)).id, ro.id);
+
+  const list = await new ListRidersWithLoadUseCase(riders(), orders()).execute(shop.id);
+  const byName = Object.fromEntries(list.map((r) => [r.name, r]));
+  assert.equal(list.length, 2);
+  assert.equal(byName["หนึ่ง"].openJobs, 2);
+  assert.equal(byName["หนึ่ง"].available, false);
+  assert.equal(byName["สอง"].openJobs, 0, "delivered jobs are not open");
+});

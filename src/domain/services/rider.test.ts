@@ -46,3 +46,11 @@ test("token: random, url-safe, hashed with sha256 hex", () => {
   assert.equal(hashRiderToken(a), hashRiderToken(a));
   assert.equal(riderFirstName("  สมชาย ใจดี "), "สมชาย");
 });
+
+test("LINE ID normalisation + chat link", async () => {
+  const { normalizeLineId, lineChatUrl } = await import("./rider");
+  assert.equal(normalizeLineId(""), null);
+  assert.equal(normalizeLineId("  ~somchai.99 "), "somchai.99");
+  assert.throws(() => normalizeLineId("bad id!"));
+  assert.equal(lineChatUrl("somchai.99"), "https://line.me/R/ti/p/~somchai.99");
+});

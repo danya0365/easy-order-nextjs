@@ -19,6 +19,7 @@ export interface RiderFormInput {
   commissionType: RiderCommissionType;
   /** Baht for per_trip (converted to satang here); percent for percent_fee. */
   commissionValue: number;
+  lineId?: string | null;
   active?: boolean;
 }
 
@@ -38,6 +39,7 @@ export async function saveRiderAction(
       phone: String(input.phone ?? ""),
       commissionType: input.commissionType,
       commissionValue: toRepoValue(input),
+      lineId: input.lineId ? String(input.lineId) : null,
     };
     if (riderId) {
       await new UpdateRiderUseCase(container.riderRepository).execute(shopId, riderId, {

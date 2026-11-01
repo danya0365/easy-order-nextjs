@@ -12,6 +12,7 @@ import {
   generateRiderToken,
   hashRiderToken,
   isRiderTokenShape,
+  normalizeLineId,
 } from "@/src/domain/services/rider";
 
 function cleanInput(input: RiderInput): RiderInput {
@@ -21,7 +22,13 @@ function cleanInput(input: RiderInput): RiderInput {
   if (phone.replace(/\D/g, "").length < 9) throw new Error("เบอร์โทรไม่ถูกต้อง");
   const commissionValue = Math.floor(Number(input.commissionValue) || 0);
   assertValidCommission(input.commissionType, commissionValue);
-  return { name, phone, commissionType: input.commissionType, commissionValue };
+  return {
+    name,
+    phone,
+    commissionType: input.commissionType,
+    commissionValue,
+    lineId: normalizeLineId(input.lineId),
+  };
 }
 
 export class CreateRiderUseCase {
@@ -166,5 +173,34 @@ export class RiderPayoutSummaryUseCase {
   execute(shopId: string, fromISO: string, toISO: string): Promise<RiderPayoutRow[]> {
     if (!(fromISO < toISO)) throw new Error("ช่วงวันที่ไม่ถูกต้อง");
     return this.riders.payoutSummary(shopId, fromISO, toISO);
+  }
+}
+
+/** Rider toggles their own availability (ว่าง/ไม่ว่าง) via the personal link. */
+export class SetRiderAvailabilityUseCase {
+  constructor(private readonly riders: IRiderRepository) {}
+  async execute(token: string, available: boolean): Promise<Rider> {
+    const rider = await resolveRider(this.riders, token);
+    if (!rider) throw new Error("ลิงก์ไม่ถูกต้องหรือถูกยกเลิกแล้ว");
+    return this.riders.setAvailable(rider.shopId, rider.id, available);
+  }
+}
+
+export interface RiderWithLoad extends Rider {
+  openJobs: number;
+}
+
+/** Shop's riders with their open-job counts (for the picker + riders list). */
+export class ListRidersWithLoadUseCase {
+  constructor(
+    private readonly riders: IRiderRepository,
+    private readonly orders: IOrderRepository,
+  ) {}
+  async execute(shopId: string): Promise<RiderWithLoad[]> {
+    const [list, counts] = await Promise.all([
+      this.riders.listByShop(shopId),
+      this.orders.openJobCountsByRider(shopId),
+    ]);
+    return list.map((r) => ({ ...r, openJobs: counts[r.id] ?? 0 }));
   }
 }
