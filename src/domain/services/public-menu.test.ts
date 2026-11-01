@@ -10,6 +10,7 @@ import {
   paginate,
   parseMenuView,
   parsePageParam,
+  publicMenuUrl,
 } from "./public-menu";
 
 const T = "2026-01-01T00:00:00.000Z";
@@ -90,4 +91,11 @@ test("buildBookPages: cover, toc, chunked categories, even count, back cover las
 test("buildBookPages: empty menu still has cover + back", () => {
   const pages = buildBookPages([]);
   assert.deepEqual(pages.map((p) => p.kind), ["cover", "toc", "blank", "back"]);
+});
+
+test("publicMenuUrl: plain static URL, optional book view, no token", () => {
+  assert.equal(publicMenuUrl("https://x.site/", "nanara"), "https://x.site/s/nanara/menu");
+  assert.equal(publicMenuUrl("https://x.site", "nanara", "book"), "https://x.site/s/nanara/menu?view=book");
+  assert.equal(publicMenuUrl("https://x.site", "a b"), "https://x.site/s/a%20b/menu");
+  assert.ok(!publicMenuUrl("https://x.site", "s").includes("?t="));
 });

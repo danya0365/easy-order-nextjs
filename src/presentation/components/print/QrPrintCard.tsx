@@ -56,6 +56,8 @@ interface Props {
   accent?: QrCardAccent;
   paper?: QrCardPaper;
   showLogo?: boolean;
+  /** Optional plain link under the caption — only for PUBLIC urls (never tokens). */
+  linkText?: string;
 }
 
 /**
@@ -73,6 +75,7 @@ export function QrPrintCard({
   accent = "ink",
   paper = "A6",
   showLogo = true,
+  linkText,
 }: Props) {
   const { w, h, scale: s } = PAPER_MM[paper];
   const c = QR_CARD_ACCENTS[accent] ?? QR_CARD_ACCENTS.ink;
@@ -135,6 +138,11 @@ export function QrPrintCard({
       <p data-testid="qr-card-caption" style={{ margin: 0, fontSize: `${14 * s}pt`, fontWeight: 600, lineHeight: 1.3, color: c.accent }}>
         {caption}
       </p>
+      {linkText && (
+        <p data-testid="qr-card-link" style={{ margin: 0, fontSize: `${8.5 * s}pt`, lineHeight: 1.3, color: "#52525b", wordBreak: "break-all" }}>
+          {linkText}
+        </p>
+      )}
     </div>
   );
 }
