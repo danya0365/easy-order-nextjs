@@ -25,9 +25,9 @@ const loadItem = cache((shopId: string, itemId: string) =>
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug, itemId } = await params;
   const data = await loadPublicMenuShop(slug);
-  // notFound() here (not only in the page): the [slug] loading.tsx Suspense
-  // boundary commits a 200 before the page body runs, so a page-level 404
-  // would render the not-found UI with status 200.
+  // The shop-home skeleton (loading.tsx) lives in s/[slug]/(home)/ so it does
+  // NOT wrap this route in a Suspense boundary — otherwise a 200 is committed
+  // before notFound() runs and the not-found UI ships with status 200.
   if (!data) notFound();
   const [found, t] = await Promise.all([loadItem(data.shop.id, itemId), getTranslations("publicMenu")]);
   if (!found) notFound();
