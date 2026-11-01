@@ -4,6 +4,7 @@ import type {
   OrderChannel,
   FulfillmentType,
   OrderWithItems,
+  DeliveryStatus,
 } from "@/src/domain/entities";
 import type { Page, PageOpts } from "./pagination";
 
@@ -73,4 +74,27 @@ export interface IOrderRepository {
     shopId: string,
     customerId: string,
   ): Promise<{ open: number; finished: number }>;
+  /** Assign/reassign a rider (sets deliveryStatus=assigned, commission snapshot). */
+  assignRider(
+    shopId: string,
+    id: string,
+    riderId: string,
+    commissionSatang: number,
+  ): Promise<OrderWithItems>;
+  /** Advance delivery status (stamps pickedUpAt/deliveredAt). */
+  setDeliveryStatus(
+    shopId: string,
+    id: string,
+    status: DeliveryStatus,
+  ): Promise<OrderWithItems>;
+  /** Rider confirms COD cash collected. */
+  markCodCollected(shopId: string, id: string): Promise<OrderWithItems>;
+  /** A rider's open jobs (assigned/picked_up, not cancelled), oldest first. */
+  listRiderActive(shopId: string, riderId: string): Promise<OrderWithItems[]>;
+  /** A rider's delivered orders since an ISO instant. */
+  listRiderDeliveredSince(
+    shopId: string,
+    riderId: string,
+    sinceISO: string,
+  ): Promise<OrderWithItems[]>;
 }

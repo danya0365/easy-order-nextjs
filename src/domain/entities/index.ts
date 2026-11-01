@@ -1,3 +1,4 @@
+import type { DeliveryStatus, RiderCommissionType } from "@/src/domain/services/rider";
 import type { MemberPolicyOverrides } from "@/src/domain/services/member-policy";
 import type { Role } from "../types/roles";
 
@@ -348,6 +349,15 @@ export interface Order {
   customerPhone: string | null;
   /** Operator who placed it from the counter UI; null for kiosk self-serve. */
   performedBy: string | null;
+  /** Rider phase 1 — shop-owned rider assigned to a delivery order. */
+  riderId: string | null;
+  deliveryStatus: DeliveryStatus | null;
+  assignedAt: string | null;
+  pickedUpAt: string | null;
+  deliveredAt: string | null;
+  codCollected: boolean;
+  /** Commission snapshot (satang) at assign time. */
+  riderCommissionSatang: number | null;
   paidAt: string | null;
   readyAt: string | null;
   completedAt: string | null;
@@ -656,4 +666,31 @@ export interface CustomerPointsView {
   balance: LoyaltyPointsBalance;
   settings: LoyaltyPointsSettings;
   rewards: LoyaltyPointsReward[];
+}
+
+export type { DeliveryStatus, RiderCommissionType };
+
+/** A shop-owned delivery rider (per shop). */
+export interface Rider {
+  id: string;
+  shopId: string;
+  name: string;
+  phone: string;
+  commissionType: RiderCommissionType;
+  /** satang for per_trip; percent for percent_fee; ignored for full_fee. */
+  commissionValue: number;
+  active: boolean;
+  /** Whether a personal link is currently issued (the hash itself never leaves the repo). */
+  hasLink: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Per-rider payout report row for a date range. */
+export interface RiderPayoutRow {
+  riderId: string;
+  riderName: string;
+  trips: number;
+  commissionSatang: number;
+  codCollectedSatang: number;
 }
