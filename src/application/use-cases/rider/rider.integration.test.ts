@@ -64,10 +64,15 @@ test("full rider flow: create → link → assign → pick up → deliver → CO
     new AssignRiderUseCase(orders(), riders()).execute(shop.id, order.id, rider.id),
     "no reassign after pick-up",
   );
-  await upd.execute(token, order.id, "delivered");
+  const delivered = await upd.execute(token, order.id, "delivered");
+  assert.equal(delivered.status, "completed", "delivered → order completed");
+  assert.ok(delivered.completedAt);
+  assert.equal(delivered.paymentStatus, "unpaid", "COD not collected yet");
   const done = await upd.execute(token, order.id, "cod");
   assert.equal(done.codCollected, true);
   assert.ok(done.deliveredAt);
+  assert.equal(done.paymentStatus, "paid", "COD collected → paid");
+  assert.equal(done.status, "completed");
 
   const d2 = await dash.execute(token);
   assert.equal(d2?.jobs.length, 0);

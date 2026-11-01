@@ -146,6 +146,27 @@ export class GetRiderDashboardUseCase {
   }
 }
 
+/** What the order status/payment should become after a rider update (pure). */
+export function settleAfterRiderUpdate(o: {
+  status: OrderWithItems["status"];
+  paymentStatus: OrderWithItems["paymentStatus"];
+  paymentMethod: OrderWithItems["paymentMethod"];
+  deliveryStatus: OrderWithItems["deliveryStatus"];
+  codCollected: boolean;
+}): { complete: boolean; markPaid: boolean } {
+  return {
+    complete:
+      o.deliveryStatus === "delivered" &&
+      o.status !== "completed" &&
+      o.status !== "cancelled",
+    markPaid:
+      o.paymentMethod === "cash" &&
+      o.codCollected &&
+      o.paymentStatus !== "paid" &&
+      o.status !== "cancelled",
+  };
+}
+
 export type RiderJobAction = "picked_up" | "delivered" | "cod";
 
 /** Rider-driven update via personal link. Only the rider's own job in their shop. */
@@ -162,13 +183,28 @@ export class RiderUpdateJobUseCase {
     if (order.status === "cancelled") throw new Error("ออเดอร์ถูกยกเลิกแล้ว");
     if (action === "cod") {
       if (order.paymentMethod !== "cash") throw new Error("ออเดอร์นี้ไม่ใช่เก็บเงินปลายทาง");
-      if (order.codCollected) return order;
-      return this.orders.markCodCollected(rider.shopId, orderId);
+      const collected = order.codCollected
+        ? order
+        : await this.orders.markCodCollected(rider.shopId, orderId);
+      return this.settle(rider.shopId, collected);
     }
     if (!canAdvanceDelivery(order.deliveryStatus, action)) {
       throw new Error("เปลี่ยนสถานะไม่ได้");
     }
-    return this.orders.setDeliveryStatus(rider.shopId, orderId, action);
+    const updated = await this.orders.setDeliveryStatus(rider.shopId, orderId, action);
+    return this.settle(rider.shopId, updated);
+  }
+
+  /**
+   * Keep the order status machine in step with delivery: a delivered order is
+   * fulfilled → `completed`; cash collected by the rider (COD) → payment `paid`.
+   */
+  private async settle(shopId: string, order: OrderWithItems): Promise<OrderWithItems> {
+    const step = settleAfterRiderUpdate(order);
+    let out = order;
+    if (step.complete) out = await this.orders.setStatus(shopId, order.id, "completed");
+    if (step.markPaid) out = await this.orders.markPaid(shopId, order.id);
+    return out;
   }
 }
 
