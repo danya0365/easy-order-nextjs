@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Bike, Navigation, RefreshCw, StickyNote } from "lucide-react";
 
+import { formatTime } from "@/src/presentation/lib/format-date";
 import { orderNavigationUrl } from "@/src/domain/services/delivery-location";
 
 import type {
@@ -491,13 +492,3 @@ function HistorySection({
   );
 }
 
-function formatTime(iso: string): string {
-  try {
-    return new Date(iso).toLocaleTimeString("th-TH", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return "";
-  }
-}
