@@ -9,6 +9,7 @@ import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
 import { getOrderAccess } from "@/src/infrastructure/auth/order-access";
 import { getMemberToken } from "@/src/infrastructure/auth/member";
 import { GetKioskMenuUseCase } from "@/src/application/use-cases/menu/GetKioskMenuUseCase";
+import { loadOrderingExtras } from "@/src/application/use-cases/menu/MenuOptionUseCases";
 import { Card } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { OnlineOrdering } from "@/src/presentation/components/order/OnlineOrdering";
@@ -159,6 +160,13 @@ export default async function OnlineOrderPage({
     }
   }
 
+  const extras = await loadOrderingExtras(
+    container.platformSettingsRepository,
+    container.menuOptionRepository,
+    shop,
+    sections.flatMap((sec) => sec.items.map((i) => i.id)),
+  );
+
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-4">
       <h1 className="text-xl font-bold text-foreground">{shop.name}</h1>
@@ -174,6 +182,8 @@ export default async function OnlineOrderPage({
         minOrderSatang={shop.minOrderSatang}
         mapCenter={mapCenter}
         lastDelivery={lastDelivery}
+        optionGroups={extras.optionGroups}
+        itemDetailEnabled={extras.itemDetailEnabled}
       />
     </main>
   );

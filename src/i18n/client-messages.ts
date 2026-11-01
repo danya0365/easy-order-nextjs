@@ -31,6 +31,7 @@ export async function getClientMessages() {
     channels: messages.channels,
     theme: messages.theme,
     menu: messages.menu,
+    menuOptions: messages.menuOptions,
     order: messages.order,
     rider: messages.rider,
     kiosk: messages.kiosk,

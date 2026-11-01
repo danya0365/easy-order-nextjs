@@ -24,6 +24,8 @@ function toSettings(r: Row): PlatformSettings {
     dailyOrderThreshold: r.dailyOrderThreshold,
     dailyFeeSatang: r.dailyFeeSatang,
     defaultCutoffTime: r.defaultCutoffTime,
+    menuOptionsEnabled: r.menuOptionsEnabled,
+    itemDetailEnabled: r.itemDetailEnabled,
     updatedAt: r.updatedAt,
   };
 }
@@ -39,6 +41,8 @@ function defaults(): PlatformSettings {
     dailyOrderThreshold: 50,
     dailyFeeSatang: 500,
     defaultCutoffTime: "04:00",
+    menuOptionsEnabled: false,
+    itemDetailEnabled: true,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -94,6 +98,12 @@ export class DrizzlePlatformSettingsRepository
           : {}),
         ...(input.defaultCutoffTime !== undefined
           ? { defaultCutoffTime: input.defaultCutoffTime }
+          : {}),
+        ...(input.menuOptionsEnabled !== undefined
+          ? { menuOptionsEnabled: input.menuOptionsEnabled }
+          : {}),
+        ...(input.itemDetailEnabled !== undefined
+          ? { itemDetailEnabled: input.itemDetailEnabled }
           : {}),
       })
       .where(eq(schema.platformSettings.id, SETTINGS_ID))

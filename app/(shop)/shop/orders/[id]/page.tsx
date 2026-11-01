@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatOrderLineOptions } from "@/src/domain/services/menu-options";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getTranslations } from "next-intl/server";
@@ -28,7 +29,7 @@ export default async function ShopOrderDetailPage({ params }: { params: Promise<
 
   const summary = [
     `#${order.orderNo}`,
-    ...order.items.map((it) => `${it.nameSnapshot} x${it.quantity}  ${satangToBaht(it.lineTotalSatang)}`),
+    ...order.items.map((it) => `${it.nameSnapshot}${it.options?.length ? ` (${formatOrderLineOptions(it.options)})` : ""} x${it.quantity}  ${satangToBaht(it.lineTotalSatang)}`),
     `${t("total")}: ${satangToBaht(order.totalSatang)}`,
     order.customerName || "",
     order.customerPhone || "",

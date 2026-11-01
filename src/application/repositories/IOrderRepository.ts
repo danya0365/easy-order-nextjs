@@ -1,4 +1,5 @@
 import type {
+  OrderLineOption,
   OrderStatus,
   OrderPaymentMethod,
   OrderChannel,
@@ -13,6 +14,8 @@ export interface CreateOrderItemInput {
   nameSnapshot: string;
   unitPriceSatang: number;
   quantity: number;
+  /** Chosen options snapshot (price already folded into unitPriceSatang). */
+  options?: OrderLineOption[];
 }
 
 export interface CreateOrderInput {

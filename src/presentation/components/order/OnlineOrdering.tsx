@@ -8,6 +8,7 @@ import { Check, MapPin, Minus, Plus, ShoppingBag } from "lucide-react";
 import type {
   FulfillmentType,
   MenuItem,
+  MenuOptionGroup,
   OrderPaymentMethod,
 } from "@/src/domain/entities";
 import type { KioskMenuSection } from "@/src/application/use-cases/menu/GetKioskMenuUseCase";
@@ -21,12 +22,14 @@ import { Textarea } from "@/src/presentation/components/ui/Textarea";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { useToast } from "@/src/presentation/components/ui/Toast";
 import { cn } from "@/src/presentation/components/ui/cn";
+import { useMenuCart } from "@/src/presentation/hooks/useMenuCart";
+import { ItemDetailSheet } from "@/src/presentation/components/order/ItemDetailSheet";
+import { formatOrderLineOptions } from "@/src/domain/services/menu-options";
 import {
   LocationPicker,
   type LatLng,
 } from "@/src/presentation/components/map/LocationPicker";
 
-type Cart = Record<string, number>; // menuItemId -> qty
 
 export interface OnlineOrderShopConfig {
   slug: string;
@@ -50,7 +53,13 @@ export function OnlineOrdering({
   minOrderSatang,
   mapCenter,
   lastDelivery,
+  optionGroups = null,
+  itemDetailEnabled = false,
 }: {
+  /** Option groups (only when menu options are effective for the shop). */
+  optionGroups?: MenuOptionGroup[] | null;
+  /** Platform switch: tap a menu item to open the detail sheet. */
+  itemDetailEnabled?: boolean;
   slug: string;
   baseHref: string;
   sections: KioskMenuSection[];
@@ -71,8 +80,11 @@ export function OnlineOrdering({
   } | null;
 }) {
   const t = useTranslations("order");
+  const tOpt = useTranslations("menuOptions");
   const toast = useToast();
-  const [cart, setCart] = useState<Cart>({});
+  const mc = useMenuCart(sections, optionGroups);
+  const { cart, count, subtotalSatang } = mc;
+  const [detailItem, setDetailItem] = useState<MenuItem | null>(null);
   const [fulfillmentType, setFulfillmentType] = useState<FulfillmentType>(
     pickupEnabled ? "pickup" : "delivery",
   );
@@ -102,17 +114,6 @@ export function OnlineOrdering({
   const [result, setResult] = useState<PlaceOrderResult | null>(null);
   const [pending, start] = useTransition();
 
-  const itemsById = useMemo(() => {
-    const map = new Map<string, MenuItem>();
-    for (const s of sections) for (const it of s.items) map.set(it.id, it);
-    return map;
-  }, [sections]);
-
-  const count = Object.values(cart).reduce((a, b) => a + b, 0);
-  const subtotalSatang = Object.entries(cart).reduce((sum, [id, qty]) => {
-    const it = itemsById.get(id);
-    return sum + (it ? it.priceSatang * qty : 0);
-  }, 0);
   const deliveryFee =
     fulfillmentType === "delivery" ? deliveryFeeSatang : 0;
   const totalSatang = subtotalSatang + deliveryFee;
@@ -124,23 +125,16 @@ export function OnlineOrdering({
     (fulfillmentType === "pickup" || (address.trim().length > 0 && pin !== null)) &&
     !belowMin;
 
-  function setQty(id: string, qty: number) {
-    setCart((prev) => {
-      const next = { ...prev };
-      if (qty <= 0) delete next[id];
-      else next[id] = qty;
-      return next;
-    });
-  }
+  const setQty = mc.setLineQty;
+  const hasGroups = (id: string) => (mc.groupsByItem.get(id)?.length ?? 0) > 0;
+  const canOpenDetail = (id: string) => itemDetailEnabled || hasGroups(id);
+  const showLines = mc.lines.some((l) => l.options.length > 0);
 
   function placeOrder() {
     start(async () => {
       const res = await placeOnlineOrderAction({
         slug,
-        cart: Object.entries(cart).map(([menuItemId, quantity]) => ({
-          menuItemId,
-          quantity,
-        })),
+        cart: mc.payload(),
         paymentMethod: method,
         note: note.trim() || null,
         customerName: customerName.trim() || null,
@@ -254,14 +248,28 @@ export function OnlineOrdering({
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {section.items.map((item) => {
-              const qty = cart[item.id] ?? 0;
+              const withOptions = hasGroups(item.id);
+              const qty = withOptions ? mc.qtyOfItem(item.id) : cart[item.id] ?? 0;
               const imageSrc = menuImageSrc(item);
               return (
                 <div
                   key={item.id}
                   className="flex flex-col justify-between gap-3 rounded-2xl border border-border bg-card p-4"
                 >
-                  <div>
+                  <div
+                    {...(canOpenDetail(item.id)
+                      ? {
+                          role: "button",
+                          tabIndex: 0,
+                          onClick: () => setDetailItem(item),
+                          onKeyDown: (e: React.KeyboardEvent) => {
+                            if (e.key === "Enter") setDetailItem(item);
+                          },
+                          className: "cursor-pointer",
+                          "data-testid": "menu-item-open",
+                        }
+                      : {})}
+                  >
                     {imageSrc && (
                       // eslint-disable-next-line @next/next/no-img-element -- served from our own API route, not a remote CDN
                       <img
@@ -278,9 +286,18 @@ export function OnlineOrdering({
                     )}
                     <p className="mt-1 text-base font-medium text-brand-700">
                       ฿{satangToBaht(item.priceSatang)}
+                      {withOptions && (
+                        <span className="ml-2 text-xs font-normal text-muted">{tOpt("hasOptions")}</span>
+                      )}
                     </p>
                   </div>
-                  {qty === 0 ? (
+                  {withOptions ? (
+                    <Button fullWidth onClick={() => setDetailItem(item)} data-testid="menu-item-add-options">
+                      <Plus className="size-4" />
+                      {t("add")}
+                      {qty > 0 && ` (${qty})`}
+                    </Button>
+                  ) : qty === 0 ? (
                     <Button fullWidth onClick={() => setQty(item.id, 1)}>
                       <Plus className="size-4" />
                       {t("add")}
@@ -314,6 +331,43 @@ export function OnlineOrdering({
           </div>
         </section>
       ))}
+
+      {showLines && (
+        <div className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-4" data-testid="cart-lines">
+          <h3 className="text-sm font-semibold text-foreground">{tOpt("cartTitle")}</h3>
+          <ul className="flex flex-col divide-y divide-border">
+            {mc.lines.map((l) => (
+              <li key={l.key} className="flex items-center justify-between gap-2 py-2 text-sm">
+                <span className="min-w-0">
+                  <span className="text-foreground">{l.item.name}</span>
+                  {l.options.length > 0 && (
+                    <span className="block text-xs text-muted">{formatOrderLineOptions(l.options)}</span>
+                  )}
+                </span>
+                <span className="flex shrink-0 items-center gap-2">
+                  <button type="button" aria-label="-" onClick={() => setQty(l.key, l.qty - 1)} className="inline-flex size-8 items-center justify-center rounded-full bg-muted-surface text-foreground">
+                    <Minus className="size-3.5" />
+                  </button>
+                  <span className="w-5 text-center font-semibold text-foreground">{l.qty}</span>
+                  <button type="button" aria-label="+" onClick={() => setQty(l.key, l.qty + 1)} className="inline-flex size-8 items-center justify-center rounded-full bg-brand-500 text-on-brand">
+                    <Plus className="size-3.5" />
+                  </button>
+                  <span className="w-16 text-right text-muted">฿{satangToBaht(l.unitSatang * l.qty)}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {detailItem && (
+        <ItemDetailSheet
+          item={detailItem}
+          groups={mc.groupsByItem.get(detailItem.id) ?? []}
+          onClose={() => setDetailItem(null)}
+          onAdd={(choiceIds, q) => mc.addLine(detailItem.id, choiceIds, q)}
+        />
+      )}
 
       {/* Identity + contact */}
       <div className="flex flex-col gap-3">

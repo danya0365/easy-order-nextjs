@@ -57,3 +57,55 @@ export async function adminUpdateShopContactAction(
     return { error: (e as Error).message };
   }
 }
+
+/** Platform feature switches (menu options, item detail). Platform admin only. */
+export async function updatePlatformFeatureSwitchesAction(
+  _prev: AdminConfigState,
+  formData: FormData,
+): Promise<AdminConfigState> {
+  try {
+    const admin = await requireRole("platform_admin");
+    const menuOptionsEnabled = formData.get("menuOptionsEnabled") === "on";
+    const itemDetailEnabled = formData.get("itemDetailEnabled") === "on";
+    await container.platformSettingsRepository.update({ menuOptionsEnabled, itemDetailEnabled });
+    await container.auditLogger.record({
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: AUDIT_ACTIONS.platformSettingsUpdated,
+      targetType: "platform_settings",
+      targetId: "default",
+      ip: await getClientIp(),
+      metadata: { settings: "features", menuOptionsEnabled, itemDetailEnabled },
+    });
+    revalidatePath("/admin/settings");
+    return { success: "saved" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+/** Admin per-shop switch: allow menu options/add-ons for this shop. */
+export async function setShopMenuOptionsAllowedAction(
+  shopId: string,
+  allowed: boolean,
+): Promise<AdminConfigState> {
+  try {
+    const admin = await requireRole("platform_admin");
+    await container.shopRepository.setMenuOptionsAllowedByAdmin(shopId, allowed);
+    await container.auditLogger.record({
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: AUDIT_ACTIONS.shopFeatureToggledByAdmin,
+      targetType: "shop",
+      targetId: shopId,
+      shopId,
+      ip: await getClientIp(),
+      metadata: { feature: "menu_options", allowed },
+    });
+    revalidatePath(`/admin/shops/${shopId}`);
+    revalidatePath("/shop/menu");
+    return { success: "saved" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}

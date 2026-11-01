@@ -15,10 +15,19 @@ import type { ICustomerRepository } from "@/src/application/repositories/ICustom
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import { normalizePhone, isValidThaiPhone } from "@/src/domain/services/phone";
 import { effectiveMemberPolicy } from "@/src/domain/services/member-policy";
+import {
+  menuOptionsEffective,
+  resolveOptionSelection,
+} from "@/src/domain/services/menu-options";
+import type { IMenuOptionRepository } from "@/src/application/repositories/IMenuOptionRepository";
+import type { IPlatformSettingsRepository } from "@/src/application/repositories/IPlatformSettingsRepository";
+import type { MenuOptionGroup, OrderLineOption } from "@/src/domain/entities";
 
 export interface CartLine {
   menuItemId: string;
   quantity: number;
+  /** Chosen option choice ids (only honoured when menu options are effective for the shop). */
+  optionChoiceIds?: string[];
 }
 
 export interface PlaceOrderInput {
@@ -64,6 +73,9 @@ export class PlaceOrderUseCase {
     private readonly items: IMenuItemRepository,
     private readonly customers: ICustomerRepository,
     private readonly shops: IShopRepository,
+    /** Optional: menu options support (omitted = options ignored, legacy behaviour). */
+    private readonly menuOptions?: IMenuOptionRepository,
+    private readonly platformSettings?: IPlatformSettingsRepository,
   ) {}
 
   async execute(input: PlaceOrderInput): Promise<OrderWithItems> {
@@ -71,7 +83,34 @@ export class PlaceOrderUseCase {
     if (cart.length === 0) throw new Error("ยังไม่ได้เลือกเมนู");
     if (cart.length > MAX_LINES) throw new Error("รายการในออเดอร์มากเกินไป");
 
-    const lines = [];
+    // Shop first: needed for the menu-options switch (prices still from DB).
+    const shop = await this.shops.findById(input.shopId);
+    if (!shop) throw new Error("ไม่พบร้านค้า");
+    let optionsOn = false;
+    if (this.menuOptions && this.platformSettings) {
+      const settings = await this.platformSettings.get();
+      optionsOn = menuOptionsEffective(
+        settings.menuOptionsEnabled,
+        shop.menuOptionsAllowedByAdmin,
+      );
+    }
+    const groupsByItem = new Map<string, MenuOptionGroup[]>();
+    if (optionsOn && this.menuOptions) {
+      const ids = [...new Set(cart.map((l) => l.menuItemId))];
+      for (const g of await this.menuOptions.listByItems(input.shopId, ids)) {
+        const list = groupsByItem.get(g.menuItemId) ?? [];
+        list.push(g);
+        groupsByItem.set(g.menuItemId, list);
+      }
+    }
+
+    const lines: {
+      menuItemId: string;
+      nameSnapshot: string;
+      unitPriceSatang: number;
+      quantity: number;
+      options: OrderLineOption[];
+    }[] = [];
     for (const line of cart) {
       if (!Number.isInteger(line.quantity) || line.quantity < 1) {
         throw new Error("จำนวนไม่ถูกต้อง");
@@ -86,11 +125,20 @@ export class PlaceOrderUseCase {
       if (!item.isAvailable) {
         throw new Error(`"${item.name}" หมดชั่วคราว กรุณาเลือกใหม่`);
       }
+      // Options: resolved against DB groups; delta folded into the unit price.
+      const resolved = optionsOn
+        ? resolveOptionSelection(
+            item.name,
+            groupsByItem.get(item.id) ?? [],
+            line.optionChoiceIds ?? [],
+          )
+        : { deltaSatang: 0, options: [] };
       lines.push({
         menuItemId: item.id,
         nameSnapshot: item.name,
-        unitPriceSatang: item.priceSatang,
+        unitPriceSatang: item.priceSatang + resolved.deltaSatang,
         quantity: line.quantity,
+        options: resolved.options,
       });
     }
 
@@ -98,8 +146,6 @@ export class PlaceOrderUseCase {
     if (note && note.length > 200) throw new Error("หมายเหตุยาวเกินไป");
 
     // Online channel: enforce the shop's own turn-on/off + order rules.
-    const shop = await this.shops.findById(input.shopId);
-    if (!shop) throw new Error("ไม่พบร้านค้า");
     const channel: OrderChannel = input.channel ?? "kiosk";
     const fulfillmentType: FulfillmentType = input.fulfillmentType ?? "pickup";
     let deliveryAddress: string | null = null;

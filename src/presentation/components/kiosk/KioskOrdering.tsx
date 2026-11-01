@@ -11,7 +11,10 @@ import {
 import { useTranslations } from "next-intl";
 import { Check, ChevronDown, Minus, Plus, ShoppingCart } from "lucide-react";
 
-import type { MenuItem, OrderPaymentMethod } from "@/src/domain/entities";
+import type { MenuItem, MenuOptionGroup, OrderPaymentMethod } from "@/src/domain/entities";
+import { formatOrderLineOptions } from "@/src/domain/services/menu-options";
+import { useMenuCart } from "@/src/presentation/hooks/useMenuCart";
+import { ItemDetailSheet } from "@/src/presentation/components/order/ItemDetailSheet";
 import type { KioskMenuSection } from "@/src/application/use-cases/menu/GetKioskMenuUseCase";
 import {
   placeOrderAction,
@@ -29,7 +32,6 @@ import { useToast } from "@/src/presentation/components/ui/Toast";
 import { cn } from "@/src/presentation/components/ui/cn";
 import { AttractScreen } from "@/src/presentation/components/kiosk/AttractScreen";
 
-type Cart = Record<string, number>; // menuItemId -> qty
 type ReceiptLine = { name: string; qty: number; lineSatang: number };
 
 // After this much inactivity (empty cart, no order in flight) the attract screen
@@ -46,7 +48,11 @@ export function KioskOrdering({
   hasPromptpay,
   shopName = "",
   selfService = false,
+  optionGroups = null,
+  itemDetailEnabled = false,
 }: {
+  optionGroups?: MenuOptionGroup[] | null;
+  itemDetailEnabled?: boolean;
   sections: KioskMenuSection[];
   hasPromptpay: boolean;
   shopName?: string;
@@ -54,7 +60,11 @@ export function KioskOrdering({
 }) {
   const t = useTranslations("kiosk");
   const toast = useToast();
-  const [cart, setCart] = useState<Cart>({});
+  const mc = useMenuCart(sections, optionGroups);
+  const { cart, count, lines: cartLines } = mc;
+  const totalSatang = mc.subtotalSatang;
+  const [detailItem, setDetailItem] = useState<MenuItem | null>(null);
+  const hasGroups = (id: string) => (mc.groupsByItem.get(id)?.length ?? 0) > 0;
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [note, setNote] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -71,34 +81,12 @@ export function KioskOrdering({
   const [pending, start] = useTransition();
   const [confirming, startConfirm] = useTransition();
 
-  const itemsById = useMemo(() => {
-    const map = new Map<string, MenuItem>();
-    for (const s of sections) for (const it of s.items) map.set(it.id, it);
-    return map;
-  }, [sections]);
-
-  const count = Object.values(cart).reduce((a, b) => a + b, 0);
-  const totalSatang = Object.entries(cart).reduce((sum, [id, qty]) => {
-    const it = itemsById.get(id);
-    return sum + (it ? it.priceSatang * qty : 0);
-  }, 0);
-
-  function setQty(id: string, qty: number) {
-    setCart((prev) => {
-      const next = { ...prev };
-      if (qty <= 0) delete next[id];
-      else next[id] = qty;
-      return next;
-    });
-  }
+  const setQty = mc.setLineQty;
 
   function placeOrder() {
     start(async () => {
       const res = await placeOrderAction({
-        cart: Object.entries(cart).map(([menuItemId, quantity]) => ({
-          menuItemId,
-          quantity,
-        })),
+        cart: mc.payload(),
         paymentMethod: method,
         note: note.trim() || null,
         customerName: customerName.trim() || null,
@@ -106,14 +94,13 @@ export function KioskOrdering({
       });
       if (res.ok) {
         // Snapshot the cart as a receipt before it's cleared for the next order.
-        const lines: ReceiptLine[] = Object.entries(cart)
-          .map(([id, qty]) => {
-            const it = itemsById.get(id);
-            return it
-              ? { name: it.name, qty, lineSatang: it.priceSatang * qty }
-              : null;
-          })
-          .filter((l): l is ReceiptLine => l !== null);
+        const lines: ReceiptLine[] = cartLines.map((l) => ({
+          name: l.options.length
+            ? `${l.item.name} (${formatOrderLineOptions(l.options)})`
+            : l.item.name,
+          qty: l.qty,
+          lineSatang: l.unitSatang * l.qty,
+        }));
         setReceipt(lines);
         setResult(res);
         setCheckoutOpen(false);
@@ -124,7 +111,7 @@ export function KioskOrdering({
   }
 
   const reset = useCallback(() => {
-    setCart({});
+    mc.clear();
     setNote("");
     setCustomerName("");
     setCustomerPhone("");
@@ -134,7 +121,7 @@ export function KioskOrdering({
     setDetailsOpen(false);
     setPaid(false);
     setIdle(false);
-  }, [hasPromptpay]);
+  }, [hasPromptpay, mc.clear]);
 
   /** Self-service: customer confirms they paid → mark the order paid + completed. */
   function selfConfirm() {
@@ -345,8 +332,14 @@ export function KioskOrdering({
                 <ItemTile
                   key={item.id}
                   item={item}
-                  qty={cart[item.id] ?? 0}
+                  qty={hasGroups(item.id) ? mc.qtyOfItem(item.id) : cart[item.id] ?? 0}
                   onChange={(q) => setQty(item.id, q)}
+                  withOptions={hasGroups(item.id)}
+                  onOpen={
+                    itemDetailEnabled || hasGroups(item.id)
+                      ? () => setDetailItem(item)
+                      : undefined
+                  }
                 />
               ))}
             </div>
@@ -376,6 +369,15 @@ export function KioskOrdering({
         </div>
       )}
 
+      {detailItem && (
+        <ItemDetailSheet
+          item={detailItem}
+          groups={mc.groupsByItem.get(detailItem.id) ?? []}
+          onClose={() => setDetailItem(null)}
+          onAdd={(ids, q) => mc.addLine(detailItem.id, ids, q)}
+        />
+      )}
+
       {/* Checkout */}
       <Modal
         open={checkoutOpen}
@@ -387,23 +389,36 @@ export function KioskOrdering({
             <p className="text-sm text-muted">{t("cartEmpty")}</p>
           ) : (
             <ul className="flex flex-col divide-y divide-border">
-              {Object.entries(cart).map(([id, qty]) => {
-                const it = itemsById.get(id);
-                if (!it) return null;
-                return (
-                  <li
-                    key={id}
-                    className="flex items-center justify-between gap-2 py-2 text-sm"
-                  >
-                    <span className="min-w-0 truncate text-foreground">
-                      {it.name} ×{qty}
+              {cartLines.map((l) => (
+                <li
+                  key={l.key}
+                  className="flex items-center justify-between gap-2 py-2 text-sm"
+                >
+                  <span className="min-w-0 text-foreground">
+                    <span className="truncate">
+                      {l.item.name} ×{l.qty}
                     </span>
-                    <span className="shrink-0 text-muted">
-                      {satangToBaht(it.priceSatang * qty)}
-                    </span>
-                  </li>
-                );
-              })}
+                    {l.options.length > 0 && (
+                      <span className="block text-xs text-muted">
+                        {formatOrderLineOptions(l.options)}
+                      </span>
+                    )}
+                  </span>
+                  <span className="flex shrink-0 items-center gap-2 text-muted">
+                    {l.options.length > 0 && (
+                      <button
+                        type="button"
+                        aria-label="-"
+                        onClick={() => setQty(l.key, l.qty - 1)}
+                        className="inline-flex size-7 items-center justify-center rounded-full bg-muted-surface text-foreground"
+                      >
+                        <Minus className="size-3.5" />
+                      </button>
+                    )}
+                    {satangToBaht(l.unitSatang * l.qty)}
+                  </span>
+                </li>
+              ))}
             </ul>
           )}
 
@@ -520,16 +535,33 @@ function ItemTile({
   item,
   qty,
   onChange,
+  withOptions = false,
+  onOpen,
 }: {
   item: MenuItem;
   qty: number;
   onChange: (qty: number) => void;
+  withOptions?: boolean;
+  onOpen?: () => void;
 }) {
   const t = useTranslations("kiosk");
   const imageSrc = menuImageSrc(item);
   return (
     <div className="flex flex-col justify-between gap-3 rounded-2xl border border-border bg-card p-4">
-      <div>
+      <div
+        {...(onOpen
+          ? {
+              role: "button",
+              tabIndex: 0,
+              onClick: onOpen,
+              onKeyDown: (e: React.KeyboardEvent) => {
+                if (e.key === "Enter") onOpen();
+              },
+              className: "cursor-pointer",
+              "data-testid": "menu-item-open",
+            }
+          : {})}
+      >
         {imageSrc && (
           // eslint-disable-next-line @next/next/no-img-element -- served from our own API route, not a remote CDN
           <img
@@ -547,7 +579,13 @@ function ItemTile({
         </p>
       </div>
 
-      {qty === 0 ? (
+      {withOptions && onOpen ? (
+        <Button size="lg" fullWidth onClick={onOpen} data-testid="menu-item-add-options">
+          <Plus className="size-5" />
+          {t("add")}
+          {qty > 0 && ` (${qty})`}
+        </Button>
+      ) : qty === 0 ? (
         <Button size="lg" fullWidth onClick={() => onChange(1)}>
           <Plus className="size-5" />
           {t("add")}

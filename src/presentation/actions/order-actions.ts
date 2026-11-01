@@ -57,8 +57,19 @@ export interface PlaceOrderResult {
   bindQrDataUrl?: string;
 }
 
+/** Untrusted client cart → plain shape (ids as strings, bounded option lists). */
+function sanitizeCart(cart: PlaceOrderActionInput["cart"]) {
+  return (Array.isArray(cart) ? cart : []).map((l) => ({
+    menuItemId: String(l?.menuItemId ?? ""),
+    quantity: Number(l?.quantity),
+    optionChoiceIds: Array.isArray(l?.optionChoiceIds)
+      ? l.optionChoiceIds.slice(0, 50).map((x) => String(x))
+      : [],
+  }));
+}
+
 export interface PlaceOrderActionInput {
-  cart: { menuItemId: string; quantity: number }[];
+  cart: { menuItemId: string; quantity: number; optionChoiceIds?: string[] }[];
   paymentMethod: OrderPaymentMethod;
   note?: string | null;
   /** Optional walk-in identity entered at checkout. */
@@ -104,6 +115,8 @@ export async function placeOrderAction(
       container.menuItemRepository,
       container.customerRepository,
       container.shopRepository,
+      container.menuOptionRepository,
+      container.platformSettingsRepository,
     ).execute({
       shopId,
       paymentMethod: input.paymentMethod,
@@ -111,7 +124,7 @@ export async function placeOrderAction(
       customerName: input.customerName ?? null,
       customerPhone: input.customerPhone ?? null,
       channel: "kiosk",
-      cart: input.cart,
+      cart: sanitizeCart(input.cart),
     });
 
     // Tell the shop a new order arrived (in-app + LINE/email if configured).
@@ -231,6 +244,8 @@ export async function placeOnlineOrderAction(
       container.menuItemRepository,
       container.customerRepository,
       container.shopRepository,
+      container.menuOptionRepository,
+      container.platformSettingsRepository,
     ).execute({
       shopId: shop.id,
       paymentMethod: input.paymentMethod,
@@ -244,7 +259,7 @@ export async function placeOnlineOrderAction(
       deliveryLat: typeof input.deliveryLat === "number" ? input.deliveryLat : null,
       deliveryLng: typeof input.deliveryLng === "number" ? input.deliveryLng : null,
       deliveryLandmark: input.deliveryLandmark ?? null,
-      cart: input.cart,
+      cart: sanitizeCart(input.cart),
     });
 
     await container.notificationService.notifyShopOwner(shop.id, {
@@ -351,6 +366,8 @@ export async function placeOrderForCustomerAction(
       container.menuItemRepository,
       container.customerRepository,
       container.shopRepository,
+      container.menuOptionRepository,
+      container.platformSettingsRepository,
     ).execute({
       shopId,
       paymentMethod: input.paymentMethod,
@@ -359,7 +376,7 @@ export async function placeOrderForCustomerAction(
       customerPhone: input.customerPhone ?? null,
       performedBy: actor.id,
       channel: "counter",
-      cart: input.cart,
+      cart: sanitizeCart(input.cart),
     });
 
     // Staff accountability: record who opened this counter order.
