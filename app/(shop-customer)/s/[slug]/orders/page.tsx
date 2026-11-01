@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Bike, Phone, Smartphone, Store, TriangleAlert } from "lucide-react";
+import { Bike, Phone, Smartphone, Store, TriangleAlert, CheckCircle2 } from "lucide-react";
 import { riderFirstName } from "@/src/domain/services/rider";
+import { customerDeliveryView } from "@/src/domain/services/rider-contact";
 import { RiderAvatar } from "@/src/presentation/components/rider/RiderAvatar";
 import { getTranslations } from "next-intl/server";
 
@@ -78,7 +79,7 @@ export default async function ShopCustomerOrdersPage({
   const riderIds = [
     ...new Set(
       (history?.orders.items ?? [])
-        .filter((o) => o.riderId && (o.deliveryStatus === "assigned" || o.deliveryStatus === "picked_up"))
+        .filter((o) => customerDeliveryView(o) === "en_route")
         .map((o) => o.riderId as string),
     ),
   ];
@@ -132,8 +133,16 @@ export default async function ShopCustomerOrdersPage({
                         {tOrder(STATUS_KEY[o.status])}
                       </Badge>
                       {(() => {
-                        const rider = o.riderId ? riderById.get(o.riderId) : undefined;
-                        if (!rider || o.status === "cancelled") return null;
+                        const view = customerDeliveryView(o);
+                        if (view === "delivered") {
+                          return (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-success" data-testid="customer-delivered">
+                              <CheckCircle2 className="size-3.5" /> {tRider("custDelivered")}
+                            </span>
+                          );
+                        }
+                        const rider = view === "en_route" && o.riderId ? riderById.get(o.riderId) : undefined;
+                        if (!rider) return null;
                         return (
                           <span className="flex flex-col items-end gap-1 text-xs" data-testid="customer-rider">
                             <span className="inline-flex items-center gap-1.5 font-semibold text-brand-700">
