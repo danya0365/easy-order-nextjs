@@ -191,7 +191,10 @@
     "settingsDailyFeeBahtLabel": "Daily fee (THB)",
     "settingsCutoffLabel": "Default cutoff time (Bangkok)",
     "settingsNextDayHint": "Changes apply from the next business day; past days are never recomputed.",
-    "settingsSuspensionNagHint": "Daily fees are nag-only; shops are never suspended for a balance."
+    "settingsSuspensionNagHint": "Daily fees are nag-only; shops are never suspended for a balance.",
+    "dailyFeeCutoffOverrideLabel": "Cutoff (blank = default {def})",
+    "dailyFeeCutoffOverrideHint": "Applies from the next business day; owners cannot edit this.",
+    "dailyFeeSaveCutoff": "Save cutoff"
   },
   "adminPages": {
     "settingsTitle": "Platform settings",
@@ -678,9 +681,6 @@
     "markPaid": "Mark paid",
     "backToShops": "Back to shops",
     "adminShopTitle": "Daily fees · {name}",
-    "cutoffOverrideTitle": "Shop cutoff override",
-    "cutoffOverrideLabel": "Cutoff (blank = default {def})",
-    "cutoffOverrideHint": "Applies from the next business day; owners cannot edit this.",
-    "saveCutoff": "Save cutoff"
+    "cutoffOverrideTitle": "Shop cutoff override"
   }
 }

@@ -543,7 +543,10 @@
     "settingsDailyFeeBahtLabel": "ค่าธรรมเนียมต่อวัน (บาท)",
     "settingsCutoffLabel": "เวลาตัดรอบเริ่มต้น (เวลาไทย)",
     "settingsNextDayHint": "การเปลี่ยนแปลงมีผลตั้งแต่วันทำการถัดไป วันที่ผ่านมาแล้วจะไม่ถูกคำนวณใหม่",
-    "settingsSuspensionNagHint": "ค่าธรรมเนียมรายวันใช้แจ้งเตือนเท่านั้น ระบบจะไม่ระงับร้านจากยอดค้าง"
+    "settingsSuspensionNagHint": "ค่าธรรมเนียมรายวันใช้แจ้งเตือนเท่านั้น ระบบจะไม่ระงับร้านจากยอดค้าง",
+    "dailyFeeCutoffOverrideLabel": "เวลาตัดรอบ (เว้นว่าง = ค่าเริ่มต้น {def})",
+    "dailyFeeCutoffOverrideHint": "มีผลตั้งแต่วันทำการถัดไป เจ้าของร้านแก้ไขไม่ได้",
+    "dailyFeeSaveCutoff": "บันทึกเวลาตัดรอบ"
   },
   "layout": {
     "navDashboard": "แดชบอร์ด",
@@ -1899,9 +1902,6 @@
     "markPaid": "ทำเครื่องหมายว่าชำระแล้ว",
     "backToShops": "กลับไปหน้าร้านค้า",
     "adminShopTitle": "ค่าธรรมเนียมรายวัน · {name}",
-    "cutoffOverrideTitle": "เวลาตัดรอบของร้านนี้",
-    "cutoffOverrideLabel": "เวลาตัดรอบ (เว้นว่าง = ค่าเริ่มต้น {def})",
-    "cutoffOverrideHint": "มีผลตั้งแต่วันทำการถัดไป เจ้าของร้านแก้ไขไม่ได้",
-    "saveCutoff": "บันทึกเวลาตัดรอบ"
+    "cutoffOverrideTitle": "เวลาตัดรอบของร้านนี้"
   }
 }
