@@ -121,6 +121,13 @@ export class DrizzleDemoDataRepository implements IDemoDataRepository {
       stmts.push(db.delete(schema.orders).where(and(eq(schema.orders.shopId, shopId), inArray(schema.orders.id, chunk))));
     }
     for (const chunk of chunks(c)) {
+      // Some DBs carry orders.customer_id without ON DELETE SET NULL (schema
+      // drift) — detach any remaining orders first so the delete never fails.
+      stmts.push(
+        db.update(schema.orders)
+          .set({ customerId: null })
+          .where(and(eq(schema.orders.shopId, shopId), inArray(schema.orders.customerId, chunk))),
+      );
       stmts.push(db.delete(schema.customers).where(and(eq(schema.customers.shopId, shopId), inArray(schema.customers.id, chunk))));
     }
     for (const chunk of chunks(r)) {
