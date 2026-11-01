@@ -24,3 +24,12 @@ test("riderAvatarSrc", () => {
   assert.equal(riderAvatarSrc({ id: "r1", avatarUrl: null }), null);
   assert.equal(riderAvatarSrc({ id: "r1", avatarUrl: "riders/s/r1/abc.jpg" }), "/api/rider-avatars/r1?v=abc");
 });
+
+test("customerDeliveryView: en route only while assigned/picked_up", async () => {
+  const { customerDeliveryView: v } = await import("./rider-contact");
+  assert.equal(v({ status: "accepted", riderId: "r", deliveryStatus: "assigned" }), "en_route");
+  assert.equal(v({ status: "accepted", riderId: "r", deliveryStatus: "picked_up" }), "en_route");
+  assert.equal(v({ status: "accepted", riderId: "r", deliveryStatus: "delivered" }), "delivered");
+  assert.equal(v({ status: "accepted", riderId: null, deliveryStatus: null }), null);
+  assert.equal(v({ status: "cancelled", riderId: "r", deliveryStatus: "assigned" }), null);
+});

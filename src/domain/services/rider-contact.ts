@@ -8,6 +8,23 @@ export function riderAvatarSrc(rider: { id: string; avatarUrl?: string | null })
   return `/api/rider-avatars/${encodeURIComponent(rider.id)}?v=${encodeURIComponent(v)}`;
 }
 
+/**
+ * What the customer sees about delivery on an order: en route (rider + call)
+ * only while assigned/picked up; "delivered" once done; nothing otherwise.
+ */
+export function customerDeliveryView(order: {
+  status: string;
+  riderId: string | null;
+  deliveryStatus: string | null;
+}): "en_route" | "delivered" | null {
+  if (order.status === "cancelled") return null;
+  if (order.deliveryStatus === "delivered") return "delivered";
+  if (order.riderId && (order.deliveryStatus === "assigned" || order.deliveryStatus === "picked_up")) {
+    return "en_route";
+  }
+  return null;
+}
+
 export function lineChatUrl(lineId: string): string {
   return `https://line.me/R/ti/p/~${encodeURIComponent(lineId)}`;
 }
