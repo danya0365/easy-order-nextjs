@@ -26,7 +26,9 @@ import {
   Users,
   UtensilsCrossed,
   Gift,
-  type LucideIcon, KeyRound } from "lucide-react";
+  type LucideIcon, KeyRound,
+  Bike,
+} from "lucide-react";
 
 import { cn } from "@/src/presentation/components/ui/cn";
 
@@ -37,6 +39,7 @@ type NavLabelKey =
   | "navDashboard"
   | "navMenu"
   | "navCustomers"
+  | "navRiders"
   | "navReviews"
   | "navAnalytics"
   | "navPromote"
@@ -81,6 +84,7 @@ const NAVS = {
     { href: "/shop/notifications", label: "navNotifications", icon: Bell },
     // Overflow (periodic → setup → rare)
     { href: "/shop/customers", label: "navCustomers", icon: Users },
+    { href: "/shop/riders", label: "navRiders", icon: Bike },
     { href: "/shop/reviews", label: "navReviews", icon: Star },
     { href: "/shop/analytics", label: "navAnalytics", icon: BarChart3 },
     { href: "/shop/promote", label: "navPromote", icon: Megaphone },

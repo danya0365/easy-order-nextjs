@@ -155,6 +155,41 @@
       "when": 1796700000000,
       "tag": "0021_audit_target_idx",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1796800000000,
+      "tag": "0022_riders_phase1",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1796900000000,
+      "tag": "0023_riders_contact_availability",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1797000000000,
+      "tag": "0024_riders_avatar",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1797100000000,
+      "tag": "0025_delivery_pin",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1797200000000,
+      "tag": "0026_daily_fee_billing",
+      "breakpoints": true
     }
   ]
 }

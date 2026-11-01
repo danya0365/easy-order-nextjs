@@ -20,6 +20,10 @@ function toSettings(r: Row): PlatformSettings {
     orderThresholdBillingEnabled: r.orderThresholdBillingEnabled,
     orderThresholdCount: r.orderThresholdCount,
     shopSuspensionEnabled: r.shopSuspensionEnabled,
+    dailyFeeBillingEnabled: r.dailyFeeBillingEnabled,
+    dailyOrderThreshold: r.dailyOrderThreshold,
+    dailyFeeSatang: r.dailyFeeSatang,
+    defaultCutoffTime: r.defaultCutoffTime,
     updatedAt: r.updatedAt,
   };
 }
@@ -31,6 +35,10 @@ function defaults(): PlatformSettings {
     orderThresholdBillingEnabled: false,
     orderThresholdCount: 50,
     shopSuspensionEnabled: false,
+    dailyFeeBillingEnabled: false,
+    dailyOrderThreshold: 50,
+    dailyFeeSatang: 500,
+    defaultCutoffTime: "04:00",
     updatedAt: new Date().toISOString(),
   };
 }
@@ -74,6 +82,18 @@ export class DrizzlePlatformSettingsRepository
           : {}),
         ...(input.shopSuspensionEnabled !== undefined
           ? { shopSuspensionEnabled: input.shopSuspensionEnabled }
+          : {}),
+        ...(input.dailyFeeBillingEnabled !== undefined
+          ? { dailyFeeBillingEnabled: input.dailyFeeBillingEnabled }
+          : {}),
+        ...(input.dailyOrderThreshold !== undefined
+          ? { dailyOrderThreshold: input.dailyOrderThreshold }
+          : {}),
+        ...(input.dailyFeeSatang !== undefined
+          ? { dailyFeeSatang: input.dailyFeeSatang }
+          : {}),
+        ...(input.defaultCutoffTime !== undefined
+          ? { defaultCutoffTime: input.defaultCutoffTime }
           : {}),
       })
       .where(eq(schema.platformSettings.id, SETTINGS_ID))

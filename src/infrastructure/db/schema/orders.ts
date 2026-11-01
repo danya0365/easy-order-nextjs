@@ -1,8 +1,11 @@
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
 import { id, createdAt, updatedAt } from "./_shared";
 import { shops } from "./shops";
 import { customers } from "./customers";
 import { users } from "./users";
+import { riders } from "./riders";
+
+export const DELIVERY_STATUSES = ["assigned", "picked_up", "delivered"] as const;
 
 export const ORDER_STATUSES = [
   "pending",
@@ -43,6 +46,10 @@ export const orders = sqliteTable(
       .default("pickup"),
     /** Drop-off address for delivery orders; null otherwise. */
     deliveryAddress: text(),
+    /** Customer-dragged map pin (WGS84) + free-text landmark, delivery only. */
+    deliveryLat: real(),
+    deliveryLng: real(),
+    deliveryLandmark: text(),
     subtotalSatang: integer().notNull(),
     totalSatang: integer().notNull(),
     note: text(),
@@ -60,6 +67,15 @@ export const orders = sqliteTable(
      * survives. For staff accountability — also audit-logged at placement.
      */
     performedBy: text().references(() => users.id, { onDelete: "set null" }),
+    /** Shop-owned rider assigned to a delivery order (phase 1). */
+    riderId: text().references(() => riders.id, { onDelete: "set null" }),
+    deliveryStatus: text({ enum: DELIVERY_STATUSES }),
+    assignedAt: text(),
+    pickedUpAt: text(),
+    deliveredAt: text(),
+    codCollected: integer({ mode: "boolean" }).notNull().default(false),
+    /** Rider commission snapshot (satang) taken at assign time. */
+    riderCommissionSatang: integer(),
     paidAt: text(),
     readyAt: text(),
     completedAt: text(),
@@ -71,5 +87,6 @@ export const orders = sqliteTable(
     index("orders_shop_status_idx").on(t.shopId, t.status),
     // Per-customer CRM aggregates / history.
     index("orders_shop_customer_idx").on(t.shopId, t.customerId, t.createdAt),
+    index("orders_shop_rider_idx").on(t.shopId, t.riderId, t.deliveryStatus),
   ],
 );

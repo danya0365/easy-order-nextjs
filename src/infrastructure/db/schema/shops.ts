@@ -39,6 +39,10 @@ export const shops = sqliteTable(
     deliveryNotes: text(),
     // Minimum subtotal (satang) for an online order; null = no minimum.
     minOrderSatang: integer(),
+    // Daily-fee billing: business-day cutoff "HH:MM" (Asia/Bangkok) override.
+    // Admin-only; null = platform default. Not part of the Shop entity so owner
+    // settings can never write it.
+    billingCutoffTime: text(),
     // Platform admin must allow loyalty before the shop can enable the module.
     loyaltyAllowedByAdmin: integer({ mode: "boolean" }).notNull().default(false),
     // Shop-level module toggle. Effective = loyaltyAllowedByAdmin && loyaltyEnabled.

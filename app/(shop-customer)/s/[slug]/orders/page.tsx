@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Smartphone, Store, TriangleAlert } from "lucide-react";
+import { Bike, Phone, Smartphone, Store, TriangleAlert, CheckCircle2 } from "lucide-react";
+import { riderFirstName } from "@/src/domain/services/rider";
+import { customerDeliveryView } from "@/src/domain/services/rider-contact";
+import { RiderAvatar } from "@/src/presentation/components/rider/RiderAvatar";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -60,6 +63,7 @@ export default async function ShopCustomerOrdersPage({
   const { bind } = await searchParams;
   const t = await getTranslations("publicPages");
   const tOrder = await getTranslations("order");
+  const tRider = await getTranslations("rider");
 
   const shop = await container.shopRepository.findBySlug(slug);
   if (!shop) notFound();
@@ -70,6 +74,22 @@ export default async function ShopCustomerOrdersPage({
     container.customerDeviceRepository,
     container.orderRepository,
   ).execute(slug, token);
+
+  // Rider phase 1: show the assigned rider (first name + call) while en route.
+  const riderIds = [
+    ...new Set(
+      (history?.orders.items ?? [])
+        .filter((o) => customerDeliveryView(o) === "en_route")
+        .map((o) => o.riderId as string),
+    ),
+  ];
+  const riderById = new Map(
+    (
+      await Promise.all(riderIds.map((id) => container.riderRepository.findById(shop.id, id)))
+    )
+      .filter((r) => r !== null)
+      .map((r) => [r.id, r]),
+  );
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-6">
@@ -108,9 +128,40 @@ export default async function ShopCustomerOrdersPage({
                         })}
                       </p>
                     </div>
-                    <Badge tone={STATUS_TONE[o.status]}>
-                      {tOrder(STATUS_KEY[o.status])}
-                    </Badge>
+                    <span className="flex shrink-0 flex-col items-end gap-1">
+                      <Badge tone={STATUS_TONE[o.status]}>
+                        {tOrder(STATUS_KEY[o.status])}
+                      </Badge>
+                      {(() => {
+                        const view = customerDeliveryView(o);
+                        if (view === "delivered") {
+                          return (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-success" data-testid="customer-delivered">
+                              <CheckCircle2 className="size-3.5" /> {tRider("custDelivered")}
+                            </span>
+                          );
+                        }
+                        const rider = view === "en_route" && o.riderId ? riderById.get(o.riderId) : undefined;
+                        if (!rider) return null;
+                        return (
+                          <span className="flex flex-col items-end gap-1 text-xs" data-testid="customer-rider">
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-brand-700">
+                              {rider.avatarUrl ? (
+                                <RiderAvatar rider={{ id: rider.id, name: riderFirstName(rider.name), avatarUrl: rider.avatarUrl }} size={28} />
+                              ) : (
+                                <Bike className="size-3.5" />
+                              )} {tRider("custEnRoute", { name: riderFirstName(rider.name) })}
+                            </span>
+                            <a
+                              href={`tel:${rider.phone}`}
+                              className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-foreground"
+                            >
+                              <Phone className="size-3.5" /> {tRider("custCall")}
+                            </a>
+                          </span>
+                        );
+                      })()}
+                    </span>
                   </li>
                 ))}
               </ul>

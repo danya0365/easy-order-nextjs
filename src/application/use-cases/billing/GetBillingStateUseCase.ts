@@ -94,6 +94,21 @@ export class GetBillingStateUseCase {
       adjusted = { ...adjusted, isSuspended: false };
     }
 
+    // Day-based top-up billing is retired (replaced by the order-threshold
+    // daily fee, which is nag-only). The old subscription logic must NEVER
+    // suspend or dun a shop — only an explicit admin suspension (or an admin
+    // pause) still applies.
+    if (adjusted.suspendReason !== "admin") {
+      adjusted = {
+        ...adjusted,
+        state: adjusted.isPaused ? adjusted.state : "active",
+        isSuspended: false,
+        suspendReason: "none",
+        bannerLevel: 0,
+        preExpiryBannerLevel: 0,
+      };
+    }
+
     return {
       shop,
       subscription,

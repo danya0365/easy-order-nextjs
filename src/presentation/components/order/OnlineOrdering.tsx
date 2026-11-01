@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Check, Minus, Plus, ShoppingBag } from "lucide-react";
+import { Check, MapPin, Minus, Plus, ShoppingBag } from "lucide-react";
 
 import type {
   FulfillmentType,
@@ -21,6 +21,10 @@ import { Textarea } from "@/src/presentation/components/ui/Textarea";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { useToast } from "@/src/presentation/components/ui/Toast";
 import { cn } from "@/src/presentation/components/ui/cn";
+import {
+  LocationPicker,
+  type LatLng,
+} from "@/src/presentation/components/map/LocationPicker";
 
 type Cart = Record<string, number>; // menuItemId -> qty
 
@@ -44,6 +48,8 @@ export function OnlineOrdering({
   deliveryFeeSatang,
   deliveryNotes,
   minOrderSatang,
+  mapCenter,
+  lastDelivery,
 }: {
   slug: string;
   baseHref: string;
@@ -54,6 +60,15 @@ export function OnlineOrdering({
   deliveryFeeSatang: number;
   deliveryNotes: string | null;
   minOrderSatang: number | null;
+  /** Where the delivery map opens before a pin exists (shop branch or Thailand). */
+  mapCenter: { lat: number; lng: number; zoom: number };
+  /** This member's last delivery pin (prefilled). */
+  lastDelivery?: {
+    lat: number;
+    lng: number;
+    address: string | null;
+    landmark: string | null;
+  } | null;
 }) {
   const t = useTranslations("order");
   const toast = useToast();
@@ -63,7 +78,23 @@ export function OnlineOrdering({
   );
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState(lastDelivery?.address ?? "");
+  const [landmark, setLandmark] = useState(lastDelivery?.landmark ?? "");
+  const [pin, setPin] = useState<LatLng | null>(
+    lastDelivery ? { lat: lastDelivery.lat, lng: lastDelivery.lng } : null,
+  );
+  // Last address we auto-filled from the map; replaced on the next pin move
+  // unless the customer has typed their own.
+  const autoAddress = useRef<string | null>(lastDelivery?.address ?? null);
+  const onPlaceLabel = useCallback((label: string) => {
+    setAddress((cur) => {
+      if (cur.trim() === "" || cur === autoAddress.current) {
+        autoAddress.current = label;
+        return label;
+      }
+      return cur;
+    });
+  }, []);
   const [note, setNote] = useState("");
   const [method, setMethod] = useState<OrderPaymentMethod>(
     hasPromptPay ? "promptpay_qr" : "cash",
@@ -90,7 +121,7 @@ export function OnlineOrdering({
     count > 0 &&
     customerName.trim().length > 0 &&
     customerPhone.trim().length >= 9 &&
-    (fulfillmentType === "pickup" || address.trim().length > 0) &&
+    (fulfillmentType === "pickup" || (address.trim().length > 0 && pin !== null)) &&
     !belowMin;
 
   function setQty(id: string, qty: number) {
@@ -116,6 +147,10 @@ export function OnlineOrdering({
         customerPhone: customerPhone.trim() || null,
         fulfillmentType,
         deliveryAddress: fulfillmentType === "delivery" ? address.trim() : null,
+        deliveryLat: fulfillmentType === "delivery" ? pin?.lat ?? null : null,
+        deliveryLng: fulfillmentType === "delivery" ? pin?.lng ?? null : null,
+        deliveryLandmark:
+          fulfillmentType === "delivery" ? landmark.trim() || null : null,
       });
       if (res.ok) setResult(res);
       else toast.error(res.error || t("orderError"));
@@ -302,14 +337,36 @@ export function OnlineOrdering({
           onChange={(e) => setCustomerPhone(e.target.value)}
         />
         {fulfillmentType === "delivery" && (
-          <Textarea
-            rows={2}
-            maxLength={300}
-            required
-            placeholder={t("onlineAddressPlaceholder")}
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-          />
+          <div className="space-y-2" data-testid="delivery-location">
+            <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+              <MapPin className="size-4 text-brand-600" />
+              {t("deliveryPinTitle")}
+            </p>
+            <LocationPicker
+              value={pin}
+              fallbackCenter={{ lat: mapCenter.lat, lng: mapCenter.lng }}
+              fallbackZoom={mapCenter.zoom}
+              onChange={setPin}
+              onPlaceLabel={onPlaceLabel}
+            />
+            {!pin && (
+              <p className="text-xs text-amber-700">{t("deliveryPinRequired")}</p>
+            )}
+            <Textarea
+              rows={2}
+              maxLength={300}
+              required
+              placeholder={t("onlineAddressPlaceholder")}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+            />
+            <Input
+              maxLength={120}
+              placeholder={t("deliveryLandmarkPlaceholder")}
+              value={landmark}
+              onChange={(e) => setLandmark(e.target.value)}
+            />
+          </div>
         )}
         <Textarea
           rows={2}

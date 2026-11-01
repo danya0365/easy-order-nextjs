@@ -4,14 +4,27 @@ import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { RefreshCw, StickyNote } from "lucide-react";
+import { Bike, Navigation, RefreshCw, StickyNote } from "lucide-react";
+
+import { formatTime } from "@/src/presentation/lib/format-date";
+import { orderNavigationUrl } from "@/src/domain/services/delivery-location";
 
 import type {
   OrderChannel,
   FulfillmentType,
   OrderStatus,
   OrderWithItems,
+  DeliveryStatus,
 } from "@/src/domain/entities";
+
+/** Rider option for the assign picker (availability + load + contact). */
+export type RiderOption = RiderContactInfo;
+
+const DELIVERY_KEY: Record<DeliveryStatus, "deliveryAssigned" | "deliveryPickedUp" | "deliveryDelivered"> = {
+  assigned: "deliveryAssigned",
+  picked_up: "deliveryPickedUp",
+  delivered: "deliveryDelivered",
+};
 
 /** Order card data: the order plus the customer's shop-internal CRM note. */
 export type QueueOrder = OrderWithItems & { customerNote?: string | null };
@@ -20,6 +33,13 @@ import {
   confirmOrderPaymentAction,
   loadMoreOrderHistoryAction,
 } from "@/src/presentation/actions/order-actions";
+import { assignRiderAction } from "@/src/presentation/actions/rider-actions";
+import {
+  RiderContactButtons,
+  RiderStatusBadges,
+  type RiderContactInfo,
+} from "@/src/presentation/components/rider/RiderContact";
+import { RiderAvatar } from "@/src/presentation/components/rider/RiderAvatar";
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { Card } from "@/src/presentation/components/ui/Card";
 import { Button } from "@/src/presentation/components/ui/Button";
@@ -72,10 +92,12 @@ export function OrderQueue({
   activeOrders,
   historyInitial,
   historyCursor,
+  riders = [],
 }: {
   activeOrders: QueueOrder[];
   historyInitial: QueueOrder[];
   historyCursor: string | null;
+  riders?: RiderOption[];
 }) {
   const t = useTranslations("order");
   const router = useRouter();
@@ -114,7 +136,7 @@ export function OrderQueue({
                 {t(`status${cap(status)}` as StatusKey)} ({orders.length})
               </h2>
               {orders.map((order) => (
-                <OrderCard key={order.id} order={order} />
+                <OrderCard key={order.id} order={order} riders={riders} />
               ))}
             </section>
           );
@@ -140,8 +162,15 @@ function cap(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-export function OrderCard({ order }: { order: QueueOrder }) {
+export function OrderCard({
+  order,
+  riders = [],
+}: {
+  order: QueueOrder;
+  riders?: RiderOption[];
+}) {
   const t = useTranslations("order");
+  const tr = useTranslations("rider");
   const customerNote = order.customerNote;
   const router = useRouter();
   const toast = useToast();
@@ -175,6 +204,18 @@ export function OrderCard({ order }: { order: QueueOrder }) {
       if (res.error) toast.error(res.error || t("actionError"));
       else {
         setCancelOpen(false);
+        router.refresh();
+      }
+    });
+  }
+
+  function assignRider(riderId: string) {
+    if (!riderId) return;
+    start(async () => {
+      const res = await assignRiderAction(order.id, riderId);
+      if (res.error) toast.error(res.error || t("actionError"));
+      else {
+        toast.success(tr("assigned"));
         router.refresh();
       }
     });
@@ -247,7 +288,83 @@ export function OrderCard({ order }: { order: QueueOrder }) {
       {order.deliveryAddress && (
         <p className="mt-2 rounded-lg bg-muted-surface px-3 py-2 text-sm text-foreground">
           {t("deliveryAddressLabel")}: {order.deliveryAddress}
+          {order.deliveryLandmark && (
+            <span className="block text-muted">
+              {t("deliveryLandmarkLabel")}: {order.deliveryLandmark}
+            </span>
+          )}
         </p>
+      )}
+
+      {order.fulfillmentType === "delivery" &&
+        order.status !== "cancelled" &&
+        orderNavigationUrl(order) && (
+          <a
+            href={orderNavigationUrl(order) as string}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-testid="order-navigate"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-base font-bold text-white transition hover:bg-blue-700"
+          >
+            <Navigation className="size-5" /> {t("navigate")}
+          </a>
+        )}
+
+      {order.fulfillmentType === "delivery" && order.status !== "cancelled" && (
+        <div className="mt-2 flex flex-col gap-1 rounded-lg border border-border px-3 py-2 text-sm">
+          <span className="flex items-center gap-2 font-medium text-foreground">
+            <Bike className="size-4 shrink-0" />
+            {order.deliveryStatus ? tr(DELIVERY_KEY[order.deliveryStatus]) : tr("deliveryNone")}
+            {order.codCollected && <Badge tone="success">{tr("codCollected")}</Badge>}
+          </span>
+          {(order.deliveryStatus === null || order.deliveryStatus === "assigned") ? (
+            riders.length === 0 ? (
+              <Link href="/shop/riders" className="text-xs text-brand-700 underline">
+                {tr("addRiderLink")}
+              </Link>
+            ) : (
+              <ul className="flex flex-col divide-y divide-border" data-testid="assign-rider" aria-label={tr("pickRider")}>
+                {riders.map((r) => {
+                  const current = order.riderId === r.id;
+                  return (
+                    <li key={r.id} className="flex flex-col gap-1.5 py-2" data-testid="rider-option">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <RiderAvatar rider={r} size={32} />
+                          <span className="truncate font-medium text-foreground">{r.name}</span>
+                        </span>
+                        {current ? (
+                          <Badge tone="success">{tr("current")}</Badge>
+                        ) : (
+                          <Button size="sm" variant="outline" disabled={pending} onClick={() => assignRider(r.id)} data-testid="assign-rider-btn">
+                            {tr("assign")}
+                          </Button>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-1.5">
+                        <RiderStatusBadges rider={r} />
+                        <RiderContactButtons rider={r} />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )
+          ) : (
+            (() => {
+              const r = riders.find((x) => x.id === order.riderId);
+              return r ? (
+                <div className="flex flex-wrap items-center justify-between gap-1.5">
+                  <span className="flex items-center gap-2 font-medium text-foreground">
+                    <RiderAvatar rider={r} size={28} />
+                    {r.name}
+                  </span>
+                  <RiderContactButtons rider={r} />
+                </div>
+              ) : null;
+            })()
+          )}
+        </div>
       )}
 
       <p className="mt-2 text-xs text-muted">
@@ -375,13 +492,3 @@ function HistorySection({
   );
 }
 
-function formatTime(iso: string): string {
-  try {
-    return new Date(iso).toLocaleTimeString("th-TH", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return "";
-  }
-}

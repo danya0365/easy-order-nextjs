@@ -1,8 +1,9 @@
 import "server-only";
 
-import { and, asc, count, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, lt, ne } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type {
+  DeliveryStatus,
   OrderItem,
   OrderStatus,
   OrderWithItems,
@@ -47,11 +48,21 @@ function toOrder(r: OrderRow, items: OrderItem[]): OrderWithItems {
     channel: r.channel,
     fulfillmentType: r.fulfillmentType,
     deliveryAddress: r.deliveryAddress,
+    deliveryLat: r.deliveryLat ?? null,
+    deliveryLng: r.deliveryLng ?? null,
+    deliveryLandmark: r.deliveryLandmark ?? null,
     note: r.note,
     customerId: r.customerId,
     customerName: r.customerName,
     customerPhone: r.customerPhone,
     performedBy: r.performedBy,
+    riderId: r.riderId ?? null,
+    deliveryStatus: r.deliveryStatus ?? null,
+    assignedAt: r.assignedAt ?? null,
+    pickedUpAt: r.pickedUpAt ?? null,
+    deliveredAt: r.deliveredAt ?? null,
+    codCollected: !!r.codCollected,
+    riderCommissionSatang: r.riderCommissionSatang ?? null,
     paidAt: r.paidAt,
     readyAt: r.readyAt,
     completedAt: r.completedAt,
@@ -140,6 +151,9 @@ export class DrizzleOrderRepository implements IOrderRepository {
         channel: input.channel ?? "kiosk",
         fulfillmentType: input.fulfillmentType ?? "pickup",
         deliveryAddress: input.deliveryAddress ?? null,
+        deliveryLat: input.deliveryLat ?? null,
+        deliveryLng: input.deliveryLng ?? null,
+        deliveryLandmark: input.deliveryLandmark ?? null,
       })
       .returning();
 
@@ -274,6 +288,25 @@ export class DrizzleOrderRepository implements IOrderRepository {
     return toOrder(r, items.get(r.id) ?? []);
   }
 
+  async countBillableBetween(
+    shopId: string,
+    fromISO: string,
+    toISO: string,
+  ): Promise<number> {
+    const [c] = await db
+      .select({ value: count() })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.shopId, shopId),
+          ne(schema.orders.status, "cancelled"),
+          gte(schema.orders.createdAt, fromISO),
+          lt(schema.orders.createdAt, toISO),
+        ),
+      );
+    return c?.value ?? 0;
+  }
+
   async countByShop(shopId: string): Promise<number> {
     const [c] = await db
       .select({ value: count() })
@@ -305,5 +338,110 @@ export class DrizzleOrderRepository implements IOrderRepository {
       else if (r.status !== "cancelled") open++;
     }
     return { open, finished };
+  }
+
+  private async one(r: OrderRow | undefined): Promise<OrderWithItems> {
+    if (!r) throw new Error("ไม่พบออเดอร์ในร้านนี้");
+    const items = await loadItems([r.id]);
+    return toOrder(r, items.get(r.id) ?? []);
+  }
+
+  async assignRider(
+    shopId: string,
+    id: string,
+    riderId: string,
+    commissionSatang: number,
+  ): Promise<OrderWithItems> {
+    const [r] = await db
+      .update(schema.orders)
+      .set({
+        riderId,
+        deliveryStatus: "assigned",
+        assignedAt: new Date().toISOString(),
+        pickedUpAt: null,
+        deliveredAt: null,
+        riderCommissionSatang: commissionSatang,
+      })
+      .where(and(eq(schema.orders.shopId, shopId), eq(schema.orders.id, id)))
+      .returning();
+    return this.one(r);
+  }
+
+  async setDeliveryStatus(
+    shopId: string,
+    id: string,
+    status: DeliveryStatus,
+  ): Promise<OrderWithItems> {
+    const now = new Date().toISOString();
+    const [r] = await db
+      .update(schema.orders)
+      .set({
+        deliveryStatus: status,
+        ...(status === "picked_up" ? { pickedUpAt: now } : {}),
+        ...(status === "delivered" ? { deliveredAt: now } : {}),
+      })
+      .where(and(eq(schema.orders.shopId, shopId), eq(schema.orders.id, id)))
+      .returning();
+    return this.one(r);
+  }
+
+  async markCodCollected(shopId: string, id: string): Promise<OrderWithItems> {
+    const [r] = await db
+      .update(schema.orders)
+      .set({ codCollected: true })
+      .where(and(eq(schema.orders.shopId, shopId), eq(schema.orders.id, id)))
+      .returning();
+    return this.one(r);
+  }
+
+  async openJobCountsByRider(shopId: string): Promise<Record<string, number>> {
+    const rows = await db
+      .select({ riderId: schema.orders.riderId, n: count() })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.shopId, shopId),
+          inArray(schema.orders.deliveryStatus, ["assigned", "picked_up"]),
+          ne(schema.orders.status, "cancelled"),
+        ),
+      )
+      .groupBy(schema.orders.riderId);
+    const out: Record<string, number> = {};
+    for (const r of rows) if (r.riderId) out[r.riderId] = r.n;
+    return out;
+  }
+
+  async listRiderActive(shopId: string, riderId: string): Promise<OrderWithItems[]> {
+    const rows = await db.query.orders.findMany({
+      where: and(
+        eq(schema.orders.shopId, shopId),
+        eq(schema.orders.riderId, riderId),
+        inArray(schema.orders.deliveryStatus, ["assigned", "picked_up"]),
+        ne(schema.orders.status, "cancelled"),
+      ),
+      orderBy: asc(schema.orders.assignedAt),
+      limit: 50,
+    });
+    const items = await loadItems(rows.map((r) => r.id));
+    return rows.map((r) => toOrder(r, items.get(r.id) ?? []));
+  }
+
+  async listRiderDeliveredSince(
+    shopId: string,
+    riderId: string,
+    sinceISO: string,
+  ): Promise<OrderWithItems[]> {
+    const rows = await db.query.orders.findMany({
+      where: and(
+        eq(schema.orders.shopId, shopId),
+        eq(schema.orders.riderId, riderId),
+        eq(schema.orders.deliveryStatus, "delivered"),
+        gte(schema.orders.deliveredAt, sinceISO),
+      ),
+      orderBy: desc(schema.orders.deliveredAt),
+      limit: 200,
+    });
+    const items = await loadItems(rows.map((r) => r.id));
+    return rows.map((r) => toOrder(r, items.get(r.id) ?? []));
   }
 }

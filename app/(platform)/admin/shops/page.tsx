@@ -77,6 +77,13 @@ export default async function AdminShopsPage() {
                     >
                       /s/{shop.slug}
                     </Link>
+                    <Link
+                      href={`/admin/shops/${shop.id}/billing`}
+                      data-testid="shop-billing-link"
+                      className="ml-3 text-xs text-brand-600 hover:underline"
+                    >
+                      {t("dailyFeeLink")}
+                    </Link>
                     {owner && (
                       <p className="break-all text-xs text-muted">
                         {t("ownerLabel", { email: owner.email })}

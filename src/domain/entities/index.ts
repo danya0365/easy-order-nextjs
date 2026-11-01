@@ -1,3 +1,4 @@
+import type { DeliveryStatus, RiderCommissionType } from "@/src/domain/services/rider";
 import type { MemberPolicyOverrides } from "@/src/domain/services/member-policy";
 import type { Role } from "../types/roles";
 
@@ -340,6 +341,10 @@ export interface Order {
   fulfillmentType: FulfillmentType;
   /** Drop-off address for delivery orders; null otherwise. */
   deliveryAddress: string | null;
+  /** Customer map pin for delivery (null for legacy/no pin). */
+  deliveryLat: number | null;
+  deliveryLng: number | null;
+  deliveryLandmark: string | null;
   note: string | null;
   /** Optional customer who placed the order (null for anonymous walk-ins). */
   customerId: string | null;
@@ -348,6 +353,15 @@ export interface Order {
   customerPhone: string | null;
   /** Operator who placed it from the counter UI; null for kiosk self-serve. */
   performedBy: string | null;
+  /** Rider phase 1 — shop-owned rider assigned to a delivery order. */
+  riderId: string | null;
+  deliveryStatus: DeliveryStatus | null;
+  assignedAt: string | null;
+  pickedUpAt: string | null;
+  deliveredAt: string | null;
+  codCollected: boolean;
+  /** Commission snapshot (satang) at assign time. */
+  riderCommissionSatang: number | null;
   paidAt: string | null;
   readyAt: string | null;
   completedAt: string | null;
@@ -395,6 +409,11 @@ export interface Customer {
   blockedBy?: string | null;
   /** CRM: new-member order cap lifted early. */
   newMemberClearedAt?: string | null;
+  /** Last delivery pin used (prefills checkout). */
+  lastDeliveryLat?: number | null;
+  lastDeliveryLng?: number | null;
+  lastDeliveryAddress?: string | null;
+  lastDeliveryLandmark?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -409,7 +428,34 @@ export interface PlatformSettings {
   orderThresholdCount: number;
   /** Off = overdue shops keep working (warn-only); admin suspension still applies. */
   shopSuspensionEnabled: boolean;
+  /** Order-threshold daily fee billing. */
+  dailyFeeBillingEnabled: boolean;
+  dailyOrderThreshold: number;
+  dailyFeeSatang: number;
+  /** "HH:MM" Asia/Bangkok. */
+  defaultCutoffTime: string;
   updatedAt: string;
+}
+
+export type DailyFeeChargeStatus = "none" | "due" | "paid";
+
+/** One closed business day for a shop, with the terms snapshotted at its start. */
+export interface DailyFeeCharge {
+  id: string;
+  shopId: string;
+  businessDate: string;
+  periodStart: string;
+  periodEnd: string;
+  orderCount: number;
+  enabled: boolean;
+  threshold: number;
+  feeSatang: number;
+  cutoffTime: string;
+  amountSatang: number;
+  status: DailyFeeChargeStatus;
+  paidAt: string | null;
+  paidBy: string | null;
+  createdAt: string;
 }
 
 export interface Subscription {
@@ -656,4 +702,37 @@ export interface CustomerPointsView {
   balance: LoyaltyPointsBalance;
   settings: LoyaltyPointsSettings;
   rewards: LoyaltyPointsReward[];
+}
+
+export type { DeliveryStatus, RiderCommissionType };
+
+/** A shop-owned delivery rider (per shop). */
+export interface Rider {
+  id: string;
+  shopId: string;
+  name: string;
+  phone: string;
+  commissionType: RiderCommissionType;
+  /** satang for per_trip; percent for percent_fee; ignored for full_fee. */
+  commissionValue: number;
+  active: boolean;
+  lineId: string | null;
+  /** Rider self-reported availability (ว่าง/ไม่ว่าง). */
+  available: boolean;
+  availableUpdatedAt: string | null;
+  /** Storage key of the profile photo, or null. */
+  avatarUrl: string | null;
+  /** Whether a personal link is currently issued (the hash itself never leaves the repo). */
+  hasLink: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Per-rider payout report row for a date range. */
+export interface RiderPayoutRow {
+  riderId: string;
+  riderName: string;
+  trips: number;
+  commissionSatang: number;
+  codCollectedSatang: number;
 }

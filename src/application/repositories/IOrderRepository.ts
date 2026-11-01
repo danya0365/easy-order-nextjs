@@ -4,6 +4,7 @@ import type {
   OrderChannel,
   FulfillmentType,
   OrderWithItems,
+  DeliveryStatus,
 } from "@/src/domain/entities";
 import type { Page, PageOpts } from "./pagination";
 
@@ -30,6 +31,9 @@ export interface CreateOrderInput {
   fulfillmentType?: FulfillmentType;
   /** Drop-off address for delivery orders; null otherwise. */
   deliveryAddress?: string | null;
+  deliveryLat?: number | null;
+  deliveryLng?: number | null;
+  deliveryLandmark?: string | null;
   /** Delivery charge (satang) the repo adds to the total. */
   deliveryFeeSatang?: number;
   items: CreateOrderItemInput[];
@@ -63,6 +67,8 @@ export interface IOrderRepository {
   ): Promise<OrderWithItems>;
   /** Mark the order paid (stamps paidAt). */
   markPaid(shopId: string, id: string): Promise<OrderWithItems>;
+  /** Billable (non-cancelled) orders created in [fromISO, toISO). */
+  countBillableBetween(shopId: string, fromISO: string, toISO: string): Promise<number>;
   /** Total orders ever placed at the shop (all statuses) — for billing thresholds. */
   countByShop(shopId: string): Promise<number>;
   /**
@@ -73,4 +79,29 @@ export interface IOrderRepository {
     shopId: string,
     customerId: string,
   ): Promise<{ open: number; finished: number }>;
+  /** Assign/reassign a rider (sets deliveryStatus=assigned, commission snapshot). */
+  assignRider(
+    shopId: string,
+    id: string,
+    riderId: string,
+    commissionSatang: number,
+  ): Promise<OrderWithItems>;
+  /** Advance delivery status (stamps pickedUpAt/deliveredAt). */
+  setDeliveryStatus(
+    shopId: string,
+    id: string,
+    status: DeliveryStatus,
+  ): Promise<OrderWithItems>;
+  /** Rider confirms COD cash collected. */
+  markCodCollected(shopId: string, id: string): Promise<OrderWithItems>;
+  /** Open job count (assigned/picked_up, not cancelled) per rider id. */
+  openJobCountsByRider(shopId: string): Promise<Record<string, number>>;
+  /** A rider's open jobs (assigned/picked_up, not cancelled), oldest first. */
+  listRiderActive(shopId: string, riderId: string): Promise<OrderWithItems[]>;
+  /** A rider's delivered orders since an ISO instant. */
+  listRiderDeliveredSince(
+    shopId: string,
+    riderId: string,
+    sinceISO: string,
+  ): Promise<OrderWithItems[]>;
 }

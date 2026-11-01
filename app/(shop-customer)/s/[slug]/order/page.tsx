@@ -7,6 +7,7 @@ import { getTranslations } from "next-intl/server";
 import { container } from "@/src/infrastructure/di/container";
 import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
 import { getOrderAccess } from "@/src/infrastructure/auth/order-access";
+import { getMemberToken } from "@/src/infrastructure/auth/member";
 import { GetKioskMenuUseCase } from "@/src/application/use-cases/menu/GetKioskMenuUseCase";
 import { Card } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
@@ -126,6 +127,38 @@ export default async function OnlineOrderPage({
     container.menuItemRepository,
   ).execute(shop.id);
 
+  // Delivery map: open on the shop's pinned branch, else Thailand overview.
+  const branches = shop.deliveryEnabled
+    ? await container.branchRepository.listByShop(shop.id)
+    : [];
+  const pinned = branches.find(
+    (b) => b.latitude !== null && b.longitude !== null,
+  );
+  const mapCenter = pinned
+    ? { lat: pinned.latitude as number, lng: pinned.longitude as number, zoom: 15 }
+    : { lat: 13.7563, lng: 100.5018, zoom: 6 };
+
+  // Remember the last pin for a bound member device of THIS shop.
+  let lastDelivery = null;
+  const memberToken = shop.deliveryEnabled ? await getMemberToken(slug) : null;
+  if (memberToken) {
+    const bound = await container.customerDeviceRepository.findByToken(memberToken);
+    const c = bound?.customer;
+    if (
+      c &&
+      c.shopId === shop.id &&
+      c.lastDeliveryLat != null &&
+      c.lastDeliveryLng != null
+    ) {
+      lastDelivery = {
+        lat: c.lastDeliveryLat,
+        lng: c.lastDeliveryLng,
+        address: c.lastDeliveryAddress ?? null,
+        landmark: c.lastDeliveryLandmark ?? null,
+      };
+    }
+  }
+
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-4">
       <h1 className="text-xl font-bold text-foreground">{shop.name}</h1>
@@ -139,6 +172,8 @@ export default async function OnlineOrderPage({
         deliveryFeeSatang={shop.deliveryFeeSatang}
         deliveryNotes={shop.deliveryNotes}
         minOrderSatang={shop.minOrderSatang}
+        mapCenter={mapCenter}
+        lastDelivery={lastDelivery}
       />
     </main>
   );
