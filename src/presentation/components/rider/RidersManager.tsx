@@ -10,6 +10,7 @@ import {
   RiderContactButtons,
   RiderStatusBadges,
 } from "@/src/presentation/components/rider/RiderContact";
+import { RiderAvatar } from "@/src/presentation/components/rider/RiderAvatar";
 
 export type RiderRow = Rider & { openJobs: number };
 import {
@@ -184,7 +185,10 @@ export function RidersManager({ riders }: { riders: RiderRow[] }) {
           <Card key={r.id}>
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="font-semibold text-foreground">{r.name}</p>
+                <p className="flex items-center gap-2 font-semibold text-foreground">
+                  <RiderAvatar rider={r} size={36} />
+                  {r.name}
+                </p>
                 <p className="text-sm text-muted">{r.phone} · {commissionText(r)}</p>
                 <div className="mt-1.5 flex flex-col gap-1.5">
                   <RiderStatusBadges rider={r} />

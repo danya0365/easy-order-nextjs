@@ -17,6 +17,10 @@ export interface IRiderRepository {
   findActiveByTokenHash(hash: string): Promise<Rider | null>;
   /** Replace (or clear with null) the personal-link token hash. */
   setTokenHash(shopId: string, id: string, hash: string | null): Promise<void>;
+  /** Set/clear the profile photo storage key. Returns the previous key. */
+  setAvatar(shopId: string, id: string, key: string | null): Promise<string | null>;
+  /** Avatar key by rider id (any shop) — for the public avatar route. */
+  findAvatarKey(id: string): Promise<string | null>;
   setAvailable(shopId: string, id: string, available: boolean): Promise<Rider>;
   /** Delivered trips per rider within [fromISO, toISO). */
   payoutSummary(shopId: string, fromISO: string, toISO: string): Promise<RiderPayoutRow[]>;

@@ -1,3 +1,5 @@
+import { nanoid } from "nanoid";
+
 import type { OrderWithItems, Rider, RiderPayoutRow } from "@/src/domain/entities";
 import type { IOrderRepository } from "@/src/application/repositories/IOrderRepository";
 import type {
@@ -14,6 +16,8 @@ import {
   isRiderTokenShape,
   normalizeLineId,
 } from "@/src/domain/services/rider";
+import { validateRiderAvatar } from "@/src/domain/services/rider-avatar";
+import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
 
 function cleanInput(input: RiderInput): RiderInput {
   const name = input.name.trim().slice(0, 80);
@@ -202,5 +206,79 @@ export class ListRidersWithLoadUseCase {
       this.orders.openJobCountsByRider(shopId),
     ]);
     return list.map((r) => ({ ...r, openJobs: counts[r.id] ?? 0 }));
+  }
+}
+
+/** Monday 00:00 of the current week in Bangkok (UTC+7) as a UTC ISO string. */
+export function startOfBangkokWeekISO(now: Date): string {
+  const bkk = new Date(now.getTime() + 7 * 3600_000);
+  const back = (bkk.getUTCDay() + 6) % 7; // Mon=0 … Sun=6
+  return new Date(
+    Date.UTC(bkk.getUTCFullYear(), bkk.getUTCMonth(), bkk.getUTCDate() - back, -7),
+  ).toISOString();
+}
+
+export interface RiderEarningsPeriod {
+  trips: number;
+  commissionSatang: number;
+  codCollectedSatang: number;
+}
+
+export interface RiderEarnings {
+  rider: Rider;
+  today: RiderEarningsPeriod;
+  week: RiderEarningsPeriod;
+  /** Most recent delivered jobs (≤30). */
+  history: OrderWithItems[];
+}
+
+function summarise(list: OrderWithItems[]): RiderEarningsPeriod {
+  return {
+    trips: list.length,
+    commissionSatang: list.reduce((s, o) => s + (o.riderCommissionSatang ?? 0), 0),
+    codCollectedSatang: list.reduce((s, o) => s + (o.codCollected ? o.totalSatang : 0), 0),
+  };
+}
+
+/** Rider's own earnings: today, this week (Mon–), and last 30 deliveries. */
+export class GetRiderEarningsUseCase {
+  constructor(
+    private readonly riders: IRiderRepository,
+    private readonly orders: IOrderRepository,
+  ) {}
+  async execute(token: string, now = new Date()): Promise<RiderEarnings | null> {
+    const rider = await resolveRider(this.riders, token);
+    if (!rider) return null;
+    const all = await this.orders.listRiderDeliveredSince(
+      rider.shopId,
+      rider.id,
+      "1970-01-01T00:00:00.000Z",
+    );
+    const day = startOfBangkokDayISO(now);
+    const week = startOfBangkokWeekISO(now);
+    return {
+      rider,
+      today: summarise(all.filter((o) => (o.deliveredAt ?? "") >= day)),
+      week: summarise(all.filter((o) => (o.deliveredAt ?? "") >= week)),
+      history: all.slice(0, 30),
+    };
+  }
+}
+
+/** Rider uploads/replaces their own profile photo (already resized client-side). */
+export class SaveRiderAvatarUseCase {
+  constructor(
+    private readonly riders: IRiderRepository,
+    private readonly storage: ISlipStorage,
+  ) {}
+  async execute(token: string, contentType: string, bytes: Uint8Array): Promise<Rider> {
+    const rider = await resolveRider(this.riders, token);
+    if (!rider) throw new Error("ลิงก์ไม่ถูกต้องหรือถูกยกเลิกแล้ว");
+    const ext = validateRiderAvatar(contentType, bytes);
+    const key = `riders/${rider.shopId}/${rider.id}/${nanoid()}.${ext}`;
+    await this.storage.saveObject({ key, contentType, bytes });
+    const prev = await this.riders.setAvatar(rider.shopId, rider.id, key);
+    if (prev && prev !== key) await this.storage.delete(prev);
+    return { ...rider, avatarUrl: key };
   }
 }

@@ -27,6 +27,8 @@ export const riders = sqliteTable(
     /** Rider self-reported availability (ว่าง/ไม่ว่าง). Busy riders stay assignable. */
     available: integer({ mode: "boolean" }).notNull().default(true),
     availableUpdatedAt: text(),
+    /** Storage key of the rider's profile photo (served via /api/rider-avatars/<id>). */
+    avatarUrl: text(),
     accessTokenHash: text(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

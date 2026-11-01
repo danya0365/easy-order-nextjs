@@ -22,6 +22,7 @@ function toRider(r: Row): Rider {
     lineId: r.lineId ?? null,
     available: r.available ?? true,
     availableUpdatedAt: r.availableUpdatedAt ?? null,
+    avatarUrl: r.avatarUrl ?? null,
     hasLink: !!r.accessTokenHash,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
@@ -131,5 +132,24 @@ export class DrizzleRiderRepository implements IRiderRepository {
       commissionSatang: Number(r.commissionSatang),
       codCollectedSatang: Number(r.codCollectedSatang),
     }));
+  }
+
+  async setAvatar(shopId: string, id: string, key: string | null): Promise<string | null> {
+    const where = and(eq(schema.riders.shopId, shopId), eq(schema.riders.id, id));
+    const prev = await db.query.riders.findFirst({ where, columns: { avatarUrl: true } });
+    if (!prev) throw new Error("ไม่พบไรเดอร์ในร้านนี้");
+    await db
+      .update(schema.riders)
+      .set({ avatarUrl: key, updatedAt: new Date().toISOString() })
+      .where(where);
+    return prev.avatarUrl ?? null;
+  }
+
+  async findAvatarKey(id: string): Promise<string | null> {
+    const r = await db.query.riders.findFirst({
+      where: eq(schema.riders.id, id),
+      columns: { avatarUrl: true },
+    });
+    return r?.avatarUrl ?? null;
   }
 }
