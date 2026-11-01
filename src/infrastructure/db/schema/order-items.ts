@@ -24,6 +24,8 @@ export const orderItems = sqliteTable(
     unitPriceSatang: integer().notNull(),
     quantity: integer().notNull(),
     lineTotalSatang: integer().notNull(),
+    // JSON snapshot of chosen options: [{group, choice, priceDeltaSatang}] (null = none).
+    optionsJson: text(),
   },
   (t) => [index("order_items_order_idx").on(t.orderId)],
 );

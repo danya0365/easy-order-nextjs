@@ -30,6 +30,7 @@ function toShop(r: Row): Shop {
     deliveryFeeSatang: r.deliveryFeeSatang,
     deliveryNotes: r.deliveryNotes,
     minOrderSatang: r.minOrderSatang,
+    menuOptionsAllowedByAdmin: r.menuOptionsAllowedByAdmin,
     loyaltyAllowedByAdmin: r.loyaltyAllowedByAdmin,
     loyaltyEnabled: r.loyaltyEnabled,
     promotionsAllowedByAdmin: r.promotionsAllowedByAdmin,
@@ -170,6 +171,16 @@ export class DrizzleShopRepository implements IShopRepository {
       .set({ selfService: on })
       .where(eq(schema.shops.id, id))
       .returning();
+    return toShop(r);
+  }
+
+  async setMenuOptionsAllowedByAdmin(id: string, on: boolean): Promise<Shop> {
+    const [r] = await db
+      .update(schema.shops)
+      .set({ menuOptionsAllowedByAdmin: on })
+      .where(eq(schema.shops.id, id))
+      .returning();
+    if (!r) throw new Error("ไม่พบร้านค้า");
     return toShop(r);
   }
 

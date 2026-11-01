@@ -1,5 +1,6 @@
 "use client";
 
+import { formatOrderLineOptions } from "@/src/domain/services/menu-options";
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -250,8 +251,15 @@ export function OrderCard({
             key={it.id}
             className="flex items-center justify-between gap-2 text-sm text-foreground"
           >
-            <span className="min-w-0 truncate">
-              {it.nameSnapshot} ×{it.quantity}
+            <span className="min-w-0">
+              <span className="block truncate">
+                {it.nameSnapshot} ×{it.quantity}
+              </span>
+              {it.options?.length > 0 && (
+                <span className="block text-xs text-muted" data-testid="order-line-options">
+                  {formatOrderLineOptions(it.options)}
+                </span>
+              )}
             </span>
             <span className="shrink-0 text-muted">
               {satangToBaht(it.lineTotalSatang)}

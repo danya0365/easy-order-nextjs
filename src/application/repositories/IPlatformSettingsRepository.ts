@@ -9,6 +9,8 @@ export interface UpdatePlatformSettingsInput {
   dailyOrderThreshold?: number;
   dailyFeeSatang?: number;
   defaultCutoffTime?: string;
+  menuOptionsEnabled?: boolean;
+  itemDetailEnabled?: boolean;
 }
 
 /**

@@ -7,6 +7,7 @@ import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { AdminShopContactForm } from "@/src/presentation/components/admin/AdminShopContactForm";
+import { ShopMenuOptionsToggle } from "@/src/presentation/components/admin/ShopMenuOptionsToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,10 @@ export default async function AdminShopConfigPage({ params }: { params: Promise<
   const t = await getTranslations("adminConfig");
   const shop = await container.shopRepository.findById(shopId);
   if (!shop) notFound();
-  const profile = await container.shopProfileRepository.get(shopId);
+  const [profile, settings] = await Promise.all([
+    container.shopProfileRepository.get(shopId),
+    container.platformSettingsRepository.get(),
+  ]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -41,6 +45,14 @@ export default async function AdminShopConfigPage({ params }: { params: Promise<
           promptpayTarget={shop.promptpayTarget}
           lineUrl={profile?.lineUrl ?? null}
           facebookUrl={profile?.facebookUrl ?? null}
+        />
+      </Card>
+      <Card>
+        <CardHeader title={t("shopFeaturesTitle")} />
+        <ShopMenuOptionsToggle
+          shopId={shop.id}
+          allowed={shop.menuOptionsAllowedByAdmin}
+          platformEnabled={settings.menuOptionsEnabled}
         />
       </Card>
     </div>

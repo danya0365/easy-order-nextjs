@@ -8,6 +8,7 @@ export * from "./lead-visit-logs";
 export * from "./branches";
 export * from "./menu-categories";
 export * from "./menu-items";
+export * from "./menu-options";
 export * from "./customers";
 export * from "./customer-devices";
 export * from "./bind-codes";

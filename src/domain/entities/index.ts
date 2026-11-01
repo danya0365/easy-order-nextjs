@@ -206,6 +206,8 @@ export interface Shop {
   /** Minimum subtotal (satang) for an online order; null = no minimum. */
   minOrderSatang: number | null;
   /** Platform admin allow-list for the loyalty module. */
+  /** Admin per-shop switch for menu options (effective = platform switch && this). */
+  menuOptionsAllowedByAdmin: boolean;
   loyaltyAllowedByAdmin: boolean;
   /** Shop toggle for loyalty. Effective = allowed && enabled. */
   loyaltyEnabled: boolean;
@@ -324,6 +326,37 @@ export interface OrderItem {
   unitPriceSatang: number;
   quantity: number;
   lineTotalSatang: number;
+  /** Chosen options snapshot (empty when none). Already included in unitPriceSatang. */
+  options: OrderLineOption[];
+}
+
+/** Snapshot of one chosen option on an order line. */
+export interface OrderLineOption {
+  group: string;
+  choice: string;
+  priceDeltaSatang: number;
+}
+
+/** Option group (modifier) on a menu item, with its choices. */
+export interface MenuOptionGroup {
+  id: string;
+  shopId: string;
+  menuItemId: string;
+  name: string;
+  isRequired: boolean;
+  minSelect: number;
+  maxSelect: number;
+  sortOrder: number;
+  choices: MenuOptionChoice[];
+}
+
+export interface MenuOptionChoice {
+  id: string;
+  groupId: string;
+  name: string;
+  priceDeltaSatang: number;
+  isAvailable: boolean;
+  sortOrder: number;
 }
 
 export interface Order {
@@ -434,6 +467,10 @@ export interface PlatformSettings {
   dailyFeeSatang: number;
   /** "HH:MM" Asia/Bangkok. */
   defaultCutoffTime: string;
+  /** Feature switch: menu options/add-ons (also needs per-shop admin allow). Default off. */
+  menuOptionsEnabled: boolean;
+  /** Feature switch: menu item detail sheet. Default on. */
+  itemDetailEnabled: boolean;
   updatedAt: string;
 }
 

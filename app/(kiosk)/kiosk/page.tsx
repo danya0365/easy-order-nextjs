@@ -5,6 +5,7 @@ import { MonitorOff } from "lucide-react";
 import { getKioskShopId, endKioskSession } from "@/src/infrastructure/auth/kiosk";
 import { container } from "@/src/infrastructure/di/container";
 import { GetKioskMenuUseCase } from "@/src/application/use-cases/menu/GetKioskMenuUseCase";
+import { loadOrderingExtras } from "@/src/application/use-cases/menu/MenuOptionUseCases";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { KioskOrdering } from "@/src/presentation/components/kiosk/KioskOrdering";
@@ -49,8 +50,19 @@ export default async function KioskPage() {
     ).execute(shopId),
   ]);
 
+  const extras = shop
+    ? await loadOrderingExtras(
+        container.platformSettingsRepository,
+        container.menuOptionRepository,
+        shop,
+        sections.flatMap((sec) => sec.items.map((i) => i.id)),
+      )
+    : { optionGroups: null, itemDetailEnabled: false };
+
   return (
     <KioskOrdering
+      optionGroups={extras.optionGroups}
+      itemDetailEnabled={extras.itemDetailEnabled}
       sections={sections}
       hasPromptpay={!!shop?.promptpayTarget}
       shopName={shop?.name ?? ""}

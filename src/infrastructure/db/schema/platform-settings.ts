@@ -25,5 +25,9 @@ export const platformSettings = sqliteTable("platform_settings", {
   dailyFeeSatang: integer().notNull().default(500),
   /** Business-day cutoff "HH:MM" Asia/Bangkok (per-shop override on shops). */
   defaultCutoffTime: text().notNull().default("04:00"),
+  /** Feature switch: menu options/add-ons platform-wide (still needs per-shop allow). */
+  menuOptionsEnabled: integer({ mode: "boolean" }).notNull().default(false),
+  /** Feature switch: tap a menu item to open the detail sheet (default on). */
+  itemDetailEnabled: integer({ mode: "boolean" }).notNull().default(true),
   updatedAt: updatedAt(),
 });
