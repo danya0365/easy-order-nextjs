@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { QrCode, ShoppingBag } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -12,6 +12,7 @@ import { GetKioskMenuUseCase } from "@/src/application/use-cases/menu/GetKioskMe
 import { loadOrderingExtras } from "@/src/application/use-cases/menu/MenuOptionUseCases";
 import { Card } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
+import { OrderQrGate } from "@/src/presentation/components/order/OrderQrGate";
 import { OnlineOrdering } from "@/src/presentation/components/order/OnlineOrdering";
 
 export const dynamic = "force-dynamic";
@@ -105,21 +106,13 @@ export default async function OnlineOrderPage({
   const orderAccess = await getOrderAccess(slug);
   if (!orderAccess || orderAccess.shopId !== shop.id) {
     return (
-      <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 px-4 py-10">
-        <EmptyState
-          icon={<QrCode className="size-10 text-muted" />}
-          title={t("onlineOrderNeedQrTitle")}
-          description={t("onlineOrderNeedQrDesc")}
-        />
-        <Card>
-          <Link
-            href={`/s/${slug}`}
-            className="block rounded-xl bg-brand-500 px-4 py-3 text-center text-sm font-semibold text-on-brand transition hover:bg-brand-600"
-          >
-            {t("onlineOrderBackToShop")}
-          </Link>
-        </Card>
-      </main>
+      <OrderQrGate
+        slug={slug}
+        title={t("orderGateTitle")}
+        description={t("orderGateDesc")}
+        menuLabel={t("orderGateMenu")}
+        bookLabel={t("orderGateBook")}
+      />
     );
   }
 
