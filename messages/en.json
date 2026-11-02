@@ -762,5 +762,13 @@
     "contact": "Still stuck? Contact the admin: More → Contact admin",
     "updated": "Guide updated {date}",
     "open": "Open guides"
+  },
+  "publicMenu": {
+    "compactTitle": "One-page menu print",
+    "compactDesc": "All available items on 1–2 sheets for laminated table menus — font size auto-fits the page",
+    "previewTitle": "One-page menu preview",
+    "showPreview": "Show preview",
+    "printNow": "Print",
+    "openPreview": "Open full preview"
   }
 }

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
+import { emitMenuBulkPatch } from "./menu-bulk-sync";
 import {
   CheckCheck,
   ChevronLeft,
@@ -132,6 +133,7 @@ export function MenuBulkList({
 
   /** Apply an action result locally (instant feedback, no page refresh). */
   const patch = (after?: BulkSnapshot[], deletedIds?: string[]) => {
+    emitMenuBulkPatch({ after, deletedIds });
     const upd = new Map((after ?? []).map((a) => [a.id, a]));
     const gone = new Set(deletedIds ?? []);
     const fix = (i: BulkListItem): BulkListItem => {
