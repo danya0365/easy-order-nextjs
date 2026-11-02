@@ -9,7 +9,9 @@ export function MenuListSkeleton() {
       <section className="overflow-hidden rounded-2xl bg-card ring-1 ring-border">
         <Skeleton className="h-36 w-full rounded-none sm:h-48" />
         <div className="flex items-start gap-3 px-4 pb-4">
-          <Skeleton className="relative z-10 -mt-9 size-20 shrink-0 rounded-full ring-4 ring-card" />
+          <div className="relative z-10 -mt-9 size-20 shrink-0 overflow-hidden rounded-full bg-card ring-4 ring-card">
+            <Skeleton className="size-full" />
+          </div>
           <div className="flex flex-1 flex-col gap-2 pt-3">
             <Skeleton className="h-6 w-3/4" />
             <Skeleton className="h-4 w-full" />
@@ -119,7 +121,9 @@ export function ListSkeleton({ hero = false }: { hero?: boolean }) {
         <div className="overflow-hidden rounded-2xl ring-1 ring-border">
           <Skeleton className="h-40 w-full rounded-none" />
           <div className="flex flex-col items-center gap-2 px-4 pb-5">
-            <Skeleton className="-mt-12 size-24 rounded-full" />
+            <div className="-mt-12 size-24 overflow-hidden rounded-full bg-card ring-4 ring-card">
+              <Skeleton className="size-full" />
+            </div>
             <Skeleton className="h-6 w-40" />
           </div>
         </div>
