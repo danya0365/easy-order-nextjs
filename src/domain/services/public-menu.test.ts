@@ -99,3 +99,11 @@ test("publicMenuUrl: plain static URL, optional book view, no token", () => {
   assert.equal(publicMenuUrl("https://x.site", "a b"), "https://x.site/s/a%20b/menu");
   assert.ok(!publicMenuUrl("https://x.site", "s").includes("?t="));
 });
+
+test("menuListHref: cat + page, defaults omitted", async () => {
+  const { menuListHref } = await import("./public-menu");
+  assert.equal(menuListHref("demo", null, 1), "/s/demo/menu");
+  assert.equal(menuListHref("demo", "c1", 1), "/s/demo/menu?cat=c1");
+  assert.equal(menuListHref("demo", "c1", 2), "/s/demo/menu?cat=c1&page=2");
+  assert.equal(menuListHref("demo", null, 3), "/s/demo/menu?page=3");
+});

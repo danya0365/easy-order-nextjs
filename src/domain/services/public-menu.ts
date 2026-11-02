@@ -134,3 +134,12 @@ export function publicMenuUrl(baseUrl: string, slug: string, view: MenuView = "n
   const path = `${base}/s/${encodeURIComponent(slug)}/menu`;
   return view === "book" ? `${path}?view=book` : path;
 }
+
+/** List-view URL for a category filter + page (`?cat=&page=`; defaults omitted). */
+export function menuListHref(slug: string, cat: string | null, page: number): string {
+  const q = new URLSearchParams();
+  if (cat) q.set("cat", cat);
+  if (page > 1) q.set("page", String(page));
+  const s = q.toString();
+  return `/s/${slug}/menu${s ? `?${s}` : ""}`;
+}
