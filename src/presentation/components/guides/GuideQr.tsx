@@ -5,7 +5,7 @@ import { Printer } from "lucide-react";
 
 /** QR rendered client-side (no server CPU); deep-links to the guide's target page. */
 export function GuideQr({ url, alt, size = "md" }: { url: string; alt: string; size?: "md" | "lg" }) {
-  const cls = size === "lg" ? "size-56 print:size-[62mm]" : "size-32 print:size-[34mm]";
+  const cls = size === "lg" ? "size-56 print:size-[50mm]" : "size-32 print:size-[34mm]";
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
