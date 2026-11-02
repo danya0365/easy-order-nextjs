@@ -5,7 +5,7 @@
  * logged-out scans go through /login?next=… and come back (see safe-next.ts).
  */
 export type GuideText = { th: string; en: string };
-export type GuideAudience = "owner" | "staff";
+export type GuideAudience = "owner" | "staff" | "customer";
 export type GuideStep = { image?: string; text: GuideText };
 export type ShopGuide = {
   slug: string;
@@ -13,6 +13,8 @@ export type ShopGuide = {
   purpose: GuideText;
   audience: GuideAudience[];
   targetPath: string;
+  /** "order-enter": QR is the shop's HMAC order-claim link (/s/<slug>/enter?t=…), minted per render. */
+  qr?: "order-enter";
   updated: string; // YYYY-MM-DD
   steps: GuideStep[];
   tips: GuideText[];
@@ -105,6 +107,31 @@ export const SHOP_GUIDES: ShopGuide[] = [
     tips: [
       { th: "โปรไม่ขึ้นหน้าร้าน? ตรวจว่าสถานะ “เปิดอยู่” และอยู่ในช่วงวันที่", en: "Not showing? Check it is active and within its dates." },
       { th: "รูปต้องเป็นลิงก์ https เท่านั้น", en: "Image must be an https link." },
+    ],
+  },
+  {
+    slug: "customer-order",
+    title: { th: "วิธีสั่งอาหาร", en: "How to order" },
+    purpose: {
+      th: "สแกน QR แล้วสั่งอาหารจากมือถือของคุณได้เลย",
+      en: "Scan the QR and order from your own phone",
+    },
+    audience: ["customer"],
+    targetPath: "/s/[slug]/enter",
+    qr: "order-enter",
+    updated: "2026-11-02",
+    steps: [
+      { image: "/guides/order-1.png", text: { th: "สแกน QR นี้ด้วยกล้องมือถือ จะเข้าหน้าสั่งอาหารของร้าน", en: "Scan this QR with your phone camera to open the order page." } },
+      { image: "/guides/order-2.png", text: { th: "เลือกหมวดด้านบน เพื่อดูเมนูที่ต้องการ", en: "Pick a category to browse the menu." } },
+      { image: "/guides/order-3.png", text: { th: "แตะเมนู เลือกตัวเลือก (ถ้ามี) แล้วกด “ใส่ตะกร้า”", en: "Tap a dish, choose options, add to cart." } },
+      { image: "/guides/order-4.png", text: { th: "ตรวจจำนวนและยอดรวมในตะกร้า แถบด้านล่าง (กด + / − เพื่อแก้)", en: "Check items and total in the cart bar (use + / −)." } },
+      { image: "/guides/order-5.png", text: { th: "กรอกข้อมูลที่ขอ (ถ้ามี) แล้วกด “เปิดออเดอร์” เพื่อส่งให้ร้าน", en: "Fill in any requested details, then tap “Place order”." } },
+      { image: "/guides/order-6.png", text: { th: "สั่งแล้วจะเห็นเลขออเดอร์และสถานะ ดูย้อนหลังที่ “ออเดอร์ของฉัน”", en: "See your order number and status; history is under “My orders”." } },
+    ],
+    tips: [
+      { th: "สแกนแล้วไม่เปิด? เปิดอินเทอร์เน็ต แล้วสแกนใหม่ด้วยกล้องมือถือ", en: "QR won’t open? Turn on internet and scan again with the camera." },
+      { th: "เมนูขึ้นว่า “หมด” = สั่งไม่ได้ตอนนี้ เลือกเมนูอื่นแทน", en: "Item shows “Sold out”? Please choose another dish." },
+      { th: "สั่งไม่ได้ หรือต้องการแก้ออเดอร์? เรียกพนักงานได้เลย", en: "Can’t order or need to change it? Call our staff." },
     ],
   },
 ];
