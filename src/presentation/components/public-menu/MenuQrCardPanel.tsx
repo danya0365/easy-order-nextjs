@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BookOpen, Check, Download, Image as ImageIcon, LayoutGrid, Link2, Printer, QrCode } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useReactToPrint } from "react-to-print";
@@ -21,9 +21,46 @@ import { exportPosterPng } from "@/src/presentation/lib/poster-export";
 
 export interface MenuQrSeed {
   shopName: string;
-  logoDataUrl: string | null;
-  normal: { url: string; qrDataUrl: string };
-  book: { url: string; qrDataUrl: string };
+  /** Public image URL of the shop logo; inlined client-side as a data URL. */
+  logoUrl: string | null;
+  normal: { url: string };
+  book: { url: string };
+}
+
+/**
+ * QR images + logo are produced in the BROWSER (lazily) instead of on the
+ * server render: two server-side QR renders + a base64 logo on every
+ * /shop/menu request were a large share of the Worker's CPU budget.
+ */
+function useQrAssets(seed: MenuQrSeed) {
+  const [qr, setQr] = useState<{ normal: string; book: string } | null>(null);
+  const [logo, setLogo] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void import("qrcode").then(async (m) => {
+      const QR = m.default ?? m;
+      const [normal, book] = await Promise.all([
+        QR.toDataURL(seed.normal.url, { margin: 1, width: 256 }),
+        QR.toDataURL(seed.book.url, { margin: 1, width: 256 }),
+      ]);
+      if (alive) setQr({ normal, book });
+    });
+    if (seed.logoUrl) {
+      void fetch(seed.logoUrl)
+        .then((r) => (r.ok ? r.blob() : null))
+        .then((b) => {
+          if (!b) return;
+          const fr = new FileReader();
+          fr.onload = () => alive && setLogo(String(fr.result));
+          fr.readAsDataURL(b);
+        })
+        .catch(() => {});
+    }
+    return () => {
+      alive = false;
+    };
+  }, [seed.normal.url, seed.book.url, seed.logoUrl]);
+  return { qr, logo };
 }
 
 /**
@@ -44,6 +81,7 @@ export function MenuQrCardPanel({ seed }: { seed: MenuQrSeed }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const { qr, logo } = useQrAssets(seed);
   const printRef = useRef<HTMLDivElement>(null);
   const target = seed[view];
   const fileName = `menu-qr-${seed.shopName}`;
@@ -54,8 +92,8 @@ export function MenuQrCardPanel({ seed }: { seed: MenuQrSeed }) {
   });
   const card = {
     shopName: seed.shopName,
-    qrDataUrl: target.qrDataUrl,
-    logoDataUrl: seed.logoDataUrl,
+    qrDataUrl: qr?.[view] ?? "",
+    logoDataUrl: logo,
     caption: caption.trim() || t("qrCaptionDefault"),
     subtitle: subtitle.trim() || undefined,
     qrAlt: t("qrAlt"),
@@ -150,7 +188,7 @@ export function MenuQrCardPanel({ seed }: { seed: MenuQrSeed }) {
             </div>
           </div>
           <label className="inline-flex items-center gap-2 text-sm text-foreground">
-            <input type="checkbox" checked={showLogo} disabled={!seed.logoDataUrl} onChange={(e) => setShowLogo(e.target.checked)} />
+            <input type="checkbox" checked={showLogo} disabled={!logo} onChange={(e) => setShowLogo(e.target.checked)} />
             <ImageIcon className="size-4" /> {tp("cardShowLogo")}
           </label>
           <label className="inline-flex items-center gap-2 text-sm text-foreground">
@@ -161,7 +199,7 @@ export function MenuQrCardPanel({ seed }: { seed: MenuQrSeed }) {
 
         <div className="flex flex-col items-center gap-3">
           <div className="flex w-full justify-center rounded-xl bg-muted-surface p-4">
-            <QrCardPreview {...card} cardRef={previewRef} displayWidth={300} />
+            {qr ? <QrCardPreview {...card} cardRef={previewRef} displayWidth={300} /> : <div className="h-[300px] w-[300px] animate-pulse rounded-lg bg-muted-surface" />}
           </div>
           <div className="flex flex-wrap justify-center gap-2">
             <Button variant="outline" disabled={busy} onClick={download}>
@@ -176,7 +214,7 @@ export function MenuQrCardPanel({ seed }: { seed: MenuQrSeed }) {
       </div>
 
       <div style={{ display: "none" }}>
-        <QrPrintCard ref={printRef} {...card} />
+        {qr && <QrPrintCard ref={printRef} {...card} />}
       </div>
     </section>
   );
