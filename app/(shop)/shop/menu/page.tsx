@@ -5,6 +5,8 @@ import { getTranslations } from "next-intl/server";
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { MenuManager } from "@/src/presentation/components/menu/MenuManager";
+import { MenuBulkList } from "@/src/presentation/components/menu/MenuBulkList";
+import { parseBulkQuery } from "@/src/domain/services/menu-bulk";
 import { getBaseUrl } from "@/src/presentation/lib/base-url";
 import { CopyLinkButton } from "@/src/presentation/components/public-menu/CopyLinkButton";
 import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
@@ -15,8 +17,13 @@ import { isMenuOptionsEnabledForShop } from "@/src/application/use-cases/menu/Me
 
 export const dynamic = "force-dynamic";
 
-export default async function ShopMenuPage() {
-  const { shopId } = await requireShopAccess();
+export default async function ShopMenuPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  const { shopId, user } = await requireShopAccess();
+  const sp = await searchParams;
   const t = await getTranslations("shopPages");
   const tMenu = await getTranslations("publicMenu");
   const shop = await container.shopRepository.findById(shopId);
@@ -82,6 +89,22 @@ export default async function ShopMenuPage() {
       )}
       {qrSeed && <MenuQrCardPanel seed={qrSeed} />}
       {menuPath && <CompactPreviewCard path={`${menuPath}/print`} />}
+      <MenuBulkList
+        items={items.map((i) => ({
+          id: i.id,
+          shopId: i.shopId,
+          name: i.name,
+          description: i.description ?? null,
+          categoryId: i.categoryId,
+          priceSatang: i.priceSatang,
+          isAvailable: i.isAvailable,
+          isRecommended: i.isRecommended,
+        }))}
+        categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+        initialQuery={parseBulkQuery(sp)}
+        initialOpen={sp.bulk === "1"}
+        role={user.role}
+      />
       <MenuManager categories={categories} items={items} optionGroups={optionGroups} />
     </div>
   );

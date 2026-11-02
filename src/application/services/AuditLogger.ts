@@ -70,6 +70,8 @@ export const AUDIT_ACTIONS = {
   shopFeatureToggledByAdmin: "shop_feature_toggled_by_admin",
   demoDataSeeded: "demo_data_seeded",
   demoDataCleared: "demo_data_cleared",
+  menuBulkUpdated: "menu_bulk_updated",
+  menuBulkUndone: "menu_bulk_undone",
 } as const;
 
 /**
