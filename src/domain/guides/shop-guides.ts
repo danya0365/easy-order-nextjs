@@ -5,7 +5,7 @@
  * logged-out scans go through /login?next=… and come back (see safe-next.ts).
  */
 export type GuideText = { th: string; en: string };
-export type GuideAudience = "owner" | "staff";
+export type GuideAudience = "owner" | "staff" | "customer";
 export type GuideStep = { image?: string; text: GuideText };
 export type ShopGuide = {
   slug: string;
@@ -13,6 +13,8 @@ export type ShopGuide = {
   purpose: GuideText;
   audience: GuideAudience[];
   targetPath: string;
+  /** "order-enter": QR is the shop's HMAC order-claim link (/s/<slug>/enter?t=…), minted per render. */
+  qr?: "order-enter";
   updated: string; // YYYY-MM-DD
   steps: GuideStep[];
   tips: GuideText[];
@@ -105,6 +107,55 @@ export const SHOP_GUIDES: ShopGuide[] = [
     tips: [
       { th: "โปรไม่ขึ้นหน้าร้าน? ตรวจว่าสถานะ “เปิดอยู่” และอยู่ในช่วงวันที่", en: "Not showing? Check it is active and within its dates." },
       { th: "รูปต้องเป็นลิงก์ https เท่านั้น", en: "Image must be an https link." },
+    ],
+  },
+  {
+    slug: "manage-orders",
+    title: { th: "จัดการออเดอร์ลูกค้า ตั้งแต่ต้นจนจบ", en: "Handle customer orders, start to finish" },
+    purpose: {
+      th: "รับออเดอร์ใหม่ เลื่อนสถานะ ส่งให้ลูกค้า/ไรเดอร์ รับเงิน และยกเลิกเมื่อจำเป็น",
+      en: "Take new orders, move them through statuses, hand off, take payment and cancel when needed",
+    },
+    audience: ["owner", "staff"],
+    targetPath: "/shop/orders",
+    updated: "2026-11-02",
+    steps: [
+      { image: "/guides/orders-1.png", text: { th: "ออเดอร์ใหม่เข้าแท็บ “ออเดอร์” (คิวออเดอร์) ในกลุ่ม “รอรับ” — หน้าอัปเดตเองทุก 15 วินาที กด “รีเฟรช” ได้ และมีแจ้งเตือนที่ไอคอนกระดิ่ง (ไม่มีเสียง)", en: "New orders land in Orders → “Pending”; the page refreshes every 15 s (or tap Refresh) and the bell shows a notification (no sound)." } },
+      { image: "/guides/orders-2.png", text: { th: "อ่านการ์ด: เลขออเดอร์ #, ช่องทาง (kiosk/เคาน์เตอร์/ออนไลน์), ทานที่ร้าน/รับเอง/ส่งถึงบ้าน, จ่ายแล้วหรือยัง, รายการและหมายเหตุ", en: "Read the card: order #, channel, dine-in/pickup/delivery, paid or not, items and notes." } },
+      { image: "/guides/orders-3.png", text: { th: "กด “เริ่มทำ” (→ กำลังทำ) ทำเสร็จกด “พร้อมเสิร์ฟ” เรียกเลข # ส่งให้ลูกค้า แล้วกด “เสร็จสิ้น” — ย้อนสถานะไม่ได้", en: "Tap “Start” (→ Preparing), then “Ready”, call the # and hand over, then “Complete”. Statuses can’t go back." } },
+      { image: "/guides/orders-4.png", text: { th: "ส่งถึงบ้าน: กด “มอบหมาย” ที่ไรเดอร์ (เปลี่ยนได้จนกว่าไรเดอร์รับของ) ไรเดอร์อัปเดตในลิงก์ของตัวเอง เมื่อ “ส่งถึงแล้ว” ออเดอร์จะเสร็จสิ้นเอง", en: "Delivery: tap “Assign” on a rider (changeable until pickup). When the rider marks delivered, the order completes itself." } },
+      { image: "/guides/orders-5.png", text: { th: "ได้รับเงิน (สแกน QR หรือเงินสด) แล้วกด “ยืนยันรับเงิน” — เก็บเงินปลายทางที่ไรเดอร์กดรับแล้ว ระบบตั้งเป็นจ่ายแล้วให้เอง", en: "After receiving payment (QR or cash) tap “Confirm payment”; rider-collected COD is marked paid automatically." } },
+      { image: "/guides/orders-6.png", text: { th: "ยกเลิก: กด “ยกเลิก” ใส่เหตุผล แล้วกด “ยกเลิกออเดอร์” (กู้คืนไม่ได้, ทำได้ก่อนเสร็จสิ้นเท่านั้น) — ออเดอร์ที่ปิดแล้วดูได้ใน “ประวัติออเดอร์”", en: "Cancel: tap “Cancel”, enter a reason, confirm (irreversible, only before Complete). Closed orders are in Order history." } },
+    ],
+    tips: [
+      { th: "ออเดอร์ไม่ขึ้น? กด “รีเฟรช” ตรวจว่าเปิดรับสั่งออนไลน์ และลูกค้าสแกน QR สั่งอาหารของร้านแล้ว", en: "Order missing? Tap Refresh; check online ordering is on and the customer scanned the shop’s order QR." },
+      { th: "สั่งผิด/ลูกค้าเปลี่ยนใจ: แก้รายการในออเดอร์ไม่ได้ — ยกเลิกพร้อมเหตุผล แล้ว “เปิดออเดอร์” ใหม่ให้", en: "Wrong order: items can’t be edited — cancel with a reason and open a new order." },
+      { th: "ลูกค้าถามสถานะ: ดูจากเลข # ในคิว ลูกค้าออนไลน์ดูเองได้ที่ “ออเดอร์ของฉัน”", en: "Customer asks for status: find their # in the queue; online customers can check “My orders”." },
+    ],
+  },
+  {
+    slug: "customer-order",
+    title: { th: "วิธีสั่งอาหาร", en: "How to order" },
+    purpose: {
+      th: "สแกน QR แล้วสั่งอาหารจากมือถือของคุณได้เลย",
+      en: "Scan the QR and order from your own phone",
+    },
+    audience: ["customer"],
+    targetPath: "/s/[slug]/enter",
+    qr: "order-enter",
+    updated: "2026-11-02",
+    steps: [
+      { image: "/guides/order-1.png", text: { th: "สแกน QR นี้ด้วยกล้องมือถือ จะเข้าหน้าสั่งอาหารของร้าน", en: "Scan this QR with your phone camera to open the order page." } },
+      { image: "/guides/order-2.png", text: { th: "เลือกหมวดด้านบน เพื่อดูเมนูที่ต้องการ", en: "Pick a category to browse the menu." } },
+      { image: "/guides/order-3.png", text: { th: "แตะเมนู เลือกตัวเลือก (ถ้ามี) แล้วกด “ใส่ตะกร้า”", en: "Tap a dish, choose options, add to cart." } },
+      { image: "/guides/order-4.png", text: { th: "ตรวจจำนวนและยอดรวมในตะกร้า แถบด้านล่าง (กด + / − เพื่อแก้)", en: "Check items and total in the cart bar (use + / −)." } },
+      { image: "/guides/order-5.png", text: { th: "กรอกข้อมูลที่ขอ (ถ้ามี) แล้วกด “เปิดออเดอร์” เพื่อส่งให้ร้าน", en: "Fill in any requested details, then tap “Place order”." } },
+      { image: "/guides/order-6.png", text: { th: "สั่งแล้วจะเห็นเลขออเดอร์และสถานะ ดูย้อนหลังที่ “ออเดอร์ของฉัน”", en: "See your order number and status; history is under “My orders”." } },
+    ],
+    tips: [
+      { th: "สแกนแล้วไม่เปิด? เปิดอินเทอร์เน็ต แล้วสแกนใหม่ด้วยกล้องมือถือ", en: "QR won’t open? Turn on internet and scan again with the camera." },
+      { th: "เมนูขึ้นว่า “หมด” = สั่งไม่ได้ตอนนี้ เลือกเมนูอื่นแทน", en: "Item shows “Sold out”? Please choose another dish." },
+      { th: "สั่งไม่ได้ หรือต้องการแก้ออเดอร์? เรียกพนักงานได้เลย", en: "Can’t order or need to change it? Call our staff." },
     ],
   },
 ];
