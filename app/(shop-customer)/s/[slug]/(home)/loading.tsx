@@ -3,7 +3,7 @@ import { Skeleton } from "@/src/presentation/components/ui/Skeleton";
 
 export default function Loading() {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-8">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-8" data-route-skeleton="home">
       {/* Hero */}
       <div className="overflow-hidden rounded-2xl ring-1 ring-border">
         <Skeleton className="h-40 w-full" />

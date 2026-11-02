@@ -14,6 +14,7 @@ import { Card } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { OrderQrGate } from "@/src/presentation/components/order/OrderQrGate";
 import { OnlineOrdering } from "@/src/presentation/components/order/OnlineOrdering";
+import { shopBySlug } from "@/src/infrastructure/request/shop-lookups";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const shop = await container.shopRepository.findBySlug(slug);
+  const shop = await shopBySlug(slug);
   const t = await getTranslations("publicPages");
   return { title: shop ? t("onlineOrderMetaTitle", { name: shop.name }) : t("metaShopNotFound") };
 }
@@ -36,7 +37,7 @@ export default async function OnlineOrderPage({
   const { slug } = await params;
   const t = await getTranslations("publicPages");
 
-  const shop = await container.shopRepository.findBySlug(slug);
+  const shop = await shopBySlug(slug);
   if (!shop) notFound();
 
   if (!shop.onlineOrderingEnabled) {

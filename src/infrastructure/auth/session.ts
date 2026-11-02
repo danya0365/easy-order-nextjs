@@ -3,6 +3,7 @@ import "server-only";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { requestMemo } from "@/src/infrastructure/request/request-memo";
 import { container } from "@/src/infrastructure/di/container";
 import { isProd } from "@/src/infrastructure/config/env";
 import type { KnownAccount, User } from "@/src/domain/entities";
@@ -29,8 +30,12 @@ const ACCOUNTS_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 export async function getSession(): Promise<User | null> {
   const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return null;
-  const result = await container.sessionRepository.findValid(token, new Date());
-  return result?.user ?? null;
+  // Keyed by token: layout probe + render + page share ONE session lookup per
+  // request; a login/logout in the same request changes the token → fresh read.
+  return requestMemo(`session:${token}`, async () => {
+    const result = await container.sessionRepository.findValid(token, new Date());
+    return result?.user ?? null;
+  });
 }
 
 /**

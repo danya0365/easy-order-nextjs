@@ -52,8 +52,26 @@ export function ShopNavPending({ slug }: { slug: string }) {
     return () => window.clearTimeout(id);
   }, [pending]);
 
-  // Route committed (pathname moved off the page we tapped from) → hide.
-  if (!pending || pending.from !== pathname) return null;
+  // Route committed (pathname moved off the page we tapped from). If the server
+  // route skeleton (loading.tsx, [data-route-skeleton]) is still streaming,
+  // keep the overlay — it already shows the optimistic name/image/price — and
+  // hide only once the real page replaced that skeleton. No double skeleton.
+  const committed = !!pending && pending.from !== pathname;
+  useEffect(() => {
+    if (!committed) return;
+    const done = () => {
+      if (!document.querySelector("[data-route-skeleton]")) setPending(null);
+    };
+    const id = window.setTimeout(done, 0);
+    const mo = new MutationObserver(done);
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      window.clearTimeout(id);
+      mo.disconnect();
+    };
+  }, [committed]);
+
+  if (!pending) return null;
   let body: React.ReactNode;
   switch (pending.kind) {
     case "menu": body = <MenuListSkeleton />; break;

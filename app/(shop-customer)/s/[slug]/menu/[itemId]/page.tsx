@@ -1,35 +1,28 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { cache } from "react";
 import { ArrowLeft, BookOpen, QrCode, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
 import { getOrderAccess } from "@/src/infrastructure/auth/order-access";
-import { GetPublicMenuItemUseCase } from "@/src/application/use-cases/menu/GetPublicMenuItemUseCase";
 import { loadOrderingExtras } from "@/src/application/use-cases/menu/MenuOptionUseCases";
 import { menuImageSrc } from "@/src/presentation/lib/menu-image";
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { MenuPrintButton } from "@/src/presentation/components/public-menu/MenuPrintButton";
-import { loadPublicMenuShop } from "../load-menu";
+import { loadPublicMenuItem, loadPublicMenuShop } from "../load-menu";
 
 export const dynamic = "force-dynamic";
 
 type Params = Promise<{ slug: string; itemId: string }>;
 
-const loadItem = cache((shopId: string, itemId: string) =>
-  new GetPublicMenuItemUseCase(container.menuCategoryRepository, container.menuItemRepository).execute(shopId, itemId),
-);
-
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug, itemId } = await params;
   const data = await loadPublicMenuShop(slug);
-  // The shop-home skeleton (loading.tsx) lives in s/[slug]/(home)/ so it does
-  // NOT wrap this route in a Suspense boundary — otherwise a 200 is committed
-  // before notFound() runs and the not-found UI ships with status 200.
+  // 404s are decided in ./layout.tsx (vinext probes layouts before streaming),
+  // so ./loading.tsx can stream a skeleton without turning them into soft 404s.
   if (!data) notFound();
-  const [found, t] = await Promise.all([loadItem(data.shop.id, itemId), getTranslations("publicMenu")]);
+  const [found, t] = await Promise.all([loadPublicMenuItem(data.shop.id, itemId), getTranslations("publicMenu")]);
   if (!found) notFound();
   return { title: t("metaItemTitle", { item: found.item.name, name: data.shop.name }) };
 }
@@ -40,7 +33,7 @@ export default async function PublicMenuItemPage({ params }: { params: Params })
   const data = await loadPublicMenuShop(slug);
   if (!data) notFound();
   const { shop } = data;
-  const found = await loadItem(shop.id, itemId);
+  const found = await loadPublicMenuItem(shop.id, itemId);
   if (!found) notFound();
   const { item, category } = found;
   const [t, extras, orderAccess] = await Promise.all([

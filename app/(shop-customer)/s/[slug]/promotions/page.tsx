@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { container } from "@/src/infrastructure/di/container";
 import { isPromotionsEffective } from "@/src/domain/services/promotions-gates";
 import { CustomerPromotionsPanel } from "@/src/presentation/components/promotions/CustomerPromotionsPanel";
+import { shopBySlug } from "@/src/infrastructure/request/shop-lookups";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const shop = await container.shopRepository.findBySlug(slug);
+  const shop = await shopBySlug(slug);
   const t = await getTranslations("promotions");
   return {
     title: shop ? `${t("customerTitle")} · ${shop.name}` : t("customerTitle"),
@@ -28,7 +29,7 @@ export default async function ShopCustomerPromotionsPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const shop = await container.shopRepository.findBySlug(slug);
+  const shop = await shopBySlug(slug);
   if (!shop || !isPromotionsEffective(shop)) notFound();
 
   const all = await container.shopPromotionRepository.listByShop(shop.id, {
