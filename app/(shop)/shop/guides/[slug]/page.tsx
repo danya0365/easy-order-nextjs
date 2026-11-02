@@ -136,7 +136,7 @@ export default async function ShopGuideDetailPage({
                   <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-500 text-base font-bold text-white">
                     {i + 1}
                   </span>
-                  <p className="text-base font-semibold leading-snug print:text-[12.5pt]">
+                  <p className="text-base font-semibold leading-snug print:text-[12pt]">
                     {s.text[lang]}
                   </p>
                 </div>
@@ -145,7 +145,7 @@ export default async function ShopGuideDetailPage({
                   <img
                     src={s.image}
                     alt=""
-                    className="w-full rounded-lg border border-neutral-200 object-cover object-top print:h-[40mm]"
+                    className="w-full rounded-lg border border-neutral-200 object-cover object-top print:h-[33mm]"
                   />
                 )}
               </li>
