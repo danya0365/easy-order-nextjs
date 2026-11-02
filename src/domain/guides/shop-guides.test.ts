@@ -4,9 +4,9 @@ import { SHOP_GUIDES, findGuide, pageGuides } from "./shop-guides";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
-test("has 5 guides with 3-6 steps, 2-3 tips, unique slugs, existing images", () => {
-    assert.equal(SHOP_GUIDES.length, 5);
-    assert.equal(new Set(SHOP_GUIDES.map((g) => g.slug)).size, 5);
+test("has 6 guides with 3-6 steps, 2-3 tips, unique slugs, existing images", () => {
+    assert.equal(SHOP_GUIDES.length, 6);
+    assert.equal(new Set(SHOP_GUIDES.map((g) => g.slug)).size, 6);
     for (const g of SHOP_GUIDES) {
       assert.ok(g.steps.length >= 3);
       assert.ok(g.steps.length <= 6);
@@ -19,7 +19,7 @@ test("has 5 guides with 3-6 steps, 2-3 tips, unique slugs, existing images", () 
 test("finds and paginates", () => {
     assert.equal(findGuide("manage-menu")?.targetPath, "/shop/menu");
     assert.equal(findGuide("nope"), undefined);
-    assert.equal(pageGuides(99, 3).page, 2);
+    assert.equal(pageGuides(99, 4).page, 2);
     assert.equal(pageGuides(1, 3).items.length, 3);
   });
 
@@ -29,4 +29,9 @@ test("customer order guide uses the order-enter QR", () => {
     assert.deepEqual(g.audience, ["customer"]);
     assert.equal(g.qr, "order-enter");
     assert.equal(g.steps.length, 6);
+  });
+test("manage-orders guide targets the order queue", () => {
+    const g = findGuide("manage-orders");
+    assert.equal(g?.targetPath, "/shop/orders");
+    assert.equal(g?.steps.length, 6);
   });
