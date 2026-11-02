@@ -113,7 +113,7 @@ export default async function PublicMenuPage({
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 pb-8 pt-4">
       <div className="print:hidden">
         <section className="overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border">
-          <div className="relative h-32 w-full sm:h-44">
+          <div className="relative h-36 w-full sm:h-48" data-testid="menu-header-cover">
             {shopView.coverSrc ? (
               // eslint-disable-next-line @next/next/no-img-element -- internal image route
               <img src={shopView.coverSrc} alt="" className="size-full object-cover" />
@@ -121,8 +121,11 @@ export default async function PublicMenuPage({
               <div className="size-full bg-linear-to-br from-brand-300 to-brand-500" />
             )}
           </div>
-          <div className="flex items-end gap-3 px-4 pb-4">
-            <div className="-mt-10 size-20 shrink-0 overflow-hidden rounded-2xl bg-card ring-4 ring-card">
+          <div className="flex items-start gap-3 px-4 pb-4">
+            <div
+              className="relative z-10 -mt-9 size-20 shrink-0 overflow-hidden rounded-full bg-card shadow-md ring-4 ring-card sm:-mt-11 sm:size-24"
+              data-testid="menu-header-avatar"
+            >
               {shopView.logoSrc ? (
                 // eslint-disable-next-line @next/next/no-img-element -- internal image route
                 <img src={shopView.logoSrc} alt="" className="size-full object-cover" />
@@ -132,8 +135,8 @@ export default async function PublicMenuPage({
                 </div>
               )}
             </div>
-            <div className="min-w-0 pt-2">
-              <h1 className="truncate text-xl font-bold text-foreground">
+            <div className="min-w-0 flex-1 pt-3">
+              <h1 className="text-lg font-bold leading-snug text-foreground sm:text-xl">
                 {t("title")} · {shop.name}
               </h1>
               <p className="text-sm text-muted">{t("subtitle")}</p>
