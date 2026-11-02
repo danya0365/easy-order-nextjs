@@ -2154,6 +2154,24 @@
     "customerQrHint": "สแกนเพื่อเริ่มสั่งอาหาร",
     "customerScanNote": "ต้องสแกน QR นี้ก่อนจึงจะสั่งได้ ถ้าไม่สแกนจะเห็นข้อความ “สแกน QR ที่ร้านเพื่อสั่งอาหาร”",
     "customerContact": "ต้องการความช่วยเหลือ? เรียกพนักงานได้เลย",
-    "customerQrOff": "ยังไม่แสดง QR — เปิด “รับสั่งออนไลน์” ในตั้งค่าร้านก่อน"
+    "customerQrOff": "ยังไม่แสดง QR — เปิด “รับสั่งออนไลน์” ในตั้งค่าร้านก่อน",
+    "audRider": "ไรเดอร์",
+    "riderLabel": "สำหรับไรเดอร์",
+    "riderNoQr": "ไม่มี QR — ขอลิงก์ส่วนตัวจากร้าน",
+    "checklistTitle": "เช็กลิสต์อบรมการใช้งาน",
+    "checklistSubtitle": "ติ๊กเมื่ออบรมคู่มือแต่ละเรื่องครบ",
+    "checklistOpen": "เช็กลิสต์อบรม (พิมพ์ได้)",
+    "checklistDone": "อบรมแล้ว",
+    "checklistTrainer": "ผู้อบรม",
+    "checklistShop": "ร้าน",
+    "checklistTrainee": "ผู้รับการอบรม",
+    "checklistDate": "วันที่",
+    "checklistSign": "ลงชื่อ",
+    "checklistNotes": "หมายเหตุ",
+    "grpSetup": "ตั้งค่าเริ่มต้น",
+    "grpDaily": "งานประจำวัน",
+    "grpCustomer": "สำหรับลูกค้า",
+    "grpRider": "ไรเดอร์ / ส่งของ",
+    "grpAddons": "โมดูลเสริม"
   }
 }
