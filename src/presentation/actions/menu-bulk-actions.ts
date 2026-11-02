@@ -17,7 +17,7 @@ import {
 import type { User } from "@/src/domain/entities";
 import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
 import { getSession, requireShopWrite } from "@/src/infrastructure/auth/session";
-import { db, schema, withScopedDb, type Database } from "@/src/infrastructure/db/client";
+import { db, schema } from "@/src/infrastructure/db/client";
 import { container } from "@/src/infrastructure/di/container";
 import { getClientIp } from "@/src/presentation/lib/request-ip";
 
@@ -58,7 +58,7 @@ async function loadOwned(shopId: string, ids: string[]): Promise<BulkItem[]> {
   }));
 }
 
-function updateStmt(db: Database, shopId: string, s: BulkSnapshot) {
+function updateStmt(shopId: string, s: BulkSnapshot) {
   return db
     .update(schema.menuItems)
     .set({
@@ -102,13 +102,11 @@ export async function bulkUpdateMenuItemsAction(rawIds: string[], op: BulkOp): P
     const changedRows = rows.filter((r) => r.changed);
     if (changedRows.length === 0) return { changed: 0, undo: [] };
 
-    await withScopedDb(async (sdb) => {
-      const stmts =
-        op.kind === "delete"
-          ? [sdb.delete(schema.menuItems).where(and(eq(schema.menuItems.shopId, shopId), inArray(schema.menuItems.id, ids)))]
-          : changedRows.map((r) => updateStmt(sdb, shopId, r.after!));
-      await sdb.batch(stmts as unknown as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
-    });
+    const stmts =
+      op.kind === "delete"
+        ? [db.delete(schema.menuItems).where(and(eq(schema.menuItems.shopId, shopId), inArray(schema.menuItems.id, ids)))]
+        : changedRows.map((r) => updateStmt(shopId, r.after!));
+    await db.batch(stmts as unknown as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
 
     await container.auditLogger.record({
       actorUserId: actor.id,
@@ -143,24 +141,21 @@ export async function undoBulkMenuItemsAction(snapshots: BulkSnapshot[]): Promis
     await assertShopActive(shopId);
     const items = await loadOwned(shopId, ids);
     const cats = new Set((await container.menuCategoryRepository.listByShop(shopId)).map((c) => c.id));
-    const snaps = snapshots.map((s) => {
+    const stmts = snapshots.map((s) => {
       const cur = items.find((i) => i.id === s.id)!;
       const staff = actor.role === "branch_staff";
       const price = Number(s.priceSatang);
       if (!staff && (!Number.isInteger(price) || price < 0)) throw new Error("ราคาไม่ถูกต้อง");
       if (!staff && !cats.has(s.categoryId)) throw new Error("ไม่พบหมวดหมู่ในร้านนี้");
-      return {
+      return updateStmt(shopId, {
         id: s.id,
         isAvailable: !!s.isAvailable,
         isRecommended: staff ? cur.isRecommended : !!s.isRecommended,
         categoryId: staff ? cur.categoryId : s.categoryId,
         priceSatang: staff ? cur.priceSatang : price,
-      };
+      });
     });
-    await withScopedDb(async (sdb) => {
-      const stmts = snaps.map((s) => updateStmt(sdb, shopId, s));
-      await sdb.batch(stmts as unknown as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
-    });
+    await db.batch(stmts as unknown as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
     await container.auditLogger.record({
       actorUserId: actor.id,
       actorRole: actor.role,
@@ -168,10 +163,10 @@ export async function undoBulkMenuItemsAction(snapshots: BulkSnapshot[]): Promis
       targetType: "menu_item",
       shopId,
       ip: await getClientIp(),
-      metadata: { count: snaps.length, restored: snapshots.slice(0, 200) },
+      metadata: { count: stmts.length, restored: snapshots.slice(0, 200) },
     });
     revalidatePath("/shop/menu");
-    return { changed: snaps.length };
+    return { changed: stmts.length };
   } catch (e) {
     return { error: (e as Error).message };
   }
