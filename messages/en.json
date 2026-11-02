@@ -761,7 +761,13 @@
     "problemTitle": "If you hit a problem",
     "contact": "Still stuck? Contact the admin: More → Contact admin",
     "updated": "Guide updated {date}",
-    "open": "Open guides"
+    "open": "Open guides",
+    "audCustomer": "Customers",
+    "customerLabel": "For customers",
+    "customerQrHint": "Scan to start ordering",
+    "customerScanNote": "You must scan this QR to order. Without it you’ll see “Scan the shop QR to order”.",
+    "customerContact": "Need help? Just call our staff.",
+    "customerQrOff": "QR hidden — enable online ordering in shop settings first"
   },
   "publicMenu": {
     "compactTitle": "One-page menu print",

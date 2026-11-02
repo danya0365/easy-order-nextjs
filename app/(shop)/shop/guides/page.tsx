@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpenCheck, ChevronLeft, ChevronRight, Users } from "lucide-react";
+import { BookOpenCheck, ChevronLeft, ChevronRight, Printer, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
@@ -36,10 +36,23 @@ export default async function ShopGuidesPage({
                 {g.title[lang]}
               </span>
               <span className="text-sm text-muted-foreground">{g.purpose[lang]}</span>
+              {g.audience.includes("customer") && (
+                <span data-testid="guide-customer-badge" className="w-fit rounded-full bg-brand-500 px-2 py-0.5 text-xs font-semibold text-white">
+                  {t("customerLabel")}
+                </span>
+              )}
               <span className="mt-auto flex items-center gap-1 text-xs text-muted-foreground">
                 <Users className="size-3.5" aria-hidden />
-                {t("audience")}: {g.audience.map((a) => t(a === "owner" ? "audOwner" : "audStaff")).join(" · ")}
+                {t("audience")}: {g.audience.map((a) => t(a === "owner" ? "audOwner" : a === "staff" ? "audStaff" : "audCustomer")).join(" · ")}
               </span>
+            </Link>
+            <Link
+              href={`/shop/guides/${g.slug}?print=1`}
+              data-testid="guide-card-print"
+              className="mt-1 inline-flex items-center gap-1 text-sm text-brand-600"
+            >
+              <Printer className="size-4" aria-hidden />
+              {t("print")}
             </Link>
           </li>
         ))}
