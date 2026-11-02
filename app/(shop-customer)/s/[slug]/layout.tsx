@@ -5,6 +5,7 @@ import { isLoyaltyEffective } from "@/src/domain/services/loyalty-gates";
 import { isPromotionsEffective } from "@/src/domain/services/promotions-gates";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 import { ShopShellHeader } from "@/src/presentation/components/layout/ShopShellHeader";
+import { ShopNavPending } from "@/src/presentation/components/layout/ShopNavPending";
 import { ShopTabBar } from "@/src/presentation/components/layout/ShopTabBar";
 
 /**
@@ -33,7 +34,10 @@ export default async function ShopCustomerLayout({
         shopName={shop.name}
         profileImageId={profileImage?.id ?? null}
       />
-      <div className="flex-1">{children}</div>
+      <div className="relative flex-1">
+        {children}
+        <ShopNavPending slug={slug} />
+      </div>
       <AppVersion />
       <ShopTabBar
         slug={slug}
