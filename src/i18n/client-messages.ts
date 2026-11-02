@@ -2,48 +2,30 @@ import "server-only";
 
 import { getMessages } from "next-intl/server";
 
-/**
- * The message namespaces shipped to the CLIENT bundle via
- * `NextIntlClientProvider`. Next's i18n guide notes that translations rendered
- * in Server Components (via `getTranslations`) cost nothing on the client — so
- * only namespaces that a CLIENT component (`useTranslations`) actually needs
- * belong here. Keeping this an explicit allowlist stops the whole catalog from
- * bloating the client bundle as it grows.
- *
- * When you add a client component that uses a new namespace, add it here (the
- * keys are type-checked against `messages/th.json`). Server-only namespaces stay
- * out (e.g. `notFound`, used by the server-rendered app/not-found.tsx).
- */
-export async function getClientMessages() {
-  const messages = await getMessages();
-  return {
-    common: messages.common,
-    error: messages.error,
-    auth: messages.auth,
-    billing: messages.billing,
-    shop: messages.shop,
-    admin: messages.admin,
-    adminConfig: messages.adminConfig,
-    adminUsers: messages.adminUsers,
-    customersCrm: messages.customersCrm,
-    customerDetail: messages.customerDetail,
-    layout: messages.layout,
-    channels: messages.channels,
-    theme: messages.theme,
-    menu: messages.menu,
-    menuOptions: messages.menuOptions,
-    menuBulk: messages.menuBulk,
-    publicMenu: messages.publicMenu,
-    order: messages.order,
-    rider: messages.rider,
-    kiosk: messages.kiosk,
-    shopPages: messages.shopPages,
-    map: messages.map,
-    reviews: messages.reviews,
-    analytics: messages.analytics,
-    promote: messages.promote,
-    leads: messages.leads,
-    loyalty: messages.loyalty,
-    promotions: messages.promotions,
-  };
+import { BASE_NAMESPACES, GROUP_NAMESPACES, type ClientGroup } from "./client-namespaces";
+
+type Messages = Awaited<ReturnType<typeof getMessages>>;
+
+// Picked subsets are cached per isolate: messages are static, so building the
+// object once avoids re-walking the catalog on every request.
+const cache = new Map<string, Messages>();
+
+function pick(messages: Messages, names: readonly string[], key: string): Messages {
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const all = messages as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const n of names) if (all[n] !== undefined) out[n] = all[n];
+  cache.set(key, out as Messages);
+  return out as Messages;
+}
+
+/** Root layout: only the namespaces every page may need. */
+export async function getBaseClientMessages() {
+  return pick(await getMessages(), BASE_NAMESPACES, "__base");
+}
+
+/** Route-group layouts: BASE + that group's client namespaces (see client-namespaces.ts). */
+export async function getClientMessagesFor(group: ClientGroup) {
+  return pick(await getMessages(), [...BASE_NAMESPACES, ...GROUP_NAMESPACES[group]], group);
 }
