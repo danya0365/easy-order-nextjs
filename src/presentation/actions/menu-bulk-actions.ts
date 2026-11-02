@@ -147,20 +147,21 @@ export async function undoBulkMenuItemsAction(snapshots: BulkSnapshot[]): Promis
     await assertShopActive(shopId);
     const items = await loadOwned(shopId, ids);
     const cats = new Set((await container.menuCategoryRepository.listByShop(shopId)).map((c) => c.id));
-    const stmts = snapshots.map((s) => {
+    const restored: BulkSnapshot[] = snapshots.map((s) => {
       const cur = items.find((i) => i.id === s.id)!;
       const staff = actor.role === "branch_staff";
       const price = Number(s.priceSatang);
       if (!staff && (!Number.isInteger(price) || price < 0)) throw new Error("ราคาไม่ถูกต้อง");
       if (!staff && !cats.has(s.categoryId)) throw new Error("ไม่พบหมวดหมู่ในร้านนี้");
-      return updateStmt(shopId, {
+      return {
         id: s.id,
         isAvailable: !!s.isAvailable,
         isRecommended: staff ? cur.isRecommended : !!s.isRecommended,
         categoryId: staff ? cur.categoryId : s.categoryId,
         priceSatang: staff ? cur.priceSatang : price,
-      });
+      };
     });
+    const stmts = restored.map((s) => updateStmt(shopId, s));
     await db.batch(stmts as unknown as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
     await container.auditLogger.record({
       actorUserId: actor.id,
@@ -171,7 +172,7 @@ export async function undoBulkMenuItemsAction(snapshots: BulkSnapshot[]): Promis
       ip: await getClientIp(),
       metadata: { count: stmts.length, restored: snapshots.slice(0, 200) },
     });
-    return { changed: stmts.length };
+    return { changed: stmts.length, after: restored };
   } catch (e) {
     return { error: (e as Error).message };
   }

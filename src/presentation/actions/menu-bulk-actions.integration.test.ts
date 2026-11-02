@@ -52,9 +52,12 @@ test("owner: sold-out → undo restores; audit logged", async () => {
   const r = await A.bulkUpdateMenuItemsAction(ids, { kind: "available", value: false });
   assert.equal(r.error, undefined);
   assert.equal(r.changed, 3);
+  assert.equal(r.after?.length, 3);
+  assert.ok(r.after!.every((a) => a.isAvailable === false));
   for (const id of ids) assert.equal((await get(id))!.isAvailable, false);
   const u = await A.undoBulkMenuItemsAction(r.undo!);
   assert.equal(u.error, undefined);
+  assert.ok(u.after?.length === 3 && u.after.every((a) => a.isAvailable === true));
   for (const id of ids) assert.equal((await get(id))!.isAvailable, true);
   const acts = (await container.auditLogRepository.pageByShop(shop.id)).items.map((l) => l.action);
   assert.ok(acts.includes("menu_bulk_updated"));
