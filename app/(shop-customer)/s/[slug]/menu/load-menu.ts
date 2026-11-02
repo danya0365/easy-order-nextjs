@@ -1,17 +1,18 @@
 import "server-only";
 
-import { cache } from "react";
-
 import { container } from "@/src/infrastructure/di/container";
+import { GetPublicMenuItemUseCase } from "@/src/application/use-cases/menu/GetPublicMenuItemUseCase";
+import { requestMemo } from "@/src/infrastructure/request/request-memo";
 import { GetKioskMenuUseCase } from "@/src/application/use-cases/menu/GetKioskMenuUseCase";
 import type { PublicMenuShop } from "@/src/presentation/components/public-menu/types";
+import { shopBySlug, shopImages } from "@/src/infrastructure/request/shop-lookups";
 
 /** Shop identity for the public menu pages (read-only; cached per request). */
-export const loadPublicMenuShop = cache(async (slug: string) => {
-  const shop = await container.shopRepository.findBySlug(slug);
+export const loadPublicMenuShop = (slug: string) => requestMemo(`publicMenuShop:${slug}`, async () => {
+  const shop = await shopBySlug(slug);
   if (!shop) return null;
   const [images, profile, branches, category] = await Promise.all([
-    container.shopImageRepository.listByShop(shop.id),
+    shopImages(shop.id),
     container.shopProfileRepository.get(shop.id),
     container.branchRepository.listByShop(shop.id),
     shop.categoryId
@@ -34,6 +35,13 @@ export const loadPublicMenuShop = cache(async (slug: string) => {
 });
 
 /** Active categories with available items only (same read model as the kiosk). */
-export const loadPublicMenuSections = cache((shopId: string) =>
-  new GetKioskMenuUseCase(container.menuCategoryRepository, container.menuItemRepository).execute(shopId),
-);
+export const loadPublicMenuSections = (shopId: string) =>
+  requestMemo(`publicMenuSections:${shopId}`, () =>
+    new GetKioskMenuUseCase(container.menuCategoryRepository, container.menuItemRepository).execute(shopId),
+  );
+
+/** One public item (+ its category); shared by the [itemId] layout gate, metadata and page. */
+export const loadPublicMenuItem = (shopId: string, itemId: string) =>
+  requestMemo(`publicMenuItem:${shopId}:${itemId}`, () =>
+    new GetPublicMenuItemUseCase(container.menuCategoryRepository, container.menuItemRepository).execute(shopId, itemId),
+  );

@@ -1,6 +1,7 @@
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { is2faBypassed } from "@/src/infrastructure/config/env";
 import { container } from "@/src/infrastructure/di/container";
+import { requestMemo } from "@/src/infrastructure/request/request-memo";
 import { AppHeader } from "@/src/presentation/components/layout/AppHeader";
 import { AppTabBar } from "@/src/presentation/components/layout/AppTabBar";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
@@ -20,7 +21,7 @@ export default async function PlatformLayout({
   // DEV bypass lets local testing skip the mandatory-2FA setup gate.
   const twoFactorOk = user.totpEnabled || is2faBypassed;
   const unread = twoFactorOk
-    ? await container.notificationRepository.countUnread(user.id)
+    ? await requestMemo("layout:platform:unread", () => container.notificationRepository.countUnread(user.id))
     : 0;
 
   return (

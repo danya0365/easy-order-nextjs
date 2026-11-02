@@ -26,6 +26,7 @@ import {
 } from "@/src/domain/services/loyalty-gates";
 import { GetCustomerStampCardUseCase } from "@/src/application/use-cases/loyalty/GetCustomerStampCardUseCase";
 import { GetRecommendedMenuUseCase } from "@/src/application/use-cases/menu/GetRecommendedMenuUseCase";
+import { shopBySlug, shopImages } from "@/src/infrastructure/request/shop-lookups";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const shop = await container.shopRepository.findBySlug(slug);
+  const shop = await shopBySlug(slug);
   const t = await getTranslations("publicPages");
   return {
     title: shop
@@ -59,7 +60,7 @@ export default async function CustomerShopPage({
     getTranslations("publicPages"),
     getTranslations("order"),
     getTranslations("publicMenu"),
-    container.shopRepository.findBySlug(slug),
+    shopBySlug(slug),
   ]);
   if (!shop) notFound();
 
@@ -77,7 +78,7 @@ export default async function CustomerShopPage({
           container.orderRepository,
         ).execute(slug, token),
       ),
-      container.shopImageRepository.listByShop(shop.id),
+      shopImages(shop.id),
       getSession(),
       getOrderAccess(slug),
       new GetRecommendedMenuUseCase(

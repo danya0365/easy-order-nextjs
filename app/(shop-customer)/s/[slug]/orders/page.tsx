@@ -17,6 +17,7 @@ import { InstallHint } from "@/src/presentation/components/pwa/InstallHint";
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { formatDateTime } from "@/src/presentation/lib/format-date";
 import type { OrderStatus } from "@/src/domain/entities";
+import { shopBySlug } from "@/src/infrastructure/request/shop-lookups";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const shop = await container.shopRepository.findBySlug(slug);
+  const shop = await shopBySlug(slug);
   const t = await getTranslations("publicPages");
   return {
     title: shop
@@ -65,7 +66,7 @@ export default async function ShopCustomerOrdersPage({
   const tOrder = await getTranslations("order");
   const tRider = await getTranslations("rider");
 
-  const shop = await container.shopRepository.findBySlug(slug);
+  const shop = await shopBySlug(slug);
   if (!shop) notFound();
 
   const token = await getMemberToken(slug);
