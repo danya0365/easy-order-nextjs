@@ -42,12 +42,14 @@ export default async function ShopGuideDetailPage({
       ? orderToken && shop
         ? `${base}/s/${shop.slug}/enter?t=${orderToken}`
         : null
-      : `${base}${guide.targetPath}`;
+      : guide.qr === "none"
+        ? null
+        : `${base}${guide.targetPath}`;
   const customer = guide.audience.includes("customer");
   const audLabel = guide.audience
     .map((a) =>
       t(
-        a === "owner" ? "audOwner" : a === "staff" ? "audStaff" : "audCustomer",
+        a === "owner" ? "audOwner" : a === "staff" ? "audStaff" : a === "rider" ? "audRider" : "audCustomer",
       ),
     )
     .join(" · ");
@@ -74,7 +76,7 @@ export default async function ShopGuideDetailPage({
           {t("back")}
         </Link>
         <GuidePrintButton label={t("print")} />
-        {autoPrint && qrUrl && <GuideAutoPrint />}
+        {autoPrint && (qrUrl || guide.qr === "none") && <GuideAutoPrint />}
       </div>
 
       {customer ? (
@@ -198,9 +200,20 @@ export default async function ShopGuideDetailPage({
             </div>
             <div className="flex shrink-0 flex-col items-center gap-1">
               {qrUrl && <GuideQr url={qrUrl} alt={t("qrAlt")} />}
-              <span className="max-w-32 text-center text-[10px] leading-tight text-neutral-500">
-                {t("qrHint")}
-              </span>
+              {guide.qr === "none" ? (
+                <span
+                  data-testid="guide-no-qr"
+                  className="max-w-40 rounded-xl border-2 border-sky-600 p-2 text-center text-sm font-semibold leading-tight text-sky-700"
+                >
+                  {t("riderLabel")}
+                  <br />
+                  {t("riderNoQr")}
+                </span>
+              ) : (
+                <span className="max-w-32 text-center text-[10px] leading-tight text-neutral-500">
+                  {t("qrHint")}
+                </span>
+              )}
             </div>
           </header>
 

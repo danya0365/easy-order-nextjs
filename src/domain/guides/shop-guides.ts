@@ -5,7 +5,7 @@
  * logged-out scans go through /login?next=… and come back (see safe-next.ts).
  */
 export type GuideText = { th: string; en: string };
-export type GuideAudience = "owner" | "staff" | "customer";
+export type GuideAudience = "owner" | "staff" | "customer" | "rider";
 export type GuideStep = { image?: string; text: GuideText };
 export type ShopGuide = {
   slug: string;
@@ -13,8 +13,8 @@ export type ShopGuide = {
   purpose: GuideText;
   audience: GuideAudience[];
   targetPath: string;
-  /** "order-enter": QR is the shop's HMAC order-claim link (/s/<slug>/enter?t=…), minted per render. */
-  qr?: "order-enter";
+  /** "none": no QR (rider personal links must never be printed). "order-enter": QR is the shop's HMAC order-claim link (/s/<slug>/enter?t=…), minted per render. */
+  qr?: "order-enter" | "none";
   updated: string; // YYYY-MM-DD
   steps: GuideStep[];
   tips: GuideText[];
@@ -158,9 +158,101 @@ export const SHOP_GUIDES: ShopGuide[] = [
       { th: "สั่งไม่ได้ หรือต้องการแก้ออเดอร์? เรียกพนักงานได้เลย", en: "Can’t order or need to change it? Call our staff." },
     ],
   },
+  {
+    slug: "getting-started",
+    title: { th: "เริ่มต้นใช้งานร้าน", en: "Getting started" },
+    purpose: { th: "เข้าสู่ระบบ ติดตั้งบนมือถือ และกรอกข้อมูลร้านให้ครบก่อนเปิดขาย", en: "Log in, install on your phone and fill in shop info before selling" },
+    audience: ["owner"],
+    targetPath: "/shop/settings",
+    updated: "2026-11-02",
+    steps: [
+      { image: "/guides/gs-1.png", text: { th: "เปิดหน้าเข้าสู่ระบบ ใส่อีเมลร้าน กด “ดำเนินการต่อ” แล้วใส่รหัสผ่าน (หรือเข้าด้วย Google / LINE ถ้าผูกไว้)", en: "Open the login page, enter the shop email, tap Continue, then the password (or Google / LINE if linked)." } },
+      { text: { th: "เพิ่มลงหน้าจอหลัก: Android กดเมนู ⋮ → “เพิ่มไปยังหน้าจอหลัก” · iPhone (Safari) กดปุ่มแชร์ → “เพิ่มไปยังหน้าจอโฮม”", en: "Add to home screen: Android menu ⋮ → Add to Home screen · iPhone Safari Share → Add to Home Screen." } },
+      { image: "/guides/gs-3.png", text: { th: "ตั้งค่า → แท็บ “ร้าน”: ชื่อร้าน หมวด พร้อมเพย์ (เบอร์/เลขบัตร ปชช.) เปิดรับสั่งออนไลน์ รับเอง/ส่งถึงบ้าน แล้วกด “บันทึก”", en: "Settings → Shop tab: name, category, PromptPay, online ordering, pickup/delivery, then Save." } },
+      { image: "/guides/gs-4.png", text: { th: "แท็บ “รายละเอียด”: คำอธิบาย เวลาทำการ เบอร์โทร ลิงก์ LINE / Facebook / Instagram / เว็บไซต์ (แสดงบนหน้าร้าน) แล้วบันทึก", en: "Details tab: description, opening hours, phone, LINE / Facebook / Instagram / website links, then save." } },
+      { image: "/guides/gs-5.png", text: { th: "แท็บ “รูปภาพ” ใส่โลโก้และรูปปก แล้วเปิดหน้าร้าน /s/ชื่อร้าน ตรวจว่าข้อมูลถูกต้อง", en: "Images tab: logo and cover, then open your storefront to check everything." } },
+    ],
+    tips: [
+      { th: "ลืมรหัสผ่าน / เข้าไม่ได้? ติดต่อผู้ดูแลระบบเพื่อขอลิงก์เข้าสู่ระบบ", en: "Can’t log in? Contact the admin for a login link." },
+      { th: "ลูกค้าจ่ายพร้อมเพย์ไม่ได้ = ยังไม่ได้กรอกพร้อมเพย์ หรือยังไม่กดบันทึก", en: "PromptPay missing at checkout = not filled in or not saved." },
+      { th: "เมนูเพิ่มลงหน้าจอหลักไม่ขึ้น? เปิดด้วย Chrome (Android) หรือ Safari (iPhone)", en: "No “Add to home” option? Use Chrome (Android) or Safari (iPhone)." },
+    ],
+  },
+  {
+    slug: "print-qr",
+    title: { th: "พิมพ์ QR และเมนู", en: "Print QR codes & menus" },
+    purpose: { th: "พิมพ์ QR สั่งอาหาร QR ดูเมนู และเมนูแผ่นเดียว แล้ววางให้ลูกค้าเห็นง่าย", en: "Print the order QR, menu QR and one-sheet menu and place them where customers see them" },
+    audience: ["owner"],
+    targetPath: "/shop/settings",
+    updated: "2026-11-02",
+    steps: [
+      { image: "/guides/pq-1.png", text: { th: "QR สั่งอาหาร: ตั้งค่า → แท็บ “ร้าน” → การ์ด “QR พิมพ์สด / หมุนเวียน” กด “พิมพ์ QR” (ต้องเปิดรับสั่งออนไลน์ก่อน)", en: "Order QR: Settings → Shop tab → “Printable / rotating QR” → Print QR (online ordering must be on)." } },
+      { image: "/guides/pq-2.png", text: { th: "QR ดูเมนู (ถาวร ดูได้อย่างเดียว สั่งไม่ได้): แท็บ “เมนู” → “QR เมนู” เลือกขนาด A6/A5/A4 สี และข้อความ แล้วพิมพ์", en: "Menu QR (permanent, view-only): Menu tab → “Menu QR”, pick A6/A5/A4, colour and caption, then print." } },
+      { image: "/guides/pq-3.png", text: { th: "เมนูแผ่นเดียว: เปิดหน้าเมนูของร้าน กด “เมนูแผ่นเดียว”", en: "One-sheet menu: open your public menu and tap “One-sheet menu”." } },
+      { image: "/guides/pq-4.png", text: { th: "เลือกกระดาษ A4 แนวตั้ง/นอน จำนวนคอลัมน์ แล้วกด “พิมพ์ / บันทึก PDF” (ปิด Headers and footers)", en: "Choose A4, orientation and columns, then “Print / Save PDF” (turn off headers and footers)." } },
+      { text: { th: "วาง QR สั่งอาหารที่โต๊ะ/เคาน์เตอร์ในร้านเท่านั้น · QR ดูเมนูและเมนูแผ่นเดียว วางหน้าร้าน ประตู หรือแชร์ออนไลน์ได้", en: "Put the order QR only on tables/counter inside the shop; the menu QR and one-sheet menu can go outside or online." } },
+    ],
+    tips: [
+      { th: "QR สั่งอาหารมีอายุ 14 วัน — พิมพ์ใหม่ทุก 2 สัปดาห์ (หรือเมื่อลูกค้าสแกนแล้วขึ้นว่าให้สแกน QR ที่ร้าน)", en: "The order QR expires after 14 days — reprint every 2 weeks." },
+      { th: "ไม่เห็นการ์ด QR สั่งอาหาร = ยังไม่ได้ติ๊ก “เปิดรับสั่งออนไลน์” และบันทึก", en: "No order QR card = online ordering is off." },
+      { th: "QR ดูเมนูสั่งอาหารไม่ได้ — ใช้คู่กับ QR สั่งอาหารเสมอ", en: "The menu QR can’t place orders — use it with the order QR." },
+    ],
+  },
+  {
+    slug: "delivery-riders",
+    title: { th: "ไรเดอร์ส่งของของร้าน", en: "Delivery riders" },
+    purpose: { th: "เพิ่มไรเดอร์ ส่งลิงก์ส่วนตัว มอบหมายงาน และเคลียร์เงินสดที่ไรเดอร์เก็บมา", en: "Add riders, send their personal link, assign jobs and settle cash they collected" },
+    audience: ["owner"],
+    targetPath: "/shop/riders",
+    updated: "2026-11-02",
+    steps: [
+      { image: "/guides/dr-1.png", text: { th: "เพิ่มเติม → “ไรเดอร์” → กด “เพิ่มไรเดอร์” ใส่ชื่อ เบอร์ LINE ID และค่าตอบแทน (ต่อเที่ยว / % ค่าส่ง / ค่าส่งเต็ม) แล้วบันทึก", en: "More → Riders → “Add rider”: name, phone, LINE ID and pay (per trip / % of fee / full fee), save." } },
+      { image: "/guides/dr-2.png", text: { th: "กด “สร้างลิงก์ไรเดอร์” คัดลอกลิงก์ (แสดงครั้งเดียว) ส่งให้ไรเดอร์ทาง LINE — “สร้างลิงก์ใหม่” จะทำให้ลิงก์เดิมใช้ไม่ได้ทันที", en: "Tap “Create rider link”, copy it (shown once) and send via LINE — regenerating kills the old link." } },
+      { image: "/guides/orders-4.png", text: { th: "ออเดอร์ส่งถึงบ้าน: ในคิวออเดอร์ กด “มอบหมาย” ที่ไรเดอร์ (ดูว่าง/งานค้างได้) เปลี่ยนคนได้จนกว่าไรเดอร์กดรับของ", en: "Delivery order: in the queue tap “Assign” on a rider; you can change until pickup." } },
+      { text: { th: "ไรเดอร์กด “รับของแล้ว” → “ส่งแล้ว” ในแอปของตน ออเดอร์จะเสร็จสิ้นเอง ถ้าเก็บเงินปลายทาง ไรเดอร์กด “เก็บเงินแล้ว” ออเดอร์เป็นจ่ายแล้ว", en: "Rider taps Picked up → Delivered; the order completes itself. COD: rider taps “Cash collected” → paid." } },
+      { image: "/guides/dr-4.png", text: { th: "เคลียร์เงิน: “สรุปค่าตอบแทนไรเดอร์” เลือกช่วงวันที่ → ดูเที่ยว ค่าตอบแทน และเงินสดที่เก็บ รับเงินสดคืน แล้วจ่ายค่าตอบแทนเอง (ระบบแสดงยอดเท่านั้น)", en: "Settle: “Rider payout summary” by date → trips, pay and cash collected; collect cash, pay riders yourself (display only)." } },
+    ],
+    tips: [
+      { th: "ไรเดอร์เปิดลิงก์ไม่ได้? ตรวจว่า “เปิดใช้งาน” อยู่ หรือสร้างลิงก์ใหม่แล้วส่งให้อีกครั้ง", en: "Rider link fails? Check the rider is active, or regenerate and resend." },
+      { th: "มอบหมายใหม่ไม่ได้ = ไรเดอร์รับของไปแล้ว", en: "Can’t reassign = rider already picked up." },
+      { th: "อย่าส่งลิงก์ไรเดอร์ในกลุ่ม — เป็นลิงก์ส่วนตัวที่เข้าแอปได้ทันที", en: "Never post a rider link in groups — it logs straight in." },
+    ],
+  },
+  {
+    slug: "rider-guide",
+    title: { th: "คู่มือไรเดอร์", en: "Rider guide" },
+    purpose: { th: "รับงาน ไปส่ง และดูรายได้จากลิงก์ส่วนตัวที่ร้านส่งให้", en: "Take jobs, deliver and see earnings from the personal link your shop sends" },
+    audience: ["rider"],
+    targetPath: "/rider",
+    qr: "none",
+    updated: "2026-11-02",
+    steps: [
+      { text: { th: "ขอลิงก์ส่วนตัวจากร้าน (ส่งทาง LINE) แล้วแตะเปิด — ไม่ต้องล็อกอิน ไม่ต้องมีรหัสผ่าน แนะนำเพิ่มลงหน้าจอหลัก", en: "Get your personal link from the shop (via LINE) and open it — no login. Add it to your home screen." } },
+      { text: { th: "ตั้งสถานะ: กด “ตั้งเป็นว่าง” เมื่อพร้อมรับงาน หรือ “ตั้งเป็นไม่ว่าง” เมื่อพัก (ร้านเห็นสถานะนี้ตอนมอบหมาย)", en: "Set status: “Set available” when ready, “Set busy” on a break (the shop sees it when assigning)." } },
+      { text: { th: "แท็บ “งาน”: งานที่ร้านมอบหมายจะขึ้นเป็น “รอรับของที่ร้าน” (อัปเดตทุก 30 วินาที) มีที่อยู่ จุดสังเกต ยอด และวิธีจ่าย", en: "Jobs tab: assigned jobs show “Waiting at shop” (refresh every 30 s) with address, landmark, total and payment." } },
+      { text: { th: "รับอาหารที่ร้านแล้วกด “รับของแล้ว” → กด “นำทาง” / “เปิดใน Google Maps” หรือ “โทรหาลูกค้า”", en: "At the shop tap “Picked up”, then Navigate / Google Maps or call the customer." } },
+      { text: { th: "ส่งถึงมือลูกค้าแล้วกด “ส่งแล้ว” · ถ้าเป็นเก็บเงินปลายทาง รับเงินแล้วกด “เก็บเงินแล้ว”", en: "After handing over tap “Delivered”; for cash on delivery, collect and tap “Cash collected”." } },
+      { text: { th: "แท็บ “รายได้”: เที่ยวและรายได้วันนี้/สัปดาห์นี้ และ “เงินสดที่ต้องคืนร้าน” — นำเงินสดคืนร้านตามยอดนี้", en: "Earnings tab: trips and pay today/this week and “Cash to return to the shop”." } },
+    ],
+    tips: [
+      { th: "ลิงก์ขึ้นว่าใช้ไม่ได้? ขอลิงก์ใหม่จากร้าน (ลิงก์เดิมถูกยกเลิก)", en: "Link says invalid? Ask the shop for a new one." },
+      { th: "ไม่เห็นงาน? ตรวจว่าตั้งเป็น “ว่าง” และให้ร้านกดมอบหมายให้คุณ", en: "No jobs? Make sure you’re available and the shop assigned you." },
+      { th: "ห้ามส่งต่อลิงก์ให้คนอื่น — ใครมีลิงก์ก็เข้าแอปในชื่อคุณได้", en: "Never share your link — anyone with it acts as you." },
+    ],
+  },
 ];
 
-export const GUIDES_PAGE_SIZE = 6;
+export const GUIDES_PAGE_SIZE = 12;
+
+/** Training checklist: every guide in one of these groups (order = training order). */
+export type TrainingGroupId = "setup" | "daily" | "customer" | "rider" | "addons";
+export const TRAINING_GROUPS: { id: TrainingGroupId; slugs: string[] }[] = [
+  { id: "setup", slugs: ["getting-started", "open-close-shop", "print-qr"] },
+  { id: "daily", slugs: ["manage-orders", "manage-menu"] },
+  { id: "customer", slugs: ["customer-order"] },
+  { id: "rider", slugs: ["delivery-riders", "rider-guide"] },
+  { id: "addons", slugs: ["loyalty", "promotions"] },
+];
 
 export function findGuide(slug: string): ShopGuide | undefined {
   return SHOP_GUIDES.find((g) => g.slug === slug);

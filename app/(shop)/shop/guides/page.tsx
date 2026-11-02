@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpenCheck, ChevronLeft, ChevronRight, Printer, Users } from "lucide-react";
+import { BookOpenCheck, ChevronLeft, ChevronRight, ListChecks, Printer, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
@@ -23,6 +23,14 @@ export default async function ShopGuidesPage({
         <h1 className="text-xl font-bold text-foreground">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
+      <Link
+        href="/shop/guides/training-checklist"
+        data-testid="guide-checklist-link"
+        className="inline-flex w-fit items-center gap-2 rounded-xl border border-brand-500 px-3 py-2 text-sm font-semibold text-brand-600"
+      >
+        <ListChecks className="size-4" aria-hidden />
+        {t("checklistOpen")}
+      </Link>
       <ul className="grid gap-3 sm:grid-cols-2" data-testid="guide-list">
         {items.map((g) => (
           <li key={g.slug}>
@@ -41,9 +49,14 @@ export default async function ShopGuidesPage({
                   {t("customerLabel")}
                 </span>
               )}
+              {g.audience.includes("rider") && (
+                <span data-testid="guide-rider-badge" className="w-fit rounded-full bg-sky-600 px-2 py-0.5 text-xs font-semibold text-white">
+                  {t("riderLabel")}
+                </span>
+              )}
               <span className="mt-auto flex items-center gap-1 text-xs text-muted-foreground">
                 <Users className="size-3.5" aria-hidden />
-                {t("audience")}: {g.audience.map((a) => t(a === "owner" ? "audOwner" : a === "staff" ? "audStaff" : "audCustomer")).join(" · ")}
+                {t("audience")}: {g.audience.map((a) => t(a === "owner" ? "audOwner" : a === "staff" ? "audStaff" : a === "rider" ? "audRider" : "audCustomer")).join(" · ")}
               </span>
             </Link>
             <Link
