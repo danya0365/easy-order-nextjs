@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { ChevronRight, Star } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import type { MenuItem } from "@/src/domain/entities";
@@ -21,6 +21,7 @@ export async function RecommendedMenu({
   if (items.length === 0) return null;
 
   const t = await getTranslations("publicPages");
+  const tMenu = await getTranslations("publicMenu");
   const linkToOrder = onlineOrderingEnabled && hasOrderAccess;
 
   return (
@@ -78,6 +79,14 @@ export async function RecommendedMenu({
           );
         })}
       </ul>
+      <Link
+        href={`/s/${slug}/menu`}
+        className="mt-3 flex items-center justify-center gap-1 rounded-xl py-2 text-sm font-semibold text-brand-700 transition hover:bg-brand-50"
+        data-testid="recommended-view-all"
+      >
+        {tMenu("viewAllMenu")}
+        <ChevronRight className="size-4" />
+      </Link>
     </Card>
     </div>
   );
