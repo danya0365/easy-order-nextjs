@@ -176,7 +176,7 @@ export function MenuBulkList({
     const snap = undo.snap;
     start(async () => {
       const res = await undoBulkMenuItemsAction(snap);
-      if (res.error) setError(res.error);
+      if (res.error) setUndo({ snap: [], msg: res.error });
       else {
         patch(res.after);
         setUndo({ snap: [], msg: t("undone") });
