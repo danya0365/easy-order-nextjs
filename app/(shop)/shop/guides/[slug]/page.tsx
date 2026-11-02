@@ -81,7 +81,7 @@ export default async function ShopGuideDetailPage({
         <article
           id="guide-sheet"
           data-testid="guide-sheet"
-          className="flex flex-col gap-4 rounded-2xl border border-border bg-white p-5 text-neutral-900 print:rounded-none print:border-0 print:p-0"
+          className="flex flex-col gap-4 print:gap-2.5 rounded-2xl border border-border bg-white p-5 text-neutral-900 print:rounded-none print:border-0 print:p-0"
         >
           <header className="flex flex-col items-center gap-2 text-center">
             <p
@@ -90,7 +90,7 @@ export default async function ShopGuideDetailPage({
             >
               {shop?.name ?? ""}
             </p>
-            <h1 className="text-4xl font-extrabold leading-tight print:text-[34pt]">
+            <h1 className="text-4xl font-extrabold leading-tight print:text-[30pt]">
               {guide.title[lang]}
             </h1>
             <p className="text-lg text-neutral-700 print:text-[14pt]">
@@ -145,7 +145,7 @@ export default async function ShopGuideDetailPage({
                   <img
                     src={s.image}
                     alt=""
-                    className="w-full rounded-lg border border-neutral-200 object-cover object-top print:h-[50mm]"
+                    className="w-full rounded-lg border border-neutral-200 object-cover object-top print:h-[40mm]"
                   />
                 )}
               </li>
