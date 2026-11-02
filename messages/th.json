@@ -1091,7 +1091,11 @@
     "onlineOrderClosedDesc": "ร้านยังไม่เปิดให้สั่งออเดอร์ในขณะนี้ โปรดลองใหม่ภายหลัง",
     "onlineOrderNeedQrTitle": "ต้องสแกน QR ที่ร้าน",
     "onlineOrderNeedQrDesc": "เพื่อสั่งออนไลน์ กรุณาสแกนคิวอาร์ของร้านนี้ที่หน้าร้านเท่านั้น",
-    "recommendedMenuTitle": "เมนูแนะนำ"
+    "recommendedMenuTitle": "เมนูแนะนำ",
+    "orderGateTitle": "สแกน QR ที่ร้านเพื่อสั่งอาหาร",
+    "orderGateDesc": "การสั่งอาหารออนไลน์จะเปิดให้ใช้หลังจากสแกน QR ของร้าน ระหว่างนี้ดูเมนูได้เลย",
+    "orderGateMenu": "ดูเมนู",
+    "orderGateBook": "เล่มเมนู"
   },
   "menu": {
     "addCategoryTitle": "เพิ่มหมวดเมนู",

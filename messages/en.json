@@ -48,7 +48,11 @@
     "onlineOrderClosedDesc": "Orders are not being accepted right now — please try later",
     "onlineOrderNeedQrTitle": "Scan this shop's QR first",
     "onlineOrderNeedQrDesc": "To order online, please scan this shop's QR code in store only",
-    "recommendedMenuTitle": "Recommended menu"
+    "recommendedMenuTitle": "Recommended menu",
+    "orderGateTitle": "Scan the shop's QR to order",
+    "orderGateDesc": "Online ordering opens after you scan this shop's QR code. You can browse the menu meanwhile.",
+    "orderGateMenu": "View menu",
+    "orderGateBook": "Menu book"
   },
   "shop": {
     "setOnlineOrderingLabel": "Accept online orders (from the web shop page)",
