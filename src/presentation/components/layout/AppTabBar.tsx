@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
+  BookOpenCheck,
   Bell,
   Building2,
   ClipboardList,
@@ -34,6 +35,7 @@ import { cn } from "@/src/presentation/components/ui/cn";
 
 /** A `layout`-namespace message key for a nav label (resolved with `t()`). */
 type NavLabelKey =
+  | "navGuides"
   | "navOrders"
   | "navNewOrder"
   | "navDashboard"
@@ -93,6 +95,7 @@ const NAVS = {
     { href: "/shop/staff", label: "navStaff", icon: UserCog },
     { href: "/shop/settings", label: "navSettings", icon: Settings },
     { href: "/shop/security", label: "navSecurity", icon: ShieldAlert },
+    { href: "/shop/guides", label: "navGuides", icon: BookOpenCheck },
     { href: "/shop/contact", label: "navContactAdmin", icon: LifeBuoy },
   ],
   admin: [

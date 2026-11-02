@@ -20,6 +20,7 @@ export function proxy(request: NextRequest) {
   // suspension gate). Forwarded as a request header.
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
+  requestHeaders.set("x-return-to", pathname + request.nextUrl.search);
 
   // Kiosk lockdown: once a device is in kiosk mode (holds the eo_kiosk cookie),
   // the only in-app screen it may load is /kiosk — typing/navigating to any
@@ -47,6 +48,8 @@ export function proxy(request: NextRequest) {
   if (needsAuth && !request.cookies.has(COOKIE_NAME)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    // Come back here after login (validated again by safeNextPath on use).
+    url.search = `?next=${encodeURIComponent(pathname + request.nextUrl.search)}`;
     return NextResponse.redirect(url);
   }
 

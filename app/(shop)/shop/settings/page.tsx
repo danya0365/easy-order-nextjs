@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, UserCog } from "lucide-react";
+import { ArrowRight, BookOpenCheck, UserCog } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
@@ -196,11 +196,23 @@ export default async function ShopSettingsPage() {
     },
   ];
 
+  const tGuides = await getTranslations("guides");
   return (
     <SettingsTabs
       tabs={tabs}
       footer={
         <div className="flex flex-col gap-4">
+          <Card>
+            <CardHeader title={tGuides("title")} subtitle={tGuides("subtitle")} />
+            <Link
+              href="/shop/guides"
+              data-testid="settings-guides-link"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
+            >
+              <BookOpenCheck className="size-4" />
+              {tGuides("open")}
+            </Link>
+          </Card>
           <Card>
             <CardHeader
               title={t("securityTitle")}

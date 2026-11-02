@@ -8,6 +8,7 @@ import { AppTabBar } from "@/src/presentation/components/layout/AppTabBar";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 import { SuspensionBanner } from "@/src/presentation/components/billing/SuspensionBanner";
 import { PreExpiryBanner } from "@/src/presentation/components/billing/PreExpiryBanner";
+import { GroupIntlProvider } from "@/src/i18n/GroupIntlProvider";
 
 export default async function StaffLayout({
   children,
@@ -23,6 +24,7 @@ export default async function StaffLayout({
     status.isPaused || (status.isSuspended && billingUiEnabled);
 
   return (
+    <GroupIntlProvider group="staff">
     <div className="flex min-h-dvh flex-col">
       <AppHeader
         role={t("roleStaff")}
@@ -53,5 +55,6 @@ export default async function StaffLayout({
       </main>
       <AppTabBar nav="staff" />
     </div>
+    </GroupIntlProvider>
   );
 }

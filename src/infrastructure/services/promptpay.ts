@@ -1,6 +1,5 @@
 import "server-only";
 
-import QRCode from "qrcode";
 
 // EMVCo TLV field: 2-digit id + 2-digit length + value.
 function tlv(id: string, value: string): string {
@@ -60,10 +59,11 @@ export function buildPromptPayPayload(
 }
 
 /** Render a PromptPay QR for a target + amount (satang) as a PNG data URL. */
-export function renderPromptPayQR(
+export async function renderPromptPayQR(
   target: string,
   amountSatang: number,
 ): Promise<string> {
   const payload = buildPromptPayPayload(target, amountSatang / 100);
+  const QRCode = (await import("qrcode")).default;
   return QRCode.toDataURL(payload, { margin: 1, width: 256 });
 }

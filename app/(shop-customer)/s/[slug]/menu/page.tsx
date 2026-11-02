@@ -1,25 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ChevronRight, FileText, ShoppingBag, Store, UtensilsCrossed } from "lucide-react";
+import { FileText, ShoppingBag, Store, UtensilsCrossed } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { getOrderAccess } from "@/src/infrastructure/auth/order-access";
 import {
   buildBookPages,
-  flattenSections,
-  groupByCategory,
-  paginate,
   parseMenuView,
   parsePageParam,
-  PUBLIC_MENU_PAGE_SIZE,
 } from "@/src/domain/services/public-menu";
 import { MenuBookSheet } from "@/src/presentation/components/public-menu/MenuBookSheet";
 import { MenuBookViewer } from "@/src/presentation/components/public-menu/MenuBookViewer";
-import { MenuItemCard } from "@/src/presentation/components/public-menu/MenuItemCard";
+import { MenuListClient } from "@/src/presentation/components/public-menu/MenuListClient";
 import { MenuPrintButton } from "@/src/presentation/components/public-menu/MenuPrintButton";
 import { MenuViewSwitch } from "@/src/presentation/components/public-menu/MenuViewSwitch";
-import { cn } from "@/src/presentation/components/ui/cn";
 import { loadPublicMenuSections, loadPublicMenuShop } from "./load-menu";
 
 export const dynamic = "force-dynamic";
@@ -112,15 +107,7 @@ export default async function PublicMenuPage({
   }
 
   const catId = sections.some((s) => s.category.id === sp.cat) ? sp.cat! : null;
-  const slice = paginate(flattenSections(sections, catId), parsePageParam(sp.page), PUBLIC_MENU_PAGE_SIZE);
-  const groups = groupByCategory(slice.items);
-  const href = (page: number, cat: string | null = catId) => {
-    const q = new URLSearchParams();
-    if (cat) q.set("cat", cat);
-    if (page > 1) q.set("page", String(page));
-    const s = q.toString();
-    return `/s/${slug}/menu${s ? `?${s}` : ""}`;
-  };
+  const initialPage = parsePageParam(sp.page);
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 pb-8 pt-4">
@@ -163,56 +150,13 @@ export default async function PublicMenuPage({
           {t("empty")}
         </p>
       ) : (
-        <div className="flex flex-col gap-4 print:hidden" data-testid="menu-list">
-          <nav className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1" aria-label={t("allCategories")}>
-            {[{ id: null as string | null, name: t("allCategories") }, ...sections.map((s) => s.category)].map((c) => (
-              <Link
-                key={c.id ?? "all"}
-                href={href(1, c.id)}
-                className={cn(
-                  "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 transition",
-                  catId === c.id ? "bg-brand-500 text-on-brand ring-brand-500" : "bg-card text-foreground ring-border hover:ring-brand-300",
-                )}
-              >
-                {c.name}
-              </Link>
-            ))}
-          </nav>
-
-          {groups.map((g, gi) => (
-            <section key={`${g.category.id}-${gi}`}>
-              <h2 className="mb-2 flex items-baseline gap-2 text-lg font-bold text-foreground">
-                {g.category.name}
-                <span className="text-xs font-medium text-muted">
-                  {t("itemsCount", { count: sections.find((s) => s.category.id === g.category.id)?.items.length ?? 0 })}
-                </span>
-              </h2>
-              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                {g.items.map((item) => (
-                  <li key={item.id}>
-                    <MenuItemCard item={item} href={`/s/${slug}/menu/${item.id}`} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-
-          {slice.totalPages > 1 && (
-            <nav className="flex items-center justify-between gap-2" aria-label={t("pagination")} data-testid="menu-pagination">
-              {slice.page > 1 ? (
-                <Link href={href(slice.page - 1)} rel="prev" className="inline-flex items-center gap-1 rounded-xl bg-card px-3 py-2 text-sm font-semibold ring-1 ring-border">
-                  <ChevronLeft className="size-4" /> {t("prev")}
-                </Link>
-              ) : <span />}
-              <span className="text-sm text-muted">{t("pageOf", { page: String(slice.page), total: slice.totalPages })}</span>
-              {slice.page < slice.totalPages ? (
-                <Link href={href(slice.page + 1)} rel="next" className="inline-flex items-center gap-1 rounded-xl bg-card px-3 py-2 text-sm font-semibold ring-1 ring-border">
-                  {t("next")} <ChevronRight className="size-4" />
-                </Link>
-              ) : <span />}
-            </nav>
-          )}
-        </div>
+        <MenuListClient
+          key={`${catId ?? ""}:${initialPage}`}
+          slug={slug}
+          sections={sections}
+          initialCat={catId}
+          initialPage={initialPage}
+        />
       )}
       {printBook}
     </main>

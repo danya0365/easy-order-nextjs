@@ -32,6 +32,7 @@ import { getClientIp, getUserAgent } from "@/src/presentation/lib/request-ip";
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
 import { formatDateTime } from "@/src/presentation/lib/format-date";
 import type { User } from "@/src/domain/entities";
+import { safeNextPath } from "@/src/domain/services/safe-next";
 import { ROLE_HOME } from "@/src/domain/types/roles";
 
 const loginSchema = z.object({
@@ -67,6 +68,7 @@ async function completeLogin(
   method: "password" | "line_otp",
   ip: string,
   userAgent: string | null,
+  next?: unknown,
 ): Promise<LoginFormState> {
   // DEV bypass: skip the TOTP challenge entirely (local testing only).
   if (user.totpEnabled && !is2faBypassed) {
@@ -85,7 +87,7 @@ async function completeLogin(
   await rememberAccount({ email: user.email, role: user.role });
   await createSession(user.id);
   await sendLoginAlert(user, method === "password" ? "รหัสผ่าน" : "LINE OTP");
-  redirect(ROLE_HOME[user.role]);
+  redirect(safeNextPath(next, user.role) ?? ROLE_HOME[user.role]);
 }
 
 /** Where the login UI should go next after the email step. */
@@ -190,7 +192,7 @@ export async function verifyLoginOtpAction(
     return { error: "รหัส OTP ไม่ถูกต้องหรือหมดอายุ" };
   }
 
-  return completeLogin(user, "line_otp", ip, userAgent);
+  return completeLogin(user, "line_otp", ip, userAgent, formData.get("next"));
 }
 
 /** Step 3 (2FA-enabled accounts): verify the TOTP/recovery code → start session. */
@@ -249,7 +251,7 @@ export async function verifyLoginTwoFactorAction(
   await rememberAccount({ email: user.email, role: user.role });
   await createSession(user.id);
   await sendLoginAlert(user, "2FA");
-  redirect(ROLE_HOME[user.role]);
+  redirect(safeNextPath(formData.get("next"), user.role) ?? ROLE_HOME[user.role]);
 }
 
 export async function loginAction(
@@ -302,7 +304,7 @@ export async function loginAction(
 
   // completeLogin redirects (throws) on success, or returns a 2FA-required
   // state for accounts with two-factor enabled.
-  return completeLogin(user, "password", ip, userAgent);
+  return completeLogin(user, "password", ip, userAgent, formData.get("next"));
 }
 
 export async function logoutAction(): Promise<void> {
