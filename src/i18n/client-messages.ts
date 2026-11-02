@@ -32,6 +32,7 @@ export async function getClientMessages() {
     theme: messages.theme,
     menu: messages.menu,
     menuOptions: messages.menuOptions,
+    menuBulk: messages.menuBulk,
     publicMenu: messages.publicMenu,
     order: messages.order,
     rider: messages.rider,
