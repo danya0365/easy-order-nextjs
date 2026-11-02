@@ -217,7 +217,8 @@
     "navPromotions": "Promotions",
     "moreMenuAria": "More menu",
     "navLoginLinks": "One-time login links",
-    "navUsers": "Users"
+    "navUsers": "Users",
+    "navGuides": "Guides"
   },
   "sell": {
     "heroTagline": "Put a tablet on the counter and turn it into a self-ordering station — customers tap to order, the shop manages one live queue.",
@@ -742,5 +743,24 @@
     "undone": "Reverted",
     "statusLabel": "Status",
     "categoryLabel": "Category"
+  },
+  "guides": {
+    "title": "Shop guides",
+    "subtitle": "Short one-page A4 printable guides for owners and staff",
+    "audience": "For",
+    "audOwner": "Owner",
+    "audStaff": "Staff",
+    "prev": "Previous",
+    "next": "Next",
+    "pageOf": "Page {page} of {total}",
+    "back": "All guides",
+    "print": "Print",
+    "guideLabel": "Easy Order shop guide",
+    "qrAlt": "QR to open the related page",
+    "qrHint": "Scan to open this page",
+    "problemTitle": "If you hit a problem",
+    "contact": "Still stuck? Contact the admin: More → Contact admin",
+    "updated": "Guide updated {date}",
+    "open": "Open guides"
   }
 }

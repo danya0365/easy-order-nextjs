@@ -7,6 +7,7 @@ import { getSession, getKnownAccounts } from "@/src/infrastructure/auth/session"
 import { container } from "@/src/infrastructure/di/container";
 import { isDevLoginEnabled } from "@/src/infrastructure/config/env";
 import { ROLE_HOME } from "@/src/domain/types/roles";
+import { safeNextPath } from "@/src/domain/services/safe-next";
 import { LoginForm } from "@/src/presentation/components/auth/LoginForm";
 import { DevLoginPanel } from "@/src/presentation/components/auth/DevLoginPanel";
 import { PublicContactButton } from "@/src/presentation/components/auth/PublicContactButton";
@@ -25,9 +26,16 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  const { next: rawNext } = await searchParams;
+  // Only a same-origin path is carried through (re-validated per role on login).
+  const next = safeNextPath(rawNext) ?? undefined;
   const user = await getSession();
-  if (user) redirect(ROLE_HOME[user.role]);
+  if (user) redirect(safeNextPath(next, user.role) ?? ROLE_HOME[user.role]);
   const t = await getTranslations("auth");
 
   // Accounts previously used on this device — offered as one-tap picks.
@@ -51,7 +59,7 @@ export default async function LoginPage() {
           </span>
           <p className="text-sm text-muted">{t("loginAdminSubtitle")}</p>
         </div>
-        <LoginForm knownAccounts={knownAccounts} />
+        <LoginForm knownAccounts={knownAccounts} next={next} />
 
         {isDevLoginEnabled && <DevLoginPanel users={devUsers} />}
 
