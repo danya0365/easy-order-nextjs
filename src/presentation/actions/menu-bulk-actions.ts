@@ -2,12 +2,12 @@
 
 import { and, eq, inArray } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
-import { revalidatePath } from "next/cache";
 
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
 import { assertHalalMenuContent } from "@/src/domain/services/halal-menu";
 import {
   canRunBulkOp,
+  type BulkListQuery,
   normalizeBulkIds,
   planBulk,
   type BulkItem,
@@ -20,12 +20,17 @@ import { getSession, requireShopWrite } from "@/src/infrastructure/auth/session"
 import { db, schema } from "@/src/infrastructure/db/client";
 import { container } from "@/src/infrastructure/di/container";
 import { getClientIp } from "@/src/presentation/lib/request-ip";
+import { loadBulkPage, type BulkPageResult } from "@/src/presentation/lib/menu-bulk-page";
 
 export interface BulkResult {
   error?: string;
   changed?: number;
   /** Pre-change state of the changed rows — pass to undo (absent for delete). */
   undo?: BulkSnapshot[];
+  /** Post-change state of the changed rows (patch the client list in place). */
+  after?: BulkSnapshot[];
+  /** Ids removed by a delete. */
+  deletedIds?: string[];
 }
 
 /** Owner / impersonating admin via requireShopWrite; branch_staff scoped to own shop. */
@@ -122,10 +127,11 @@ export async function bulkUpdateMenuItemsAction(rawIds: string[], op: BulkOp): P
         changes: changedRows.slice(0, 200).map((r) => ({ id: r.id, before: r.before, after: r.after })),
       },
     });
-    revalidatePath("/shop/menu");
     return {
       changed: changedRows.length,
       undo: op.kind === "delete" ? undefined : changedRows.map((r) => r.before),
+      after: op.kind === "delete" ? undefined : changedRows.map((r) => r.after!),
+      deletedIds: op.kind === "delete" ? ids : undefined,
     };
   } catch (e) {
     return { error: (e as Error).message };
@@ -165,9 +171,24 @@ export async function undoBulkMenuItemsAction(snapshots: BulkSnapshot[]): Promis
       ip: await getClientIp(),
       metadata: { count: stmts.length, restored: snapshots.slice(0, 200) },
     });
-    revalidatePath("/shop/menu");
     return { changed: stmts.length };
   } catch (e) {
     return { error: (e as Error).message };
+  }
+}
+
+/** Client fetch of one bulk page (filter/page change) — no full page re-render. */
+export async function listBulkMenuItemsAction(q: BulkListQuery, withAll = false): Promise<BulkPageResult> {
+  try {
+    const { shopId } = await bulkActor();
+    const safe: BulkListQuery = {
+      q: String(q?.q ?? "").slice(0, 80),
+      cat: q?.cat ? String(q.cat) : null,
+      status: (["available", "soldout", "recommended"] as const).find((s) => s === q?.status) ?? "all",
+      page: Math.max(1, Math.floor(Number(q?.page) || 1)),
+    };
+    return await loadBulkPage(shopId, safe, withAll);
+  } catch (e) {
+    return { error: (e as Error).message, items: [], page: 1, totalPages: 1, total: 0 };
   }
 }

@@ -2071,7 +2071,8 @@
     "entryBook": "เล่มเมนู",
     "viewAllMenu": "ดูเมนูทั้งหมด",
     "stickyMenu": "ดูเมนู",
-    "stickyOrder": "สั่งออนไลน์"
+    "stickyOrder": "สั่งออนไลน์",
+    "showPreview": "แสดงตัวอย่าง"
   },
   "menuBulk": {
     "title": "แก้ไขหลายรายการ",

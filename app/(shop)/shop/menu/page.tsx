@@ -7,9 +7,9 @@ import { container } from "@/src/infrastructure/di/container";
 import { MenuManager } from "@/src/presentation/components/menu/MenuManager";
 import { MenuBulkList } from "@/src/presentation/components/menu/MenuBulkList";
 import { parseBulkQuery } from "@/src/domain/services/menu-bulk";
+import { loadBulkPage } from "@/src/presentation/lib/menu-bulk-page";
 import { getBaseUrl } from "@/src/presentation/lib/base-url";
 import { CopyLinkButton } from "@/src/presentation/components/public-menu/CopyLinkButton";
-import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
 import { publicMenuUrl } from "@/src/domain/services/public-menu";
 import { CompactPreviewCard } from "@/src/presentation/components/public-menu/CompactPreviewCard";
 import { MenuQrCardPanel, type MenuQrSeed } from "@/src/presentation/components/public-menu/MenuQrCardPanel";
@@ -24,6 +24,8 @@ export default async function ShopMenuPage({
 }) {
   const { shopId, user } = await requireShopAccess();
   const sp = await searchParams;
+  const bulkQuery = parseBulkQuery(sp);
+  const bulkOpen = sp.bulk === "1";
   const t = await getTranslations("shopPages");
   const tMenu = await getTranslations("publicMenu");
   const shop = await container.shopRepository.findById(shopId);
@@ -33,23 +35,13 @@ export default async function ShopMenuPage({
   let qrSeed: MenuQrSeed | null = null;
   if (shop) {
     // Static, token-free public URLs only (read-only menu; cannot place orders).
-    const bookUrl = publicMenuUrl(baseUrl, shop.slug, "book");
-    const [normalQr, bookQr, profile] = await Promise.all([
-      renderQrDataUrl(menuUrl!),
-      renderQrDataUrl(bookUrl),
-      container.shopImageRepository.findProfile(shopId),
-    ]);
-    // Inline the logo as a data URL so PNG export doesn't taint the canvas.
-    let logoDataUrl: string | null = null;
-    if (profile) {
-      const file = await container.slipStorage.read(profile.storageKey);
-      if (file) logoDataUrl = `data:${file.contentType};base64,${Buffer.from(file.bytes).toString("base64")}`;
-    }
+    // QR images + logo are rendered client-side (see MenuQrCardPanel).
+    const profile = await container.shopImageRepository.findProfile(shopId);
     qrSeed = {
       shopName: shop.name,
-      logoDataUrl,
-      normal: { url: menuUrl!, qrDataUrl: normalQr },
-      book: { url: bookUrl, qrDataUrl: bookQr },
+      logoUrl: profile ? `/api/shop-images/${profile.id}` : null,
+      normal: { url: menuUrl! },
+      book: { url: publicMenuUrl(baseUrl, shop.slug, "book") },
     };
   }
   const [categories, items] = await Promise.all([
@@ -90,19 +82,10 @@ export default async function ShopMenuPage({
       {qrSeed && <MenuQrCardPanel seed={qrSeed} />}
       {menuPath && <CompactPreviewCard path={`${menuPath}/print`} />}
       <MenuBulkList
-        items={items.map((i) => ({
-          id: i.id,
-          shopId: i.shopId,
-          name: i.name,
-          description: i.description ?? null,
-          categoryId: i.categoryId,
-          priceSatang: i.priceSatang,
-          isAvailable: i.isAvailable,
-          isRecommended: i.isRecommended,
-        }))}
+        initialPage={bulkOpen ? await loadBulkPage(shopId, bulkQuery) : null}
         categories={categories.map((c) => ({ id: c.id, name: c.name }))}
-        initialQuery={parseBulkQuery(sp)}
-        initialOpen={sp.bulk === "1"}
+        initialQuery={bulkQuery}
+        initialOpen={bulkOpen}
         role={user.role}
       />
       <MenuManager categories={categories} items={items} optionGroups={optionGroups} />

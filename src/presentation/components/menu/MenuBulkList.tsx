@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import {
   CheckCheck,
@@ -23,8 +22,6 @@ import {
 import {
   bulkQueryString,
   canRunBulkOp,
-  filterBulkItems,
-  pageOf,
   planBulk,
   type BulkItem,
   type BulkListQuery,
@@ -33,7 +30,8 @@ import {
   type BulkStatusFilter,
   type PriceRounding,
 } from "@/src/domain/services/menu-bulk";
-import { bulkUpdateMenuItemsAction, undoBulkMenuItemsAction } from "@/src/presentation/actions/menu-bulk-actions";
+import { bulkUpdateMenuItemsAction, listBulkMenuItemsAction, undoBulkMenuItemsAction } from "@/src/presentation/actions/menu-bulk-actions";
+import type { BulkPageResult } from "@/src/presentation/lib/menu-bulk-page";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { Card } from "@/src/presentation/components/ui/Card";
 import { Modal } from "@/src/presentation/components/ui/Modal";
@@ -48,28 +46,31 @@ const UNDO_MS = 10_000;
 
 /**
  * Batch menu editing on /shop/menu. Filters + page live in the URL
- * (?bq=&bcat=&bstatus=&bpage=, history.replaceState — no server round trip).
+ * (?bq=&bcat=&bstatus=&bpage=, history.replaceState). Only the CURRENT page is
+ * sent to the client (server-side filter/paginate); changing filter/page fetches
+ * one page via a light server action, and bulk ops patch local state from the
+ * action result instead of a full router.refresh().
  * Every op shows a before/after preview; the server re-plans from DB state and
  * writes in one transaction. Non-delete ops can be undone for ~10s.
  */
 export function MenuBulkList({
-  items,
+  initialPage,
   categories,
   initialQuery,
   initialOpen,
   role,
 }: {
-  items: BulkListItem[];
+  initialPage: BulkPageResult | null;
   categories: { id: string; name: string }[];
   initialQuery: BulkListQuery;
   initialOpen: boolean;
   role: string;
 }) {
   const t = useTranslations("menuBulk");
-  const router = useRouter();
   const [open, setOpen] = useState(initialOpen);
   const [q, setQ] = useState<BulkListQuery>(initialQuery);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [data, setData] = useState<BulkPageResult | null>(initialPage);
+  const [selected, setSelected] = useState<Map<string, BulkListItem>>(new Map());
   const [dialog, setDialog] = useState<Dialog>(null);
   const [error, setError] = useState<string | null>(null);
   const [undo, setUndo] = useState<{ snap: BulkSnapshot[]; msg: string } | null>(null);
@@ -86,31 +87,65 @@ export function MenuBulkList({
     window.history.replaceState(window.history.state, "", url.toString());
   }, [q, open]);
 
+  // Fetch the current page whenever the query changes (search debounced).
+  const firstLoad = useRef(initialPage !== null);
+  const reqId = useRef(0);
+  const reload = useCallback(async (query: BulkListQuery) => {
+    const id = ++reqId.current;
+    const res = await listBulkMenuItemsAction(query);
+    if (id === reqId.current && !res.error) setData(res);
+  }, []);
+  useEffect(() => {
+    if (!open) return;
+    if (firstLoad.current) {
+      firstLoad.current = false;
+      return;
+    }
+    const h = setTimeout(() => void reload(q), 250);
+    return () => clearTimeout(h);
+  }, [q, open, reload]);
+
   const catName = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
-  const filtered = useMemo(() => filterBulkItems(items, q), [items, q]);
-  const pg = pageOf(filtered, q.page);
-  const selItems = items.filter((i) => selected.has(i.id));
-  // Live selection only (ids that still exist after delete / refresh).
-  const sel = new Set(selItems.map((i) => i.id));
+  const pg = data ?? { items: [], page: 1, totalPages: 1, total: 0 };
+  const selItems = [...selected.values()];
+  const sel = new Set(selected.keys());
   const staffOnly = !canRunBulkOp(role, "price");
 
   const setQuery = (patch: Partial<BulkListQuery>) => setQ((cur) => ({ ...cur, page: 1, ...patch }));
-  const toggle = (id: string) =>
+  const toggle = (item: BulkListItem) =>
     setSelected((s) => {
-      const n = new Set(s);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
+      const n = new Map(s);
+      if (n.has(item.id)) n.delete(item.id);
+      else n.set(item.id, item);
       return n;
     });
   const pageAllSelected = pg.items.length > 0 && pg.items.every((i) => selected.has(i.id));
   const togglePage = () =>
     setSelected((s) => {
-      const n = new Set(s);
+      const n = new Map(s);
       for (const i of pg.items) {
         if (pageAllSelected) n.delete(i.id);
-        else n.add(i.id);
+        else n.set(i.id, i);
       }
       return n;
+    });
+
+  /** Apply an action result locally (instant feedback, no page refresh). */
+  const patch = (after?: BulkSnapshot[], deletedIds?: string[]) => {
+    const upd = new Map((after ?? []).map((a) => [a.id, a]));
+    const gone = new Set(deletedIds ?? []);
+    const fix = (i: BulkListItem): BulkListItem => {
+      const a = upd.get(i.id);
+      return a ? { ...i, categoryId: a.categoryId, priceSatang: a.priceSatang, isAvailable: a.isAvailable, isRecommended: a.isRecommended } : i;
+    };
+    setData((d) => d && { ...d, items: d.items.filter((i) => !gone.has(i.id)).map(fix), total: d.total - [...gone].filter((id) => d.items.some((i) => i.id === id)).length });
+    setSelected((s) => new Map([...s].filter(([id]) => !gone.has(id)).map(([id, i]) => [id, fix(i)])));
+  };
+
+  const selectAllFiltered = () =>
+    start(async () => {
+      const res = await listBulkMenuItemsAction(q, true);
+      if (!res.error && res.all) setSelected(new Map(res.all.map((i) => [i.id, i])));
     });
 
   const run = (op: BulkOp) => {
@@ -122,7 +157,8 @@ export function MenuBulkList({
         return;
       }
       setDialog(null);
-      if (op.kind === "delete") setSelected(new Set());
+      patch(res.after, res.deletedIds);
+      if (op.kind === "delete") setSelected(new Map());
       if (undoTimer.current) clearTimeout(undoTimer.current);
       if (res.undo && res.undo.length) {
         setUndo({ snap: res.undo, msg: t("done", { count: res.changed ?? 0 }) });
@@ -131,7 +167,7 @@ export function MenuBulkList({
         setUndo({ snap: [], msg: op.kind === "delete" ? `${t("deleted")} ${res.changed ?? 0}` : t("done", { count: res.changed ?? 0 }) });
         undoTimer.current = setTimeout(() => setUndo(null), 4000);
       }
-      router.refresh();
+      void reload(q);
     });
   };
 
@@ -141,10 +177,13 @@ export function MenuBulkList({
     start(async () => {
       const res = await undoBulkMenuItemsAction(snap);
       if (res.error) setError(res.error);
-      else setUndo({ snap: [], msg: t("undone") });
+      else {
+        patch(res.after);
+        setUndo({ snap: [], msg: t("undone") });
+      }
       if (undoTimer.current) clearTimeout(undoTimer.current);
       undoTimer.current = setTimeout(() => setUndo(null), 3000);
-      router.refresh();
+      void reload(q);
     });
   };
 
@@ -184,7 +223,7 @@ export function MenuBulkList({
         <div className="flex items-center gap-2">
           <ListChecks className="size-5 text-brand-600" />
           <h2 className="flex-1 font-semibold text-foreground">{t("title")}</h2>
-          <button type="button" onClick={() => { setOpen(false); setSelected(new Set()); }} className="rounded-lg p-1.5 text-muted hover:bg-muted-surface" aria-label={t("close")}>
+          <button type="button" onClick={() => { setOpen(false); setSelected(new Map()); }} className="rounded-lg p-1.5 text-muted hover:bg-muted-surface" aria-label={t("close")}>
             <X className="size-4" />
           </button>
         </div>
@@ -222,11 +261,11 @@ export function MenuBulkList({
           <button type="button" onClick={togglePage} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-medium text-brand-700 ring-1 ring-border" data-testid="bulk-select-page">
             <CheckCheck className="size-4" /> {t("selectPage")}
           </button>
-          <button type="button" onClick={() => setSelected(new Set(filtered.slice(0, 200).map((i) => i.id)))} className="rounded-lg px-2 py-1 font-medium text-brand-700 ring-1 ring-border" data-testid="bulk-select-filtered">
-            {t("selectAllFiltered", { count: Math.min(filtered.length, 200) })}
+          <button type="button" onClick={selectAllFiltered} className="rounded-lg px-2 py-1 font-medium text-brand-700 ring-1 ring-border" data-testid="bulk-select-filtered">
+            {t("selectAllFiltered", { count: Math.min(pg.total, 200) })}
           </button>
           {sel.size > 0 && (
-            <button type="button" onClick={() => setSelected(new Set())} className="rounded-lg px-2 py-1 text-muted">{t("clear")}</button>
+            <button type="button" onClick={() => setSelected(new Map())} className="rounded-lg px-2 py-1 text-muted">{t("clear")}</button>
           )}
         </div>
 
@@ -238,7 +277,7 @@ export function MenuBulkList({
             {pg.items.map((i) => (
               <li key={i.id}>
                 <label className={cn("flex cursor-pointer items-center gap-3 px-3 py-2.5", selected.has(i.id) && "bg-brand-50")}>
-                  <input type="checkbox" checked={selected.has(i.id)} onChange={() => toggle(i.id)} className="size-5 accent-brand-500" data-testid="bulk-check" />
+                  <input type="checkbox" checked={selected.has(i.id)} onChange={() => toggle(i)} className="size-5 accent-brand-500" data-testid="bulk-check" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium text-foreground">{i.name}</span>
                     <span className="block truncate text-xs text-muted">{catName.get(i.categoryId) ?? "-"}</span>
@@ -275,7 +314,7 @@ export function MenuBulkList({
           <div className="mx-auto flex max-w-2xl flex-col gap-1.5">
             <div className="flex items-center justify-between text-sm">
               <span className="font-semibold text-foreground" data-testid="bulk-count">{t("selected", { count: sel.size })}</span>
-              <button type="button" onClick={() => setSelected(new Set())} className="text-xs text-muted">{t("clear")}</button>
+              <button type="button" onClick={() => setSelected(new Map())} className="text-xs text-muted">{t("clear")}</button>
             </div>
             <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
               {opButtons.filter((b) => canRunBulkOp(role, b.kind)).map((b) => (
