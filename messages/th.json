@@ -2062,6 +2062,11 @@
     "openPreview": "เปิดตัวอย่างเต็ม",
     "menuHeading": "เมนู",
     "footerScan": "สแกนดูเมนูออนไลน์",
-    "previewTitle": "ตัวอย่างเมนูแผ่นเดียว"
+    "previewTitle": "ตัวอย่างเมนูแผ่นเดียว",
+    "entryMenu": "ดูเมนู",
+    "entryBook": "เล่มเมนู",
+    "viewAllMenu": "ดูเมนูทั้งหมด",
+    "stickyMenu": "ดูเมนู",
+    "stickyOrder": "สั่งออนไลน์"
   }
 }
