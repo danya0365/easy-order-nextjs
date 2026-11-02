@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
 import { container } from "@/src/infrastructure/di/container";
+import { requestMemo } from "@/src/infrastructure/request/request-memo";
 import { AppHeader } from "@/src/presentation/components/layout/AppHeader";
 import { AppTabBar } from "@/src/presentation/components/layout/AppTabBar";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
@@ -15,10 +16,16 @@ export default async function StaffLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireRole("branch_staff");
-  const t = await getTranslations("staffPages");
-  const { status, billingUiEnabled } = await getBillingState(user.shopId!);
-  const unread = await container.notificationRepository.countUnread(user.id);
+  // Memoized: vinext probes then renders the layout — run once, in parallel.
+  const { user, t, status, billingUiEnabled, unread } = await requestMemo("layout:staff", async () => {
+    const user = await requireRole("branch_staff");
+    const [t, { status, billingUiEnabled }, unread] = await Promise.all([
+      getTranslations("staffPages"),
+      getBillingState(user.shopId!),
+      container.notificationRepository.countUnread(user.id),
+    ]);
+    return { user, t, status, billingUiEnabled, unread };
+  });
 
   const blocked =
     status.isPaused || (status.isSuspended && billingUiEnabled);

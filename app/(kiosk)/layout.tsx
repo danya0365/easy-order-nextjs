@@ -1,5 +1,6 @@
 import { getKioskShopId } from "@/src/infrastructure/auth/kiosk";
 import { container } from "@/src/infrastructure/di/container";
+import { requestMemo } from "@/src/infrastructure/request/request-memo";
 import { BRAND } from "@/src/config/brand";
 import { KioskExitButton } from "@/src/presentation/components/kiosk/KioskExitButton";
 import { GroupIntlProvider } from "@/src/i18n/GroupIntlProvider";
@@ -12,7 +13,9 @@ export default async function KioskLayout({
   children: React.ReactNode;
 }) {
   const shopId = await getKioskShopId();
-  const shop = shopId ? await container.shopRepository.findById(shopId) : null;
+  const shop = shopId
+    ? await requestMemo(`shopById:${shopId}`, () => container.shopRepository.findById(shopId))
+    : null;
 
   return (
     <GroupIntlProvider group="kiosk">

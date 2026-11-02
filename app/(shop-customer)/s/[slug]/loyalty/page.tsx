@@ -12,6 +12,7 @@ import {
   isStampCardOn,
 } from "@/src/domain/services/loyalty-gates";
 import { CustomerLoyaltyPanel } from "@/src/presentation/components/loyalty/CustomerLoyaltyPanel";
+import { shopBySlug } from "@/src/infrastructure/request/shop-lookups";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const shop = await container.shopRepository.findBySlug(slug);
+  const shop = await shopBySlug(slug);
   const t = await getTranslations("loyalty");
   return {
     title: shop
@@ -37,7 +38,7 @@ export default async function ShopCustomerLoyaltyPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const shop = await container.shopRepository.findBySlug(slug);
+  const shop = await shopBySlug(slug);
   if (!shop || !isLoyaltyEffective(shop)) notFound();
 
   const showStamp = isStampCardOn(shop);

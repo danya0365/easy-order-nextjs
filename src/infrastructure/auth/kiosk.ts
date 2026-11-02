@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 
+import { requestMemo } from "@/src/infrastructure/request/request-memo";
 import { container } from "@/src/infrastructure/di/container";
 import { isProd } from "@/src/infrastructure/config/env";
 
@@ -39,9 +40,9 @@ export async function startKioskSession(
 export async function getKioskShopId(): Promise<string | null> {
   const token = (await cookies()).get(KIOSK_COOKIE)?.value;
   if (!token) return null;
-  const session = await container.kioskSessionRepository.findValid(
-    token,
-    new Date(),
+  // Token-keyed request memo: layout probe + render + page share one lookup.
+  const session = await requestMemo(`kiosk:${token}`, () =>
+    container.kioskSessionRepository.findValid(token, new Date()),
   );
   return session?.shopId ?? null;
 }

@@ -14,7 +14,7 @@ import { MenuBookViewer } from "@/src/presentation/components/public-menu/MenuBo
 import { MenuListClient } from "@/src/presentation/components/public-menu/MenuListClient";
 import { MenuPrintButton } from "@/src/presentation/components/public-menu/MenuPrintButton";
 import { MenuViewSwitch } from "@/src/presentation/components/public-menu/MenuViewSwitch";
-import { loadPublicMenuSections, loadPublicMenuShop } from "./load-menu";
+import { loadPublicMenuSections, loadPublicMenuShop } from "../load-menu";
 
 export const dynamic = "force-dynamic";
 

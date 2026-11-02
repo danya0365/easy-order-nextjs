@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 
+import { requestMemo } from "@/src/infrastructure/request/request-memo";
 import { container } from "@/src/infrastructure/di/container";
 import { resolveRider } from "@/src/application/use-cases/rider/RiderUseCases";
 import type { Rider } from "@/src/domain/entities";
@@ -32,7 +33,8 @@ export async function getRiderToken(): Promise<string | null> {
 export async function getSessionRider(): Promise<{ rider: Rider; token: string } | null> {
   const token = await getRiderToken();
   if (!token) return null;
-  const rider = await resolveRider(container.riderRepository, token);
+  // Token-keyed request memo: layout probe + render + page share one lookup.
+  const rider = await requestMemo(`rider:${token}`, () => resolveRider(container.riderRepository, token));
   return rider ? { rider, token } : null;
 }
 

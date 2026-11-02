@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 
-import { container } from "@/src/infrastructure/di/container";
 import { isLoyaltyEffective } from "@/src/domain/services/loyalty-gates";
 import { isPromotionsEffective } from "@/src/domain/services/promotions-gates";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 import { ShopShellHeader } from "@/src/presentation/components/layout/ShopShellHeader";
 import { ShopNavPending } from "@/src/presentation/components/layout/ShopNavPending";
 import { ShopTabBar } from "@/src/presentation/components/layout/ShopTabBar";
+import { shopBySlug, shopImages } from "@/src/infrastructure/request/shop-lookups";
 
 /**
  * Per-shop customer PWA shell: shop-scoped header + bottom tabs.
@@ -21,10 +21,10 @@ export default async function ShopCustomerLayout({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const shop = await container.shopRepository.findBySlug(slug);
+  const shop = await shopBySlug(slug);
   if (!shop) notFound();
 
-  const images = await container.shopImageRepository.listByShop(shop.id);
+  const images = await shopImages(shop.id);
   const profileImage = images.find((i) => i.kind === "profile") ?? null;
 
   return (

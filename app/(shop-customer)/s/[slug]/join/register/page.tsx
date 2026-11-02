@@ -7,6 +7,7 @@ import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { staticJoinTokenMatches } from "@/src/domain/services/static-join-guard";
 import { staticJoinTurnstileSiteKey } from "@/src/infrastructure/services/turnstile";
 import { RegisterForm } from "./RegisterForm";
+import { shopBySlug } from "@/src/infrastructure/request/shop-lookups";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export default async function JoinRegisterPage({
   const { slug } = await params;
   const { k } = await searchParams;
   const t = await getTranslations("shopPages");
-  const shop = await container.shopRepository.findBySlug(slug);
+  const shop = await shopBySlug(slug);
   if (!shop) notFound();
 
   const expected = await container.shopRepository.getStaticJoinToken(shop.id);

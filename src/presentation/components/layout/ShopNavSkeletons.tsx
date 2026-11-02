@@ -2,10 +2,16 @@ import { UtensilsCrossed } from "lucide-react";
 
 import { Skeleton } from "@/src/presentation/components/ui/Skeleton";
 
+/**
+ * Shared by the client tap overlay (ShopNavPending) and the server route
+ * loading.tsx files (`route` marks them with data-route-skeleton so the overlay
+ * stays on top until the real page replaces them — no double skeleton).
+ */
+
 /** Mirrors /s/[slug]/menu: cover, avatar header, toolbar, chips, 2-col grid. */
-export function MenuListSkeleton() {
+export function MenuListSkeleton({ route }: { route?: boolean } = {}) {
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 pb-8 pt-4">
+    <main className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 pb-8 pt-4" data-route-skeleton={route ? "menu" : undefined}>
       <section className="overflow-hidden rounded-2xl bg-card ring-1 ring-border">
         <Skeleton className="h-36 w-full rounded-none sm:h-48" />
         <div className="flex items-start gap-3 px-4 pb-4">
@@ -55,9 +61,9 @@ function GridCards({ n = 6 }: { n?: number }) {
  * know name/image/price, so they render for real (optimistic) and only the
  * description + option groups shimmer.
  */
-export function MenuDetailSkeleton({ name, img, price }: { name?: string; img?: string; price?: string }) {
+export function MenuDetailSkeleton({ name, img, price, route }: { name?: string; img?: string; price?: string; route?: boolean }) {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pb-8 pt-4">
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pb-8 pt-4" data-route-skeleton={route ? "menuItem" : undefined}>
       <div className="flex gap-2">
         <Skeleton className="h-9 w-28 rounded-xl" />
         <Skeleton className="h-9 w-28 rounded-xl" />
@@ -99,9 +105,9 @@ export function MenuDetailSkeleton({ name, img, price }: { name?: string; img?: 
 }
 
 /** Order page: menu grid + floating cart bar. */
-export function OrderSkeleton() {
+export function OrderSkeleton({ route }: { route?: boolean } = {}) {
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 pb-24 pt-4">
+    <main className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 pb-24 pt-4" data-route-skeleton={route ? "order" : undefined}>
       <Skeleton className="h-7 w-48" />
       <div className="flex gap-2 overflow-hidden">
         {[16, 20, 20, 14, 16].map((w, i) => (
@@ -114,9 +120,9 @@ export function OrderSkeleton() {
 }
 
 /** Orders list / loyalty / promotions / home: header + stacked cards. */
-export function ListSkeleton({ hero = false }: { hero?: boolean }) {
+export function ListSkeleton({ hero = false, route }: { hero?: boolean; route?: boolean }) {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-6">
+    <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-6" data-route-skeleton={route ? "list" : undefined}>
       {hero ? (
         <div className="overflow-hidden rounded-2xl ring-1 ring-border">
           <Skeleton className="h-40 w-full rounded-none" />
