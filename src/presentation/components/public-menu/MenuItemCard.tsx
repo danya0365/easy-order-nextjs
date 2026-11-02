@@ -31,7 +31,15 @@ export function MenuItemCard({
       >
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element -- internal image route
-          <img src={src} alt={item.name} loading="lazy" className="size-full object-cover" />
+          <img
+            src={src}
+            alt={item.name}
+            loading="lazy"
+            decoding="async"
+            width={variant === "grid" ? 400 : 80}
+            height={variant === "grid" ? 300 : 80}
+            className="size-full object-cover"
+          />
         ) : (
           <div className="flex size-full items-center justify-center text-muted">
             <UtensilsCrossed className="size-6 opacity-40" />
