@@ -15,6 +15,7 @@ import { SuspensionBanner } from "@/src/presentation/components/billing/Suspensi
 import { PreExpiryBanner } from "@/src/presentation/components/billing/PreExpiryBanner";
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { PausedBanner } from "@/src/presentation/components/billing/PausedBanner";
+import { GroupIntlProvider } from "@/src/i18n/GroupIntlProvider";
 
 export default async function ShopLayout({
   children,
@@ -48,6 +49,7 @@ export default async function ShopLayout({
   }
 
   return (
+    <GroupIntlProvider group="shop">
     <div className="flex min-h-dvh flex-col">
       {impersonating && (
         <ImpersonationBanner shopName={shop?.name ?? "—"} />
@@ -80,5 +82,6 @@ export default async function ShopLayout({
       </main>
       <AppTabBar nav="shop" hideBillingNav={!billingUiEnabled} />
     </div>
+    </GroupIntlProvider>
   );
 }

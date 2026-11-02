@@ -1,5 +1,6 @@
 import { CustomerTabBar } from "@/src/presentation/components/layout/CustomerTabBar";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
+import { GroupIntlProvider } from "@/src/i18n/GroupIntlProvider";
 
 /**
  * Platform customer shell (map, shops directory, my history, tutorial, about).
@@ -13,10 +14,12 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
+    <GroupIntlProvider group="public">
     <div className="pb-[calc(env(safe-area-inset-bottom)+4rem)]">
       {children}
       <AppVersion />
       <CustomerTabBar />
     </div>
+    </GroupIntlProvider>
   );
 }

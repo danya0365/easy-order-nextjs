@@ -12,7 +12,7 @@ import { getLocale } from "next-intl/server";
 import { ToastProvider } from "@/src/presentation/components/ui/Toast";
 import { ConfirmProvider } from "@/src/presentation/components/ui/ConfirmDialog";
 import { BRAND } from "@/src/config/brand";
-import { getClientMessages } from "@/src/i18n/client-messages";
+import { getBaseClientMessages } from "@/src/i18n/client-messages";
 
 const notoSansThai = Noto_Sans_Thai({
   variable: "--font-noto-thai",
@@ -74,7 +74,7 @@ export default async function RootLayout({
   const locale = await getLocale();
   // Only client-needed namespaces reach the browser bundle (see getClientMessages);
   // server components translate via getTranslations at no client cost.
-  const messages = await getClientMessages();
+  const messages = await getBaseClientMessages();
   return (
     <html
       lang={locale}

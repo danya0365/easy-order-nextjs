@@ -5,6 +5,7 @@ import { AppHeader } from "@/src/presentation/components/layout/AppHeader";
 import { AppTabBar } from "@/src/presentation/components/layout/AppTabBar";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 import { MandatoryTwoFactorGate } from "@/src/presentation/components/auth/MandatoryTwoFactorGate";
+import { GroupIntlProvider } from "@/src/i18n/GroupIntlProvider";
 
 export default async function PlatformLayout({
   children,
@@ -23,6 +24,7 @@ export default async function PlatformLayout({
     : 0;
 
   return (
+    <GroupIntlProvider group="platform">
     <div className="flex min-h-dvh flex-col">
       <AppHeader
         role="Admin"
@@ -35,5 +37,6 @@ export default async function PlatformLayout({
       </main>
       <AppTabBar nav="admin" />
     </div>
+    </GroupIntlProvider>
   );
 }
