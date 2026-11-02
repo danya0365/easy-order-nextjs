@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { ListPlus, Pencil, Star, Trash2 } from "lucide-react";
 
 import { createContext, useContext } from "react";
+import { applyMenuBulkPatch, onMenuBulkPatch } from "./menu-bulk-sync";
 import type { MenuCategory, MenuItem, MenuOptionGroup } from "@/src/domain/entities";
 import { MenuOptionsEditor } from "@/src/presentation/components/menu/MenuOptionsEditor";
 import {
@@ -40,7 +41,7 @@ const OptionsCtx = createContext<Map<string, MenuOptionGroup[]> | null>(null);
 
 export function MenuManager({
   categories,
-  items,
+  items: itemsProp,
   optionGroups = null,
 }: {
   categories: MenuCategory[];
@@ -49,6 +50,11 @@ export function MenuManager({
   optionGroups?: MenuOptionGroup[] | null;
 }) {
   const t = useTranslations("menu");
+  // Local copy so bulk-edit results (MenuBulkList) show here without a full refresh;
+  // re-synced whenever the server sends fresh props (e.g. after single-item actions).
+  const [items, setItems] = useState(itemsProp);
+  useEffect(() => setItems(itemsProp), [itemsProp]);
+  useEffect(() => onMenuBulkPatch((p) => setItems((cur) => applyMenuBulkPatch(cur, p))), []);
   const optionsByItem = optionGroups
     ? optionGroups.reduce((m, g) => {
         m.set(g.menuItemId, [...(m.get(g.menuItemId) ?? []), g]);
