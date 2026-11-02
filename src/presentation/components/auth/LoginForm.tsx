@@ -25,8 +25,11 @@ type Step = "email" | "otp" | "password" | "unavailable" | "twofa";
 
 export function LoginForm({
   knownAccounts = [],
+  next,
 }: {
   knownAccounts?: KnownAccount[];
+  /** Safe post-login path (from ?next=); re-validated server-side per role. */
+  next?: string;
 }) {
   const t = useTranslations("auth");
   const tc = useTranslations("common");
@@ -233,6 +236,7 @@ export function LoginForm({
     return (
       <form onSubmit={onSubmitOtp} className="flex flex-col gap-4">
         <input type="hidden" name="email" value={email} />
+        {next && <input type="hidden" name="next" value={next} />}
         <p className="text-sm text-muted">
           {t.rich("otpSentTo", {
             email,
@@ -325,6 +329,7 @@ export function LoginForm({
   if (step === "twofa") {
     return (
       <form onSubmit={onSubmitTwoFactor} className="flex flex-col gap-4">
+        {next && <input type="hidden" name="next" value={next} />}
         <p className="text-sm text-muted">{t("twoFactorPrompt")}</p>
         <div className="flex flex-col gap-1">
           <label htmlFor="code" className="text-sm font-medium text-foreground">
@@ -360,6 +365,7 @@ export function LoginForm({
   return (
     <form onSubmit={onSubmitPassword} className="flex flex-col gap-4">
       <input type="hidden" name="email" value={email} />
+        {next && <input type="hidden" name="next" value={next} />}
       <div className="flex flex-col gap-1">
         <label className="text-sm font-medium text-foreground">{t("email")}</label>
         <p className="rounded-lg bg-muted-surface px-3 py-2 text-sm text-foreground">

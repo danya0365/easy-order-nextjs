@@ -7,6 +7,7 @@ import { container } from "@/src/infrastructure/di/container";
 import { isProd } from "@/src/infrastructure/config/env";
 import type { KnownAccount, User } from "@/src/domain/entities";
 import type { Role } from "@/src/domain/types/roles";
+import { loginUrlFor } from "@/src/domain/services/safe-next";
 
 const COOKIE_NAME = process.env.SESSION_COOKIE_NAME || "es_session";
 const SESSION_TTL_DAYS = 7;
@@ -39,7 +40,7 @@ export async function getSession(): Promise<User | null> {
  */
 export async function requireRole(...roles: Role[]): Promise<User> {
   const user = await getSession();
-  if (!user) redirect("/login");
+  if (!user) redirect(await loginRedirectUrl());
   if (roles.length > 0 && !roles.includes(user.role)) {
     redirect("/login");
   }
@@ -121,7 +122,7 @@ export async function getImpersonation(): Promise<Impersonation | null> {
  */
 export async function requireShopAccess(): Promise<ShopAccess> {
   const user = await getSession();
-  if (!user) redirect("/login");
+  if (!user) redirect(await loginRedirectUrl());
   if (user.role === "shop_owner") {
     if (!user.shopId) redirect("/login");
     return { user, shopId: user.shopId, impersonating: false };
@@ -349,3 +350,12 @@ export async function forgetAccount(email: string): Promise<void> {
 }
 
 export { COOKIE_NAME };
+
+/** /login?next=<current page> for an unauthenticated request (safe paths only). */
+async function loginRedirectUrl(): Promise<string> {
+  try {
+    return loginUrlFor((await headers()).get("x-return-to"));
+  } catch {
+    return "/login";
+  }
+}
