@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { History, PauseCircle, Pencil, ShoppingBag, Smartphone } from "lucide-react";
+import { BookOpen, History, UtensilsCrossed, PauseCircle, Pencil, ShoppingBag, Smartphone } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -54,10 +54,11 @@ export default async function CustomerShopPage({
   searchParams: Promise<{ bind?: string }>;
 }) {
   const { slug } = await params;
-  const [{ bind }, t, tOrder, shop] = await Promise.all([
+  const [{ bind }, t, tOrder, tMenu, shop] = await Promise.all([
     searchParams,
     getTranslations("publicPages"),
     getTranslations("order"),
+    getTranslations("publicMenu"),
     container.shopRepository.findBySlug(slug),
   ]);
   if (!shop) notFound();
@@ -154,7 +155,7 @@ export default async function CustomerShopPage({
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-8">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 pt-8 pb-24 md:pb-8">
       {shop.onlineOrderingEnabled && hasOrderAccess && (
         <Link
           href={`/s/${slug}/order`}
@@ -197,6 +198,26 @@ export default async function CustomerShopPage({
         }
       />
 
+      {/* Primary menu entry, right under the shop header */}
+      <div className="grid grid-cols-[1fr_auto] gap-2" data-testid="shop-menu-entry">
+        <Link
+          href={`/s/${slug}/menu`}
+          className="flex items-center justify-center gap-2 rounded-2xl bg-brand-500 px-4 py-3 text-base font-bold text-on-brand shadow-sm transition hover:bg-brand-600"
+          data-testid="shop-menu-button"
+        >
+          <UtensilsCrossed className="size-5" />
+          {tMenu("entryMenu")}
+        </Link>
+        <Link
+          href={`/s/${slug}/menu?view=book`}
+          className="flex items-center justify-center gap-2 rounded-2xl bg-card px-4 py-3 text-sm font-semibold text-brand-700 shadow-sm ring-1 ring-border transition hover:ring-brand-300"
+          data-testid="shop-menu-book-button"
+        >
+          <BookOpen className="size-5" />
+          {tMenu("entryBook")}
+        </Link>
+      </div>
+
       {isOwner ? (
         <EditableShopGallery images={gallery} />
       ) : (
@@ -209,6 +230,7 @@ export default async function CustomerShopPage({
         hasOrderAccess={hasOrderAccess}
         onlineOrderingEnabled={shop.onlineOrderingEnabled}
       />
+
 
       {history ? (
         <Card>
@@ -277,6 +299,33 @@ export default async function CustomerShopPage({
         <Link href="/tos" className="hover:underline">
           {t("termsOfService")}
         </Link>
+      </div>
+      {/* Mobile-only sticky menu bar; sits above the shop tab bar (4rem + safe area). */}
+      <div
+        className="fixed inset-x-0 z-30 border-t border-border bg-card/95 px-4 py-2 backdrop-blur md:hidden print:hidden"
+        style={{ bottom: "calc(env(safe-area-inset-bottom) + 4rem)" }}
+        data-testid="shop-sticky-bar"
+      >
+        <div className="mx-auto flex max-w-md gap-2">
+          <Link
+            href={`/s/${slug}/menu`}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold transition ${shop.onlineOrderingEnabled && hasOrderAccess ? "bg-card text-brand-700 ring-1 ring-border" : "bg-brand-500 text-on-brand hover:bg-brand-600"}`}
+            data-testid="sticky-menu"
+          >
+            <UtensilsCrossed className="size-4" />
+            {tMenu("stickyMenu")}
+          </Link>
+          {shop.onlineOrderingEnabled && hasOrderAccess && (
+            <Link
+              href={`/s/${slug}/order`}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-500 px-3 py-2.5 text-sm font-bold text-on-brand transition hover:bg-brand-600"
+              data-testid="sticky-order"
+            >
+              <ShoppingBag className="size-4" />
+              {tMenu("stickyOrder")}
+            </Link>
+          )}
+        </div>
       </div>
     </main>
   );

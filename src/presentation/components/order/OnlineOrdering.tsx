@@ -454,8 +454,12 @@ export function OnlineOrdering({
         )}
       </div>
 
-      {/* Sticky cart / place order bar */}
-      <div className="sticky bottom-0 z-40 -mx-4 border-t border-border bg-card px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+      {/* Sticky cart / place order bar — sits above the fixed shop tab bar
+          (h-16 + safe-area inset), so it's never hidden behind it. */}
+      <div
+        className="sticky bottom-[calc(env(safe-area-inset-bottom)+4rem)] z-30 -mx-4 border-t border-border bg-card px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]"
+        data-testid="order-sticky-bar"
+      >
         {belowMin && minOrderSatang !== null ? (
           <p className="text-center text-sm text-warning">
             {t("minOrderHint", { amount: satangToBaht(minOrderSatang) })}

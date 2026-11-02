@@ -1,0 +1,667 @@
+/* ============================================
+   Public menu book (/s/[slug]/menu?view=book) + print-to-PDF A4 book.
+   Ported from ai-agent-academy `.bookview*` (pure CSS scroll-snap flipbook,
+   no library). The SAME `.menubook-page` sheets render on screen inside
+   `.menubook-track` and on paper inside `.menuprint`.
+
+   🪤 Print trap (from the reference): an A4 sheet minus margins is ~673px
+   wide — below Tailwind's `lg` (1024px) and even `md` breakpoints — so any
+   responsive class decides "mobile" on paper. The sheets therefore use NO
+   breakpoint utilities; they size themselves with a container query instead,
+   and every screen-only element is `print:hidden`.
+   ============================================ */
+@layer components {
+  /* ── a sheet of menu paper (screen + print) ── */
+  .menubook-page {
+    --paper: color-mix(in oklab, var(--card) 94%, var(--brand-100));
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    container-type: inline-size;
+    background-color: var(--paper);
+    color: var(--foreground);
+    padding: 1.75rem 1.5rem 1rem;
+    overflow: hidden;
+  }
+  .menubook-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--brand-500);
+    color: var(--brand-700);
+  }
+  .menubook-head h2 {
+    font-family: var(--font-heading-family);
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+  }
+  .menubook-cont {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .menubook-items {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-content: start;
+    gap: 0.875rem 1.5rem;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  /* very wide single sheet (tablet portrait) → two columns */
+  @container (min-width: 760px) {
+    .menubook-items {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .menubook-items > li,
+  .menuitem {
+    break-inside: avoid;
+  }
+  .menuitem-sheet {
+    padding-bottom: 0.75rem;
+    border-bottom: 1px dashed var(--border);
+  }
+  .menuitem-sheet .menuitem-name {
+    font-family: var(--font-heading-family);
+  }
+  /* dotted leader between name and price, like a printed menu */
+  .menuitem-leader {
+    display: none;
+  }
+  .menuitem-sheet .menuitem-leader,
+  .menubook-toc .menuitem-leader {
+    display: block;
+    flex: 1 1 1rem;
+    min-width: 1rem;
+    border-bottom: 2px dotted var(--border);
+    translate: 0 -0.25rem;
+  }
+  .menuitem-sheet .menuitem-name {
+    flex: 0 1 auto;
+  }
+  .menubook-folio {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .menubook-toc {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+  .menubook-toc li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .menubook-about {
+    margin-top: auto;
+    padding-top: 1.5rem;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--muted);
+    white-space: pre-line;
+  }
+
+  /* ── cover / back cover ── */
+  .menubook-cover,
+  .menubook-back {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: var(--on-brand);
+    background: radial-gradient(circle at 30% 20%, var(--brand-500), var(--brand-800));
+  }
+  .menubook-cover-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.28;
+    mix-blend-mode: luminosity;
+  }
+  .menubook-cover-inner,
+  .menubook-back-inner {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 26rem;
+  }
+  .menubook-kicker {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.35em;
+    opacity: 0.85;
+  }
+  .menubook-cover-title {
+    font-family: var(--font-heading-family);
+    font-size: 2.25rem;
+    line-height: 1.2;
+    font-weight: 800;
+  }
+  .menubook-cover-sub {
+    font-size: 1rem;
+    opacity: 0.85;
+  }
+  .menubook-cover-halal {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-top: 0.5rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid color-mix(in oklab, var(--on-brand) 45%, var(--brand-700));
+  }
+  .menubook-cover-hint {
+    margin-top: 1.5rem;
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+  .menubook-back-logo {
+    width: 5rem;
+    height: 5rem;
+    border-radius: 9999px;
+    object-fit: cover;
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--on-brand) 60%, var(--brand-700));
+  }
+  .menubook-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    width: 100%;
+    margin-top: 0.5rem;
+    text-align: left;
+    font-size: 0.9rem;
+  }
+  .menubook-contact > div {
+    display: grid;
+    grid-template-columns: 8rem 1fr;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid color-mix(in oklab, var(--on-brand) 25%, var(--brand-700));
+  }
+  .menubook-contact dt {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-weight: 700;
+  }
+  .menubook-contact dd {
+    overflow-wrap: anywhere;
+  }
+  .menubook-blank {
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--muted);
+    font-family: var(--font-heading-family);
+  }
+
+  /* 3D cover (CSS only — logo on the face, brand spine) */
+  .menubook-book3d {
+    position: relative;
+    width: 9rem;
+    aspect-ratio: 3 / 4;
+    margin-bottom: 1rem;
+    perspective: 900px;
+  }
+  .menubook-book3d-face,
+  .menubook-book3d-spine {
+    position: absolute;
+    inset: 0;
+    border-radius: 0.25rem 0.75rem 0.75rem 0.25rem;
+  }
+  .menubook-book3d-spine {
+    background-color: var(--brand-900);
+    transform: rotateY(-28deg) translateX(-0.6rem);
+    transform-origin: left center;
+  }
+  .menubook-book3d-face {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background-color: var(--card);
+    color: var(--brand-600);
+    transform: rotateY(-22deg);
+    transform-origin: left center;
+    box-shadow:
+      inset 6px 0 10px -4px color-mix(in oklab, var(--foreground) 35%, var(--card)),
+      18px 22px 30px -8px color-mix(in oklab, var(--foreground) 55%, var(--brand-900));
+    border: 3px solid var(--brand-100);
+  }
+
+  /* ── on-screen flipbook ── */
+  .menubook {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    height: calc(100dvh - 12rem);
+    min-height: 30rem;
+  }
+  .menubook-stage {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+  }
+  .menubook-track {
+    display: flex;
+    gap: 1rem;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    border-radius: 1rem;
+  }
+  .menubook-track::-webkit-scrollbar {
+    display: none;
+  }
+  .menubook-track > .menubook-page {
+    flex: 0 0 100%;
+    height: 100%;
+    overflow-y: auto;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    border-radius: 1rem;
+    box-shadow: inset 0 0 0 1px var(--border);
+  }
+  @media (min-width: 1024px) {
+    /* two sheets = one open spread; gutter shadow fakes the binding */
+    .menubook-track {
+      gap: 0;
+      box-shadow: 0 20px 40px -20px color-mix(in oklab, var(--foreground) 60%, var(--background));
+    }
+    .menubook-track > .menubook-page {
+      flex-basis: 50%;
+      border-radius: 0;
+    }
+    .menubook-track > .menubook-page:nth-child(odd) {
+      border-radius: 1rem 0 0 1rem;
+      box-shadow: inset -18px 0 24px -18px color-mix(in oklab, var(--foreground) 40%, var(--card));
+    }
+    .menubook-track > .menubook-page:nth-child(even) {
+      border-radius: 0 1rem 1rem 0;
+      scroll-snap-align: none;
+      box-shadow: inset 18px 0 24px -18px color-mix(in oklab, var(--foreground) 40%, var(--card));
+    }
+  }
+  .menubook-nav {
+    display: none;
+  }
+  @media (min-width: 1024px) {
+    .menubook-nav {
+      position: absolute;
+      top: 50%;
+      translate: 0 -50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: 9999px;
+      background-color: var(--card);
+      color: var(--foreground);
+      box-shadow: 0 4px 14px -4px color-mix(in oklab, var(--foreground) 50%, var(--background));
+    }
+    .menubook-nav:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .menubook-nav-prev {
+      left: -1.25rem;
+    }
+    .menubook-nav-next {
+      right: -1.25rem;
+    }
+  }
+  .menubook-foot {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.25rem 0.25rem 0.5rem;
+  }
+  .menubook-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    background-color: var(--card);
+    box-shadow: inset 0 0 0 1px var(--border);
+  }
+  .menubook-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .menubook-progress {
+    height: 4px;
+    border-radius: 9999px;
+    background-color: var(--muted-surface);
+    overflow: hidden;
+  }
+  .menubook-progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    background-color: var(--brand-500);
+    transition: width 200ms ease;
+  }
+}
+
+/* ── paper ── */
+@page {
+  size: A4;
+  margin: 10mm;
+}
+@media print {
+  html,
+  body {
+    background: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* layout shell reserves room for the floating tab bar — not on paper */
+  body > div,
+  .min-h-dvh {
+    min-height: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .menuprint .menubook-page {
+    /* A4 297mm − 2×10mm margins, a hair less so rounding never spills a page */
+    height: 276mm;
+    break-after: page;
+    break-inside: avoid;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .menuprint .menubook-page {
+    padding: 10mm 10mm 6mm;
+  }
+  .menuprint .menubook-items {
+    overflow: visible;
+    gap: 5mm;
+  }
+  /* fixed physical size regardless of mode/viewport (beats size-20 utility,
+     flex shrink and any responsive class) */
+  .menuprint .menuitem-img {
+    flex: 0 0 32mm !important;
+    width: 32mm !important;
+    height: 32mm !important;
+    min-width: 32mm !important;
+    max-width: 32mm !important;
+  }
+  .menuprint .menuitem-sheet {
+    padding-bottom: 4mm;
+  }
+  .menuprint .menuitem-name,
+  .menuprint .menuitem-price {
+    font-size: 1.1rem;
+  }
+  .menuprint .menuitem-desc {
+    font-size: 0.9rem;
+    -webkit-line-clamp: 3;
+  }
+  .menuprint .menubook-page:last-child {
+    break-after: auto;
+  }
+  .menu-detail {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+  img {
+    break-inside: avoid;
+  }
+}
+
+/* ============================================
+   Compact one-sheet print menu (/s/[slug]/menu/print).
+   Sized in mm (true paper size) and scaled on screen by CompactFit; type
+   scale comes from --fit (auto-fit). Named page `compact` → own @page size.
+   ============================================ */
+@layer components {
+  .compact-preview {
+    width: 100%;
+  }
+  .compact-scaler {
+    margin: 0 auto;
+    overflow: hidden;
+    box-shadow: 0 10px 30px -12px color-mix(in oklab, var(--foreground) 55%, var(--background));
+  }
+  .compact-sheet {
+    --fit: 1;
+    --base: 9.5pt;
+    transform-origin: top left;
+    background-color: var(--card);
+    color: var(--foreground);
+    font-size: calc(var(--base) * var(--fit));
+    line-height: 1.3;
+    page: compact;
+  }
+  .compact-sheet:has(.compact-a3) {
+    --base: 12pt;
+  }
+  .compact-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9em;
+    padding: 0;
+  }
+  .compact-head {
+    display: flex;
+    align-items: center;
+    gap: 0.9em;
+    padding-bottom: 0.7em;
+    border-bottom: 0.25em solid var(--brand-500);
+  }
+  .compact-logo {
+    width: 4.2em;
+    height: 4.2em;
+    border-radius: 9999px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .compact-logo-empty {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--brand-50);
+    color: var(--brand-600);
+  }
+  .compact-logo-empty svg {
+    width: 50%;
+    height: 50%;
+  }
+  .compact-kicker {
+    font-size: 0.85em;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    color: var(--brand-700);
+  }
+  .compact-name {
+    font-family: var(--font-heading-family);
+    font-size: 2.1em;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+  .compact-halal {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.3em 0.8em;
+    border-radius: 9999px;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--brand-700);
+    border: 1px solid var(--brand-300);
+  }
+  .compact-halal svg,
+  .compact-contact svg {
+    width: 1.1em;
+    height: 1.1em;
+  }
+  .compact-cols {
+    column-gap: 1.8em;
+    column-rule: 1px dotted var(--border);
+    column-fill: balance;
+  }
+  .compact-cat {
+    break-inside: avoid-column;
+    margin-bottom: 0.9em;
+  }
+  .compact-cat-title {
+    break-after: avoid;
+    break-inside: avoid;
+    margin-bottom: 0.35em;
+    padding-bottom: 0.15em;
+    font-family: var(--font-heading-family);
+    font-size: 1.3em;
+    font-weight: 800;
+    color: var(--brand-700);
+    border-bottom: 1px solid var(--brand-200);
+  }
+  .compact-item {
+    display: flex;
+    gap: 0.6em;
+    align-items: flex-start;
+    padding: 0.22em 0;
+    break-inside: avoid;
+  }
+  .compact-thumb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.8em;
+    height: 2.8em;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 0.35em;
+    background-color: var(--muted-surface);
+    color: var(--muted);
+  }
+  .compact-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .compact-thumb svg {
+    width: 45%;
+    height: 45%;
+    opacity: 0.5;
+  }
+  .compact-item-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+  }
+  .compact-line {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35em;
+  }
+  .compact-item-name {
+    font-weight: 600;
+  }
+  .compact-leader {
+    flex: 1 1 1em;
+    min-width: 1em;
+    border-bottom: 1.5px dotted var(--muted);
+    opacity: 0.6;
+    translate: 0 -0.25em;
+  }
+  .compact-price {
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--brand-700);
+    white-space: nowrap;
+  }
+  .compact-desc {
+    font-size: 0.82em;
+    line-height: 1.25;
+    color: var(--muted);
+  }
+  .compact-empty {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    color: var(--muted);
+  }
+  .compact-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1em;
+    padding-top: 0.6em;
+    border-top: 1px solid var(--border);
+    break-inside: avoid;
+    font-size: 0.9em;
+  }
+  .compact-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4em 1.4em;
+  }
+  .compact-contact span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+  }
+  .compact-qr {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    font-size: 0.8em;
+    color: var(--muted);
+  }
+  .compact-qr img {
+    width: 5.5em;
+    height: 5.5em;
+  }
+  /* embedded preview (dashboard iframe): hide the customer shell */
+  body:has(.compact-embed) header,
+  body:has(.compact-embed) nav,
+  body:has(.compact-embed) .compact-page ~ * {
+    display: none;
+  }
+}
+@media print {
+  .compact-page {
+    display: block !important;
+  }
+  .compact-scaler {
+    width: auto !important;
+    height: auto !important;
+    overflow: visible;
+    box-shadow: none;
+  }
+  .compact-sheet {
+    transform: none !important;
+    min-height: 0 !important;
+  }
+}
