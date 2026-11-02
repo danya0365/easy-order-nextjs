@@ -27,22 +27,3 @@ if (process.env.NODE_ENV !== "production") globalForDb.__esDb = db;
 
 export { schema };
 export type Database = typeof db;
-
-/**
- * Run `fn` with a libSQL client scoped to ONE request, closed afterwards.
- * Use for `db.batch` on Workers: the HTTP client keeps the batch's stream on
- * the client instance, and reusing the shared module-level client across
- * requests makes later requests await I/O owned by an earlier one ("Worker
- * code had hung"). A short-lived client keeps that I/O request-local.
- */
-export async function withScopedDb<T>(fn: (db: Database) => Promise<T>): Promise<T> {
-  const url = process.env.TURSO_DATABASE_URL ?? "file:./local.db";
-  // Local/in-memory DBs have no remote stream (and :memory: must stay shared).
-  if (url === ":memory:" || url.startsWith("file:")) return fn(db);
-  const c = buildClient();
-  try {
-    return await fn(drizzle(c, { schema, casing: "snake_case" }));
-  } finally {
-    c.close();
-  }
-}
