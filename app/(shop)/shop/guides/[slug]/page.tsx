@@ -74,7 +74,7 @@ export default async function ShopGuideDetailPage({ params }: { params: Promise<
                 <img
                   src={s.image}
                   alt=""
-                  className="w-full rounded-lg border border-neutral-200 object-cover object-top print:h-[52mm]"
+                  className="w-full rounded-lg border border-neutral-200 object-cover object-center print:h-[52mm]"
                 />
               )}
             </li>
