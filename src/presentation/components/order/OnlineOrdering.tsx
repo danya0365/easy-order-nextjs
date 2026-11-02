@@ -275,6 +275,10 @@ export function OnlineOrdering({
                       <img
                         src={imageSrc}
                         alt={item.name}
+                        loading="lazy"
+                        decoding="async"
+                        width={400}
+                        height={400}
                         className="mb-3 aspect-square w-full rounded-xl border border-border bg-muted-surface object-cover"
                       />
                     )}

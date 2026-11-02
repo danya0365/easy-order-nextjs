@@ -8,7 +8,6 @@ import { getOrderAccess } from "@/src/infrastructure/auth/order-access";
 import {
   buildBookPages,
   parseMenuView,
-  parsePageParam,
 } from "@/src/domain/services/public-menu";
 import { MenuBookSheet } from "@/src/presentation/components/public-menu/MenuBookSheet";
 import { MenuBookViewer } from "@/src/presentation/components/public-menu/MenuBookViewer";
@@ -107,7 +106,6 @@ export default async function PublicMenuPage({
   }
 
   const catId = sections.some((s) => s.category.id === sp.cat) ? sp.cat! : null;
-  const initialPage = parsePageParam(sp.page);
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 pb-8 pt-4">
@@ -154,11 +152,10 @@ export default async function PublicMenuPage({
         </p>
       ) : (
         <MenuListClient
-          key={`${catId ?? ""}:${initialPage}`}
+          key={catId ?? ""}
           slug={slug}
           sections={sections}
           initialCat={catId}
-          initialPage={initialPage}
         />
       )}
       {printBook}

@@ -31,7 +31,15 @@ export function MenuItemCard({
       >
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element -- internal image route
-          <img src={src} alt={item.name} loading="lazy" className="size-full object-cover" />
+          <img
+            src={src}
+            alt={item.name}
+            loading="lazy"
+            decoding="async"
+            width={variant === "grid" ? 400 : 80}
+            height={variant === "grid" ? 300 : 80}
+            className="size-full object-cover"
+          />
         ) : (
           <div className="flex size-full items-center justify-center text-muted">
             <UtensilsCrossed className="size-6 opacity-40" />
@@ -61,7 +69,15 @@ export function MenuItemCard({
       : "menuitem-sheet flex items-start gap-3",
   );
   return href ? (
-    <Link href={href} className={cls} data-testid="menu-item-card">
+    <Link
+      href={href}
+      className={cn(cls, "active:scale-[0.97] active:ring-2 active:ring-brand-400 motion-reduce:active:scale-100")}
+      data-testid="menu-item-card"
+      // Read by ShopNavPending to paint the detail optimistically on tap.
+      data-nav-name={item.name}
+      data-nav-img={src ?? undefined}
+      data-nav-price={`฿${satangToBaht(item.priceSatang)}`}
+    >
       {body}
     </Link>
   ) : (

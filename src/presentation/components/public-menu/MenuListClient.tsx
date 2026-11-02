@@ -1,70 +1,64 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import {
   flattenSections,
   menuListHref,
   groupByCategory,
-  paginate,
-  parsePageParam,
-  PUBLIC_MENU_PAGE_SIZE,
   type PublicMenuSection,
 } from "@/src/domain/services/public-menu";
 import { MenuItemCard } from "@/src/presentation/components/public-menu/MenuItemCard";
 import { cn } from "@/src/presentation/components/ui/cn";
 
 /**
- * Public menu list with client-side category filter + pagination. All of the
- * shop's public items arrive once from the server (menus are small), so chip /
- * page taps update instantly with no server round trip. The URL is kept in sync
- * via history.pushState (?cat=&page= stay shareable; SSR honours them, and
- * the chips/pager are real <a href> links so no-JS still works).
+ * Public menu list: ALL available items, grouped by category, no pagination.
+ * The shop's items arrive once from the server (one categories + one items
+ * query), so chip taps filter client-side instantly with no round trip. ?cat=
+ * is kept in sync via history.pushState (shareable; SSR honours it; chips are
+ * real <a href> links so no-JS still works). Images are lazy (MenuItemCard).
  */
 export function MenuListClient({
   slug,
   sections,
   initialCat,
-  initialPage,
 }: {
   slug: string;
   sections: PublicMenuSection[];
   initialCat: string | null;
-  initialPage: number;
 }) {
   const t = useTranslations("publicMenu");
-  const [state, setState] = useState({ cat: initialCat, page: initialPage });
+  const [state, setState] = useState({ cat: initialCat });
   const validCat = useCallback(
     (c: string | null) => (c && sections.some((s) => s.category.id === c) ? c : null),
     [sections],
   );
 
-  // Back/forward: re-read ?cat=&page= from the URL.
+  // Back/forward: re-read ?cat= from the URL.
   useEffect(() => {
     const onPop = () => {
       const sp = new URLSearchParams(window.location.search);
       if (sp.get("view") === "book") return;
-      setState({ cat: validCat(sp.get("cat")), page: parsePageParam(sp.get("page") ?? undefined) });
+      setState({ cat: validCat(sp.get("cat")) });
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, [validCat]);
 
-  const slice = useMemo(
-    () => paginate(flattenSections(sections, state.cat), state.page, PUBLIC_MENU_PAGE_SIZE),
+  const groups = useMemo(
+    () => groupByCategory(flattenSections(sections, state.cat)),
     [sections, state],
   );
-  const groups = useMemo(() => groupByCategory(slice.items), [slice]);
 
-  const go = (e: React.MouseEvent<HTMLAnchorElement>, cat: string | null, page: number, scroll: boolean) => {
+  const go = (e: React.MouseEvent<HTMLAnchorElement>, cat: string | null) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
     e.preventDefault();
-    const next = { cat, page };
-    setState(next);
-    window.history.pushState(window.history.state, "", menuListHref(slug, cat, page));
-    if (scroll) document.querySelector("[data-testid=menu-list]")?.scrollIntoView({ block: "start" });
+    setState({ cat });
+    window.history.pushState(window.history.state, "", menuListHref(slug, cat, 1));
+    // Bring the list top into view if the user had scrolled deep into the menu.
+    const list = document.querySelector("[data-testid=menu-list]");
+    if (list && list.getBoundingClientRect().top < 0) list.scrollIntoView({ block: "start" });
   };
 
   const chips = [{ id: null as string | null, name: t("allCategories") }, ...sections.map((s) => s.category)];
@@ -78,7 +72,7 @@ export function MenuListClient({
             <a
               key={c.id ?? "all"}
               href={menuListHref(slug, c.id, 1)}
-              onClick={(e) => go(e, c.id, 1, false)}
+              onClick={(e) => go(e, c.id)}
               aria-current={active ? "true" : undefined}
               data-cat={c.id ?? ""}
               className={cn(
@@ -112,31 +106,6 @@ export function MenuListClient({
         </section>
       ))}
 
-      {slice.totalPages > 1 && (
-        <nav className="flex items-center justify-between gap-2" aria-label={t("pagination")} data-testid="menu-pagination">
-          {slice.page > 1 ? (
-            <a
-              href={menuListHref(slug, state.cat, slice.page - 1)}
-              onClick={(e) => go(e, state.cat, slice.page - 1, true)}
-              rel="prev"
-              className="inline-flex items-center gap-1 rounded-xl bg-card px-3 py-2 text-sm font-semibold ring-1 ring-border active:scale-95"
-            >
-              <ChevronLeft className="size-4" /> {t("prev")}
-            </a>
-          ) : <span />}
-          <span className="text-sm text-muted">{t("pageOf", { page: String(slice.page), total: slice.totalPages })}</span>
-          {slice.page < slice.totalPages ? (
-            <a
-              href={menuListHref(slug, state.cat, slice.page + 1)}
-              onClick={(e) => go(e, state.cat, slice.page + 1, true)}
-              rel="next"
-              className="inline-flex items-center gap-1 rounded-xl bg-card px-3 py-2 text-sm font-semibold ring-1 ring-border active:scale-95"
-            >
-              {t("next")} <ChevronRight className="size-4" />
-            </a>
-          ) : <span />}
-        </nav>
-      )}
     </div>
   );
 }
