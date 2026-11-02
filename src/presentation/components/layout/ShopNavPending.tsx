@@ -24,8 +24,10 @@ export function ShopNavPending({ slug }: { slug: string }) {
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
-      // Bubble phase: respect handlers that already took over (chips, pagination).
-      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      // Capture phase: next/link calls preventDefault() for client navigation,
+      // so defaultPrevented can't be trusted. Same-page links (chips,
+      // pagination) are filtered by classifyShopNav instead.
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       const a = (e.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
       if (!a || (a.target && a.target !== "_self") || a.hasAttribute("download")) return;
       const t = classifyShopNav(a.getAttribute("href")!, slug, window.location);
@@ -33,11 +35,11 @@ export function ShopNavPending({ slug }: { slug: string }) {
       setPending({ ...t, from: window.location.pathname, name: a.dataset.navName, img: a.dataset.navImg, price: a.dataset.navPrice });
     };
     const clear = () => setPending(null);
-    document.addEventListener("click", onClick);
+    document.addEventListener("click", onClick, true);
     window.addEventListener("popstate", clear);
     window.addEventListener("pageshow", clear);
     return () => {
-      document.removeEventListener("click", onClick);
+      document.removeEventListener("click", onClick, true);
       window.removeEventListener("popstate", clear);
       window.removeEventListener("pageshow", clear);
     };
