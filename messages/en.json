@@ -147,7 +147,8 @@
     "staticJoinQrPrintCaption": "Scan to join and order",
     "dailyFeeNag": "Outstanding daily fees ฿{amount} — view details",
     "legacyBillingTitle": "Legacy top-up history",
-    "legacyBillingSubtitle": "The day-based top-up system is retired; shown for reference only."
+    "legacyBillingSubtitle": "The day-based top-up system is retired; shown for reference only.",
+    "qrHubLink": "All QR codes in “Print QR”"
   },
   "admin": {
     "settingsBillingUiLabel": "Show monthly billing UI",
@@ -218,7 +219,8 @@
     "moreMenuAria": "More menu",
     "navLoginLinks": "One-time login links",
     "navUsers": "Users",
-    "navGuides": "Guides"
+    "navGuides": "Guides",
+    "navQr": "Print QR"
   },
   "sell": {
     "heroTagline": "Put a tablet on the counter and turn it into a self-ordering station — customers tap to order, the shop manages one live queue.",
@@ -794,5 +796,36 @@
     "showPreview": "Show preview",
     "printNow": "Print",
     "openPreview": "Open full preview"
+  },
+  "qrHub": {
+    "title": "Print QR",
+    "subtitle": "Every QR for your shop in one place, ready to print",
+    "orderTitle": "Order QR (in-shop)",
+    "orderDesc": "Put on tables/counter; customers scan to order online · valid 14 days, reprint every 2 weeks",
+    "orderCta": "Print order QR",
+    "orderOff": "Online ordering is off — turn it on in Settings",
+    "orderPrintHint": "Printing remembers the expiry date on this device",
+    "expiryUnknown": "Not printed from this device yet",
+    "expiryExpired": "Printed QR has expired — reprint",
+    "expirySoon": "Expires in {days} days — reprint",
+    "expiryOk": "Valid for {days} more days",
+    "menuTitle": "Menu QR (permanent)",
+    "menuDesc": "View-only menu, can’t order · never expires",
+    "menuCta": "Print menu QR",
+    "sheetTitle": "One-sheet menu",
+    "sheetDesc": "Whole menu with QR on a single page",
+    "sheetCta": "Open printable menu",
+    "joinTitle": "Join QR (permanent)",
+    "joinDesc": "Customers sign up and order online (member settings)",
+    "joinCta": "Open join QR",
+    "posterTitle": "Promo poster",
+    "posterDesc": "Shop poster with QR to hang or post",
+    "posterCta": "Make poster",
+    "guideLink": "Guide: printing QR codes & menus",
+    "back": "Back to Print QR",
+    "dashTitle": "Print shop QR codes",
+    "dashWarnTitle": "Order QR expiring / expired",
+    "dashDesc": "Order QR · Menu QR · One-sheet menu · Poster",
+    "dashCta": "Print QR"
   }
 }

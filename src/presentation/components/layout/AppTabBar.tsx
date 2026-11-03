@@ -29,6 +29,7 @@ import {
   Gift,
   type LucideIcon, KeyRound,
   Bike,
+  QrCode,
 } from "lucide-react";
 
 import { cn } from "@/src/presentation/components/ui/cn";
@@ -36,6 +37,7 @@ import { cn } from "@/src/presentation/components/ui/cn";
 /** A `layout`-namespace message key for a nav label (resolved with `t()`). */
 type NavLabelKey =
   | "navGuides"
+  | "navQr"
   | "navOrders"
   | "navNewOrder"
   | "navDashboard"
@@ -80,6 +82,8 @@ const NAVS = {
     { href: "/shop/orders", label: "navOrders", icon: ClipboardList },
     { href: "/shop/new-order", label: "navNewOrder", icon: ShoppingCart },
     { href: "/shop/menu", label: "navMenu", icon: UtensilsCrossed },
+    // Printing QR is a frequent on-site task (visits, 14-day order-QR reprints) → primary tab.
+    { href: "/shop/qr", label: "navQr", icon: QrCode },
     { href: "/shop/kiosk", label: "navKiosk", icon: MonitorSmartphone },
     { href: "/shop/loyalty", label: "navLoyalty", icon: Gift },
     { href: "/shop", label: "navDashboard", icon: LayoutDashboard },
