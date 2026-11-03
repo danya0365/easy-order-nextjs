@@ -8,6 +8,7 @@ import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { FeatureCarousel } from "@/src/presentation/components/shop/FeatureCarousel";
 import { FeatureGrid } from "@/src/presentation/components/shop/FeatureGrid";
+import { QrHubDashCard } from "@/src/presentation/components/shop/QrHubDashCard";
 import { OnboardingSuggestions } from "@/src/presentation/components/shop/OnboardingSuggestions";
 
 export const dynamic = "force-dynamic";
@@ -52,6 +53,8 @@ export default async function ShopDashboardPage() {
         <h1 className="text-xl font-bold text-foreground">{shop?.name}</h1>
         <p className="mt-1 text-sm text-muted">{t("dashRemaining", { remaining })}</p>
       </div>
+
+      <QrHubDashCard shopId={shopId} orderQrOn={!!shop?.onlineOrderingEnabled} />
 
       <FeatureCarousel />
       <OnboardingSuggestions

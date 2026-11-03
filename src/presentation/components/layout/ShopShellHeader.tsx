@@ -1,12 +1,16 @@
 import Link from "next/link";
-import { Store } from "lucide-react";
+import { History, ShoppingBag, Store } from "lucide-react";
+import { getTranslations } from "next-intl/server";
+
+import { HEADER_ICON_BTN, SiteHeader } from "@/src/presentation/components/layout/SiteHeader";
 
 /**
- * Compact top bar for the per-shop customer shell — shop name (+ logo when
- * available). Intentionally omits Easy Order platform branding; discovery of
- * other shops stays off this chrome.
+ * Per-shop customer PWA header (shared SiteHeader): shop logo + name on the
+ * left; order (cart) + my orders + skin switcher on the right. Intentionally
+ * omits Easy Order platform branding. Sits above the page hero (cover +
+ * round avatar), which is untouched.
  */
-export function ShopShellHeader({
+export async function ShopShellHeader({
   slug,
   shopName,
   profileImageId,
@@ -15,9 +19,12 @@ export function ShopShellHeader({
   shopName: string;
   profileImageId: string | null;
 }) {
+  const t = await getTranslations("layout");
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur print:hidden">
-      <div className="mx-auto flex max-w-md items-center gap-2.5 px-4 py-2.5">
+    <SiteHeader
+      sticky
+      width="max-w-md sm:max-w-4xl"
+      left={
         <Link
           href={`/s/${slug}`}
           className="flex min-w-0 items-center gap-2.5 text-foreground transition hover:opacity-90"
@@ -36,7 +43,17 @@ export function ShopShellHeader({
           )}
           <span className="truncate text-sm font-bold">{shopName}</span>
         </Link>
-      </div>
-    </header>
+      }
+      actions={
+        <>
+          <Link href={`/s/${slug}/order`} aria-label={t("navShopOrder")} title={t("navShopOrder")} className={HEADER_ICON_BTN} data-testid="header-cart">
+            <ShoppingBag className="size-5" />
+          </Link>
+          <Link href={`/s/${slug}/orders`} aria-label={t("navShopOrders")} title={t("navShopOrders")} className={HEADER_ICON_BTN} data-testid="header-my-orders">
+            <History className="size-5" />
+          </Link>
+        </>
+      }
+    />
   );
 }

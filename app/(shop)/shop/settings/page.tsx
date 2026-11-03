@@ -16,9 +16,7 @@ import { OrderAccessQrCard } from "@/src/presentation/components/shop/OrderAcces
 import { LoyaltyModuleForm } from "@/src/presentation/components/loyalty/LoyaltyModuleForm";
 import { PromotionsModuleForm } from "@/src/presentation/components/promotions/PromotionsModuleForm";
 import { SettingsTabs } from "@/src/presentation/components/settings/SettingsTabs";
-import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
-import { getBaseUrl } from "@/src/presentation/lib/base-url";
-import { mintClaimToken } from "@/src/infrastructure/auth/order-access";
+import { buildOrderAccessQr } from "@/src/infrastructure/request/order-qr";
 
 export const dynamic = "force-dynamic";
 
@@ -59,15 +57,8 @@ export default async function ShopSettingsPage() {
       )
     : 0;
 
-  // Shop QR gate: claim QR for the online-order page. Regenerated on every
-  // render so the token stays fresh; only the signed claim URL is embedded.
-  const orderAccessQr = await (async () => {
-    if (!shop.onlineOrderingEnabled) return null;
-    const token = mintClaimToken(shop.slug, shop.id);
-    if (!token) return null;
-    const url = `${await getBaseUrl()}/s/${shop.slug}/enter?t=${token}`;
-    return renderQrDataUrl(url);
-  })();
+  // Shop QR gate: claim QR for the online-order page (fresh token per render).
+  const orderAccessQr = await buildOrderAccessQr(shop);
 
   const tabs = [
     {
@@ -104,9 +95,14 @@ export default async function ShopSettingsPage() {
                 subtitle={t("orderAccessQrSubtitle")}
               />
               <OrderAccessQrCard
-                qrDataUrl={orderAccessQr}
+                qrDataUrl={orderAccessQr.qrDataUrl}
                 shopName={shop.name}
+                shopId={shop.id}
+                expiresAtMs={orderAccessQr.expiresAtMs}
               />
+              <Link href="/shop/qr" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:underline print:hidden">
+                {t("qrHubLink")} <ArrowRight className="size-4" />
+              </Link>
             </Card>
           )}
 

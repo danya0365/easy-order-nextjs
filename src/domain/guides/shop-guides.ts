@@ -186,8 +186,8 @@ export const SHOP_GUIDES: ShopGuide[] = [
     targetPath: "/shop/settings",
     updated: "2026-11-02",
     steps: [
-      { image: "/guides/pq-1.png", text: { th: "QR สั่งอาหาร: ตั้งค่า → แท็บ “ร้าน” → การ์ด “QR พิมพ์สด / หมุนเวียน” กด “พิมพ์ QR” (ต้องเปิดรับสั่งออนไลน์ก่อน)", en: "Order QR: Settings → Shop tab → “Printable / rotating QR” → Print QR (online ordering must be on)." } },
-      { image: "/guides/pq-2.png", text: { th: "QR ดูเมนู (ถาวร ดูได้อย่างเดียว สั่งไม่ได้): แท็บ “เมนู” → “QR เมนู” เลือกขนาด A6/A5/A4 สี และข้อความ แล้วพิมพ์", en: "Menu QR (permanent, view-only): Menu tab → “Menu QR”, pick A6/A5/A4, colour and caption, then print." } },
+      { image: "/guides/pq-1.png", text: { th: "QR สั่งอาหาร: แท็บ “พิมพ์ QR” ที่แถบเมนูด้านล่าง (หรือการ์ด “พิมพ์ QR ร้าน” หน้าแรก) → “พิมพ์ QR สั่งอาหาร” (ต้องเปิดรับสั่งออนไลน์ก่อน) · ยังพิมพ์ได้จาก ตั้งค่า → แท็บ “ร้าน” เหมือนเดิม", en: "Order QR: the “Print QR” tab in the bottom bar (or the “Print shop QR codes” card on the dashboard) → Print order QR (online ordering must be on). Settings → Shop tab still works." } },
+      { image: "/guides/pq-2.png", text: { th: "QR ดูเมนู (ถาวร ดูได้อย่างเดียว สั่งไม่ได้): แท็บ “พิมพ์ QR” → “พิมพ์ QR เมนู” (หรือแท็บ “เมนู” → “QR เมนู”) เลือกขนาด A6/A5/A4 สี และข้อความ แล้วพิมพ์", en: "Menu QR (permanent, view-only): “Print QR” tab → Print menu QR (or Menu tab → “Menu QR”), pick A6/A5/A4, colour and caption, then print." } },
       { image: "/guides/pq-3.png", text: { th: "เมนูแผ่นเดียว: เปิดหน้าเมนูของร้าน กด “เมนูแผ่นเดียว”", en: "One-sheet menu: open your public menu and tap “One-sheet menu”." } },
       { image: "/guides/pq-4.png", text: { th: "เลือกกระดาษ A4 แนวตั้ง/นอน จำนวนคอลัมน์ แล้วกด “พิมพ์ / บันทึก PDF” (ปิด Headers and footers)", en: "Choose A4, orientation and columns, then “Print / Save PDF” (turn off headers and footers)." } },
       { text: { th: "วาง QR สั่งอาหารที่โต๊ะ/เคาน์เตอร์ในร้านเท่านั้น · QR ดูเมนูและเมนูแผ่นเดียว วางหน้าร้าน ประตู หรือแชร์ออนไลน์ได้", en: "Put the order QR only on tables/counter inside the shop; the menu QR and one-sheet menu can go outside or online." } },
