@@ -11,10 +11,10 @@ export default defineConfig((ctx) => {
     worker: defineWorker({
       name: isDevMode ? "easy-order-dev" : "easy-order",
       // vinext app + Cloudflare cron `scheduled` handler (worker/entry.ts).
-      entrypoint: isDevMode ? "./worker/entry.ts" : "vinext/server/fetch-handler",
-      // Hourly: settle the prepaid-credit daily fee (idempotent). Staging only
-      // until the daily model is approved for production.
-      ...(isDevMode ? { triggers: [triggers.scheduled({ schedule: "5 * * * *" })] } : {}),
+      entrypoint: "./worker/entry.ts",
+      // Hourly: settle the prepaid-credit daily fee (idempotent; no-op while the
+      // credit master switch is off).
+      triggers: [triggers.scheduled({ schedule: "5 * * * *" })],
       compatibilityDate: "2026-10-27",
       compatibilityFlags: ["nodejs_compat"],
       assets: {
