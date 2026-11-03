@@ -16,11 +16,11 @@ import { DrizzleMenuCategoryRepository } from "@/src/infrastructure/repositories
 import { DrizzleMenuItemRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMenuItemRepository";
 import { DrizzleDemoDataRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleDemoDataRepository";
 import { DrizzleMenuOptionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleMenuOptionRepository";
-import { DrizzleOrderRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleOrderRepository";
 import { DrizzleCreditRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleCreditRepository";
 import type { ICreditRepository } from "@/src/application/repositories/ICreditRepository";
 import { CreditService } from "@/src/application/services/CreditService";
-import { withCreditHooks } from "@/src/infrastructure/repositories/CreditHookedOrderRepository";
+import { CreditHookedOrderRepository } from "@/src/infrastructure/repositories/CreditHookedOrderRepository";
+import { requestMemo } from "@/src/infrastructure/request/request-memo";
 import { DrizzleCustomerRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleCustomerRepository";
 import { DrizzleCustomerCrmRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleCustomerCrmRepository";
 import type { ICustomerCrmRepository } from "@/src/application/repositories/ICustomerCrmRepository";
@@ -113,9 +113,9 @@ class Container extends GenericContainer {
   readonly menuItemRepository: IMenuItemRepository =
     new DrizzleMenuItemRepository();
   readonly creditRepository: ICreditRepository = new DrizzleCreditRepository();
-  readonly creditService: CreditService = new CreditService(this.creditRepository, this.slipStorage);
+  readonly creditService: CreditService = new CreditService(this.creditRepository, this.slipStorage, undefined, requestMemo);
   /** Every order write passes through the prepaid-credit gate/hooks (no-op while credit is off). */
-  readonly orderRepository: IOrderRepository = withCreditHooks(new DrizzleOrderRepository(), () => this.creditService);
+  readonly orderRepository: IOrderRepository = new CreditHookedOrderRepository(() => this.creditService);
   readonly customerRepository: ICustomerRepository =
     new DrizzleCustomerRepository();
   readonly customerCrmRepository: ICustomerCrmRepository =

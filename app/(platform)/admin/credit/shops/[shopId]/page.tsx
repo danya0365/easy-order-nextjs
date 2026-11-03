@@ -25,7 +25,7 @@ export default async function AdminCreditShopPage({ params, searchParams }: { pa
   const typeRaw = typeof sp.type === "string" ? sp.type : null;
   const type = CREDIT_ENTRY_TYPES.includes(typeRaw as CreditEntryType) ? (typeRaw as CreditEntryType) : null;
   const [status, platform, override, ledger] = await Promise.all([
-    container.creditService.getStatus(shopId),
+    container.creditService.getStatus(shopId, { withBalance: true }),
     container.creditService.getPlatformConfig(),
     container.creditService.getShopOverride(shopId),
     container.creditRepository.pageLedger(shopId, { page, pageSize: CREDIT_PAGE_SIZE, type }),
