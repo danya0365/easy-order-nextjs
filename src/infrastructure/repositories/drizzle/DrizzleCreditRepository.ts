@@ -172,6 +172,10 @@ export class DrizzleCreditRepository implements ICreditRepository {
     return { exists: !!r, billingCutoffTime: r?.c ?? null };
   }
 
+  async setShopCutoff(shopId: string, cutoff: string | null) {
+    await db.update(schema.shops).set({ billingCutoffTime: cutoff }).where(eq(schema.shops.id, shopId));
+  }
+
   async findSettlement(shopId: string, businessDate: string) {
     const t = schema.creditDailySettlements;
     const [r] = await db.select().from(t).where(and(eq(t.shopId, shopId), eq(t.businessDate, businessDate))).limit(1);

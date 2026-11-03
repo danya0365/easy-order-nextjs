@@ -33,8 +33,6 @@ export default async function AdminShopsPage() {
   const billing = new GetBillingStateUseCase(
     container.shopRepository,
     container.subscriptionRepository,
-    container.platformSettingsRepository,
-    container.orderRepository,
   );
   const [states, members, activeLinks] = await Promise.all([
     Promise.all(shops.map((s) => billing.execute(s.id))),
@@ -86,11 +84,11 @@ export default async function AdminShopsPage() {
                       {tc("manageLink")}
                     </Link>
                     <Link
-                      href={`/admin/shops/${shop.id}/billing`}
-                      data-testid="shop-billing-link"
+                      href={`/admin/credit/shops/${shop.id}`}
+                      data-testid="shop-credit-link"
                       className="ml-3 text-xs text-brand-600 hover:underline"
                     >
-                      {t("dailyFeeLink")}
+                      {t("creditLink")}
                     </Link>
                     {owner && (
                       <p className="break-all text-xs text-muted">

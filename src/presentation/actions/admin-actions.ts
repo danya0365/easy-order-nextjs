@@ -11,12 +11,6 @@ import {
   stopImpersonation,
   getImpersonation,
 } from "@/src/infrastructure/auth/session";
-import {
-  MarkDailyFeePaidUseCase,
-  SetShopBillingCutoffUseCase,
-  UpdatePlatformBillingSettingsUseCase,
-} from "@/src/application/use-cases/billing/DailyFeeUseCases";
-import { VerifyPaymentUseCase } from "@/src/application/use-cases/billing/VerifyPaymentUseCase";
 import { CreateShopUseCase } from "@/src/application/use-cases/shop/CreateShopUseCase";
 import { PauseShopUseCase } from "@/src/application/use-cases/billing/PauseShopUseCase";
 import { ResumeShopUseCase } from "@/src/application/use-cases/billing/ResumeShopUseCase";
@@ -25,77 +19,15 @@ import { ResetPeerTwoFactorUseCase } from "@/src/application/use-cases/auth/Rese
 import { assertPasswordAcceptable } from "@/src/application/use-cases/auth/password-policy";
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
 import { getClientIp } from "@/src/presentation/lib/request-ip";
-import { bahtToSatang, satangToBaht } from "@/src/presentation/lib/money";
+import { bahtToSatang } from "@/src/presentation/lib/money";
 import { buildShopHandoff } from "@/src/presentation/lib/build-shop-handoff";
 import type { ShopHandoff } from "@/src/presentation/lib/shop-handoff";
-import type { Page } from "@/src/application/repositories/pagination";
-import type { PendingPaymentRow } from "@/src/presentation/components/admin/AdminPaymentQueue";
 
 export interface AdminFormState {
   error?: string;
   success?: string;
   /** Present after a successful create — credentials to hand the owner (once). */
   handoff?: ShopHandoff;
-}
-
-/** Platform-wide billing switches (soft-launch gates). Platform admin only. */
-export async function updatePlatformSettingsAction(
-  _prev: AdminFormState,
-  formData: FormData,
-): Promise<AdminFormState> {
-  try {
-    const admin = await requireRole("platform_admin");
-    const threshold = Number(formData.get("dailyOrderThreshold") ?? "");
-    const feeBaht = Number(formData.get("dailyFeeBaht") ?? "");
-    if (!Number.isFinite(feeBaht)) throw new Error("ค่าธรรมเนียมรายวันไม่ถูกต้อง");
-    // Legacy order-threshold top-up flags are retired; leave their columns as-is.
-    await new UpdatePlatformBillingSettingsUseCase(
-      container.platformSettingsRepository,
-      container.dailyFeeRepository,
-    ).execute(
-      {
-        billingUiEnabled: formData.get("billingUiEnabled") === "on",
-        shopSuspensionEnabled: formData.get("shopSuspensionEnabled") === "on",
-        dailyFeeBillingEnabled: formData.get("dailyFeeBillingEnabled") === "on",
-        dailyOrderThreshold: threshold,
-        dailyFeeSatang: bahtToSatang(feeBaht),
-        defaultCutoffTime: String(formData.get("defaultCutoffTime") ?? "").trim(),
-      },
-      admin.id,
-    );
-    await container.auditLogger.record({
-      actorUserId: admin.id,
-      actorRole: admin.role,
-      action: AUDIT_ACTIONS.platformSettingsUpdated,
-      targetType: "platform_settings",
-      targetId: "default",
-      ip: await getClientIp(),
-      metadata: { settings: "platform" },
-    });
-    revalidatePath("/admin/settings");
-    return { success: "บันทึกการตั้งค่าแพลตฟอร์มแล้ว" };
-  } catch (e) {
-    return { error: (e as Error).message };
-  }
-}
-
-/** Next page of the pending-payment review queue (admin "load more"). */
-export async function loadMorePendingPaymentsAction(
-  cursor: string,
-): Promise<Page<PendingPaymentRow>> {
-  await requireRole("platform_admin");
-  const page = await container.paymentRepository.pageByStatus("pending", {
-    cursor,
-  });
-  const shops = await container.shopRepository.list();
-  const shopName = new Map(shops.map((s) => [s.id, s.name]));
-  return {
-    items: page.items.map((payment) => ({
-      payment,
-      shopName: shopName.get(payment.shopId) ?? payment.shopId,
-    })),
-    nextCursor: page.nextCursor,
-  };
 }
 
 export async function createShopAction(
@@ -164,54 +96,6 @@ export async function getShopHandoffAction(
   } catch (e) {
     return { error: (e as Error).message };
   }
-}
-
-export async function verifyPaymentAction(
-  paymentId: string,
-  decision: "approve" | "reject",
-  rejectReason?: string,
-): Promise<void> {
-  const admin = await requireRole("platform_admin");
-  const payment = await new VerifyPaymentUseCase(
-    container.paymentRepository,
-    container.subscriptionRepository,
-    container.paymentVerifier,
-    container.topupTransactionRepository,
-  ).execute({ paymentId, reviewerUserId: admin.id, decision, rejectReason });
-
-  await container.auditLogger.record({
-    actorUserId: admin.id,
-    actorRole: admin.role,
-    action: AUDIT_ACTIONS.paymentVerified,
-    targetType: "payment",
-    targetId: paymentId,
-    shopId: payment.shopId,
-    ip: await getClientIp(),
-    metadata: { decision, status: payment.status },
-  });
-
-  // Tell the shop owner the outcome (best-effort: in-app + LINE).
-  const amount = satangToBaht(payment.amountSatang);
-  if (payment.status === "approved") {
-    await container.notificationService.notifyShopOwner(payment.shopId, {
-      type: "payment_approved",
-      title: "อนุมัติการชำระเงินแล้ว ✅",
-      body: `ชำระเงิน ${amount} บาท ได้รับการอนุมัติ — เติมวันใช้งานเรียบร้อย`,
-      linkUrl: "/shop/billing",
-    });
-  } else {
-    await container.notificationService.notifyShopOwner(payment.shopId, {
-      type: "payment_rejected",
-      title: "การชำระเงินถูกปฏิเสธ",
-      body: payment.rejectReason
-        ? `ชำระเงิน ${amount} บาท ถูกปฏิเสธ — เหตุผล: ${payment.rejectReason}`
-        : `ชำระเงิน ${amount} บาท ถูกปฏิเสธ กรุณาตรวจสอบและส่งใหม่`,
-      linkUrl: "/shop/billing",
-    });
-  }
-
-  revalidatePath("/admin/payments");
-  revalidatePath("/admin/shops");
 }
 
 export async function setShopStatusAction(
@@ -416,10 +300,7 @@ export async function setShopBillingCutoffAction(
     const admin = await requireRole("platform_admin");
     const shopId = String(formData.get("shopId") ?? "");
     const cutoff = String(formData.get("billingCutoffTime") ?? "").trim() || null;
-    await new SetShopBillingCutoffUseCase(
-      container.dailyFeeRepository,
-      container.shopRepository,
-    ).execute(shopId, cutoff, admin.id);
+    await container.creditService.setShopCutoff(shopId, cutoff);
     await container.auditLogger.record({
       actorUserId: admin.id,
       actorRole: admin.role,
@@ -429,31 +310,9 @@ export async function setShopBillingCutoffAction(
       ip: await getClientIp(),
       metadata: { cutoff },
     });
-    revalidatePath(`/admin/shops/${shopId}/billing`);
+    revalidatePath(`/admin/credit/shops/${shopId}`);
     return { success: "บันทึกเวลาตัดรอบแล้ว" };
   } catch (e) {
     return { error: (e as Error).message };
   }
-}
-
-/** Admin: mark one due daily-fee charge paid (manual; no auto-debit). */
-export async function markDailyFeePaidAction(formData: FormData): Promise<void> {
-  const admin = await requireRole("platform_admin");
-  const shopId = String(formData.get("shopId") ?? "");
-  const chargeId = String(formData.get("chargeId") ?? "");
-  await new MarkDailyFeePaidUseCase(container.dailyFeeRepository).execute(
-    shopId,
-    chargeId,
-    admin.id,
-  );
-  await container.auditLogger.record({
-    actorUserId: admin.id,
-    actorRole: admin.role,
-    action: AUDIT_ACTIONS.dailyFeePaid,
-    targetType: "shop",
-    targetId: shopId,
-    ip: await getClientIp(),
-    metadata: { chargeId },
-  });
-  revalidatePath(`/admin/shops/${shopId}/billing`);
 }

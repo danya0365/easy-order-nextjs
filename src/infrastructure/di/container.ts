@@ -28,7 +28,6 @@ import { DrizzleCustomerDeviceRepository } from "@/src/infrastructure/repositori
 import { DrizzleBindCodeRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleBindCodeRepository";
 import { DrizzleKioskSessionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleKioskSessionRepository";
 import { DrizzlePlatformSettingsRepository } from "@/src/infrastructure/repositories/drizzle/DrizzlePlatformSettingsRepository";
-import { DrizzleDailyFeeRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleDailyFeeRepository";
 import { DrizzleLoyaltyStampTypeRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyStampTypeRepository";
 import { DrizzleLoyaltyStampCardRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyStampCardRepository";
 import { DrizzleLoyaltyStampBalanceRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyStampBalanceRepository";
@@ -60,7 +59,6 @@ import type { ICustomerDeviceRepository } from "@/src/application/repositories/I
 import type { IBindCodeRepository } from "@/src/application/repositories/IBindCodeRepository";
 import type { IKioskSessionRepository } from "@/src/application/repositories/IKioskSessionRepository";
 import type { IPlatformSettingsRepository } from "@/src/application/repositories/IPlatformSettingsRepository";
-import type { IDailyFeeRepository } from "@/src/application/repositories/IDailyFeeRepository";
 import type { ILoyaltyStampTypeRepository } from "@/src/application/repositories/ILoyaltyStampTypeRepository";
 import type { ILoyaltyStampCardRepository } from "@/src/application/repositories/ILoyaltyStampCardRepository";
 import type { ILoyaltyStampBalanceRepository } from "@/src/application/repositories/ILoyaltyStampBalanceRepository";
@@ -128,8 +126,6 @@ class Container extends GenericContainer {
     new DrizzleKioskSessionRepository();
   readonly platformSettingsRepository: IPlatformSettingsRepository =
     new DrizzlePlatformSettingsRepository();
-  readonly dailyFeeRepository: IDailyFeeRepository =
-    new DrizzleDailyFeeRepository();
   readonly loyaltyStampTypeRepository: ILoyaltyStampTypeRepository =
     new DrizzleLoyaltyStampTypeRepository();
   readonly loyaltyStampCardRepository: ILoyaltyStampCardRepository =

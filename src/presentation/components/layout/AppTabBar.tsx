@@ -9,7 +9,6 @@ import {
   Bell,
   Building2,
   ClipboardList,
-  CreditCard,
   LayoutDashboard,
   LifeBuoy,
   MessageSquare,
@@ -96,7 +95,6 @@ const NAVS = {
     { href: "/shop/reviews", label: "navReviews", icon: Star },
     { href: "/shop/analytics", label: "navAnalytics", icon: BarChart3 },
     { href: "/shop/promote", label: "navPromote", icon: Megaphone },
-    { href: "/shop/billing", label: "navBilling", icon: CreditCard },
     { href: "/shop/credit", label: "navCredit", icon: Wallet },
     { href: "/shop/branches", label: "navBranches", icon: Building2 },
     { href: "/shop/staff", label: "navStaff", icon: UserCog },
@@ -106,13 +104,12 @@ const NAVS = {
     { href: "/shop/contact", label: "navContactAdmin", icon: LifeBuoy },
   ],
   admin: [
-    // Primary: shop management + payment-slip approval are the daily admin tasks.
+    // Primary: shop management + credit top-up approval are the daily admin tasks.
     { href: "/admin", label: "navOverview", icon: LayoutDashboard },
     { href: "/admin/shops", label: "navShops", icon: Store },
-    { href: "/admin/payments", label: "navPayments", icon: CreditCard },
+    { href: "/admin/credit", label: "navCredit", icon: Wallet },
     { href: "/admin/notifications", label: "navNotifications", icon: Bell },
     // Overflow
-    { href: "/admin/credit", label: "navCredit", icon: Wallet },
     { href: "/admin/contacts", label: "navContacts", icon: MessageSquare },
     { href: "/admin/reviews", label: "navReviews", icon: Star },
     { href: "/admin/analytics", label: "navAnalytics", icon: BarChart3 },
@@ -159,13 +156,10 @@ function matchActiveHref(pathname: string, links: NavItem[]): string | null {
  */
 export function AppTabBar({
   nav,
-  hideBillingNav = false,
   hideAdminNav = false,
   hideCreditNav = false,
 }: {
   nav: keyof typeof NAVS;
-  /** Hide the navBilling link (platform billing-UI switch → pure white-label). */
-  hideBillingNav?: boolean;
   /** Hide the platform-admin settings link (kept for symmetry / future hinges). */
   hideAdminNav?: boolean;
   /** Hide the shop credit link while the prepaid-credit master switch is off. */
@@ -173,10 +167,6 @@ export function AppTabBar({
 }) {
   const t = useTranslations("layout");
   let links: NavItem[] = NAVS[nav];
-  // Hidden chrome vs hidden route: the /shop/billing page itself still shows a
-  // notice when the toggle is off, so a stale link is harmless — but the entry
-  // shouldn't be discoverable.
-  if (hideBillingNav) links = links.filter((l) => l.href !== "/shop/billing");
   if (hideCreditNav) links = links.filter((l) => l.href !== "/shop/credit");
   if (hideAdminNav) links = links.filter((l) => l.href !== "/admin/settings");
   const pathname = usePathname();

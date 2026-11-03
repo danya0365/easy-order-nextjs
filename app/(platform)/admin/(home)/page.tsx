@@ -23,7 +23,7 @@ export default async function AdminDashboardPage() {
   const [shops, pending, openContacts, totpState, sessions, currentToken] =
     await Promise.all([
       container.shopRepository.list(),
-      container.paymentRepository.listByStatus("pending"),
+      container.creditRepository.countPendingTopups(),
       container.contactRequestRepository.countByStatus("open"),
       container.userRepository.getTotpState(user.id),
       container.sessionRepository.listByUser(user.id, new Date()),
@@ -49,12 +49,12 @@ export default async function AdminDashboardPage() {
             <span className="text-sm text-muted">{t("statShops")}</span>
           </Card>
         </Link>
-        <Link href="/admin/payments">
+        <Link href="/admin/credit/topups">
           <Card className="flex flex-col gap-1">
             <span className="text-2xl font-bold text-accent-500">
-              {pending.length}
+              {pending}
             </span>
-            <span className="text-sm text-muted">{t("statPendingPayments")}</span>
+            <span className="text-sm text-muted">{t("statPendingTopups")}</span>
           </Card>
         </Link>
         <Link href="/admin/contacts">

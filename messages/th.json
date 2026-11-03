@@ -409,7 +409,9 @@
     "setDeliveryNotesPlaceholder": "เช่น พื้นที่ให้บริการ, เวลาส่ง (ไม่บังคับ)",
     "setMinOrderLabel": "ยอดขั้นต่ำของออเดอร์ (บาท)",
     "setMinOrderHint": "เว้นว่าง = ไม่กำหนดยอดขั้นต่ำ",
-    "detailsAcceptsPromptPay": "รับชำระ PromptPay"
+    "detailsAcceptsPromptPay": "รับชำระ PromptPay",
+    "featCreditLabel": "เครดิต",
+    "featCreditDesc": "เติมเครดิต ดูยอดคงเหลือและรายการหักรายวัน"
   },
   "admin": {
     "auditLoginSucceeded": "เข้าสู่ระบบสำเร็จ",
@@ -919,14 +921,17 @@
     "settingsSubtitle": "สวิตช์การคิดเงินและการระงับร้าน (ระดับทั้งระบบ)",
     "billingUiOffNote": "UI ค่าบริการถูกปิดอยู่ (ร้านไม่เห็นหน้าค่าบริการ) — คำสั่งชำระเงินยังเข้ามาตามปกติ",
     "leadsSellGuide": "คู่มือขาย",
-    "dailyFeeLink": "ค่าธรรมเนียมรายวัน"
+    "dailyFeeLink": "ค่าธรรมเนียมรายวัน",
+    "statPendingTopups": "คำขอเติมเครดิตรอตรวจ",
+    "settingsCreditLink": "ตั้งค่าระบบเครดิต (ค่าบริการรายวัน / ยอดต่ำ)",
+    "creditLink": "เครดิต"
   },
   "staffPages": {
     "roleStaff": "พนักงาน",
     "shopPausedTitle": "ร้านปิดชั่วคราว",
     "shopPausedBody": "เจ้าของร้านปิดร้านชั่วคราว กรุณาติดต่อเจ้าของร้านเพื่อเปิดใช้งานอีกครั้ง",
     "shopSuspendedTitle": "ร้านถูกระงับการใช้งาน",
-    "shopSuspendedBody": "วันใช้งานหมดอายุ กรุณาแจ้งเจ้าของร้านให้เติมวันเพื่อเปิดใช้งานต่อ",
+    "shopSuspendedBody": "ร้านถูกระงับโดยผู้ดูแลระบบ หรือหยุดพักร้านอยู่ กรุณาแจ้งเจ้าของร้าน",
     "ordersTitle": "คิวออเดอร์",
     "orderQueueComingSoon": "ระบบคิวออเดอร์กำลังจะมา",
     "orderQueueComingSoonDesc": "เร็ว ๆ นี้พนักงานจะรับและจัดการออเดอร์ได้จากหน้านี้",
@@ -1917,7 +1922,7 @@
   "adminConfig": {
     "backToShops": "กลับไปรายชื่อร้าน",
     "shopTitle": "ตั้งค่าร้าน: {name}",
-    "billingLink": "ค่าบริการรายวัน",
+    "billingLink": "เครดิต",
     "manageLink": "ตั้งค่าร้าน",
     "contactTitle": "ติดต่อร้าน & การชำระเงิน",
     "contactSubtitle": "แสดงบนหน้าร้านของลูกค้า — ช่องที่เว้นว่างจะถูกซ่อน",
@@ -2388,6 +2393,7 @@
     "dMetric": "วัดจาก",
     "ordersUnit": "{n} ออเดอร์",
     "ruleDailyOrders": "วันไหนครบ {threshold} ออเดอร์ หัก {fee} บาท (ไม่ถึงไม่หัก)",
-    "ruleDailyOrdersStrict": "วันไหนเกิน {threshold} ออเดอร์ หัก {fee} บาท (ไม่ถึงไม่หัก)"
+    "ruleDailyOrdersStrict": "วันไหนเกิน {threshold} ออเดอร์ หัก {fee} บาท (ไม่ถึงไม่หัก)",
+    "cutoffTitle": "เวลาตัดรอบวันของร้าน"
   }
 }

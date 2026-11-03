@@ -12,6 +12,7 @@ import { CreditLedgerList, CreditRuleSummary, CREDIT_PAGE_SIZE, LedgerTypeFilter
 import { CreditAdjustForm } from "@/src/presentation/components/credit/CreditAdjustForm";
 import { CreditOverrideForm } from "@/src/presentation/components/credit/CreditConfigForm";
 import { CreditSettleDayForm } from "@/src/presentation/components/credit/CreditSettleDayForm";
+import { ShopCutoffForm } from "@/src/presentation/components/admin/ShopCutoffForm";
 import { DailySettlementList } from "@/src/presentation/components/credit/CreditDailyBits";
 import { addDaysYmd, creditDayOf } from "@/src/domain/services/credit";
 
@@ -27,12 +28,13 @@ export default async function AdminCreditShopPage({ params, searchParams }: { pa
   const page = pageParam(sp.page);
   const typeRaw = typeof sp.type === "string" ? sp.type : null;
   const type = CREDIT_ENTRY_TYPES.includes(typeRaw as CreditEntryType) ? (typeRaw as CreditEntryType) : null;
-  const [status, platform, override, ledger, daily] = await Promise.all([
+  const [status, platform, override, ledger, daily, shopCutoff] = await Promise.all([
     container.creditService.getStatus(shopId, { withBalance: true }),
     container.creditService.getPlatformConfig(),
     container.creditService.getShopOverride(shopId),
     container.creditRepository.pageLedger(shopId, { page, pageSize: CREDIT_PAGE_SIZE, type }),
     container.creditService.pageSettlements(shopId, 1, 5),
+    container.creditRepository.findShopCutoff(shopId),
   ]);
   const yesterday = addDaysYmd(creditDayOf(new Date(), "00:00"), -1);
   const base = `/admin/credit/shops/${shopId}`;
@@ -67,6 +69,10 @@ export default async function AdminCreditShopPage({ params, searchParams }: { pa
       <Card>
         <CardHeader title={t("overrideTitle")} />
         <CreditOverrideForm shopId={shopId} platform={platform} override={override} />
+      </Card>
+      <Card>
+        <CardHeader title={t("cutoffTitle")} />
+        <ShopCutoffForm shopId={shopId} cutoff={shopCutoff.billingCutoffTime} platformDefault={platform.daily.cutoffTime} />
       </Card>
       <Card>
         <CardHeader title={t("ledgerTitle")} />
