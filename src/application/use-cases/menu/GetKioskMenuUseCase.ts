@@ -17,10 +17,19 @@ export class GetKioskMenuUseCase {
     private readonly items: IMenuItemRepository,
   ) {}
 
-  async execute(shopId: string): Promise<KioskMenuSection[]> {
+  /**
+   * `includeSoldOut` (customer-facing menus): also return unavailable items so
+   * they can be shown as "sold out" (ordering is still rejected server-side).
+   */
+  async execute(
+    shopId: string,
+    opts: { includeSoldOut?: boolean } = {},
+  ): Promise<KioskMenuSection[]> {
     const [categories, items] = await Promise.all([
       this.categories.listActiveByShop(shopId),
-      this.items.listAvailableByShop(shopId),
+      opts.includeSoldOut
+        ? this.items.listByShop(shopId)
+        : this.items.listAvailableByShop(shopId),
     ]);
     const byCategory = new Map<string, MenuItem[]>();
     for (const item of items) {
