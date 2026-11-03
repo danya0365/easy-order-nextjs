@@ -57,6 +57,8 @@ export const shops = sqliteTable(
     spendPointsEnabled: integer({ mode: "boolean" }).notNull().default(false),
     // Shop toggle for membership OTP verification (default OFF — no SMS cost yet).
     memberOtpEnabled: integer({ mode: "boolean" }).notNull().default(false),
+    // Online order → customer account linking: auto | confirm | off (default auto).
+    customerLinkMode: text().notNull().default("auto"),
     // Revocable secret embedded in the permanent static QR (`/s/{slug}/join?k=`).
     staticJoinToken: text().$defaultFn(() =>
       randomBytes(24).toString("base64url"),

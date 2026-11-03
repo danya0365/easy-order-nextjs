@@ -225,6 +225,13 @@
       "when": 1797600000000,
       "tag": "0031_credit_daily_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1797700000000,
+      "tag": "0032_customer_link_mode",
+      "breakpoints": true
     }
   ]
 }

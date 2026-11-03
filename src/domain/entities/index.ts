@@ -221,6 +221,8 @@ export interface Shop {
   spendPointsEnabled: boolean;
   /** Shop toggle for OTP verification on static member registration. Default false. */
   memberOtpEnabled: boolean;
+  /** Online order → link order to the customer + remember the device. */
+  customerLinkMode: CustomerLinkMode;
   /** Pause NEW static-QR member signups (existing members unaffected). */
   memberSignupPaused: boolean;
   /** Per-shop membership policy overrides (null = default). */
@@ -772,4 +774,11 @@ export interface RiderPayoutRow {
   trips: number;
   commissionSatang: number;
   codCollectedSatang: number;
+}
+
+/** How an online order links to a customer account + remembers the device. */
+export const CUSTOMER_LINK_MODES = ["auto", "confirm", "off"] as const;
+export type CustomerLinkMode = (typeof CUSTOMER_LINK_MODES)[number];
+export function toCustomerLinkMode(v: unknown): CustomerLinkMode {
+  return (CUSTOMER_LINK_MODES as readonly unknown[]).includes(v) ? (v as CustomerLinkMode) : "auto";
 }

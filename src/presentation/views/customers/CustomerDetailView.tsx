@@ -7,6 +7,8 @@ import type { CrmAccess } from "@/src/infrastructure/auth/crm-access";
 import { crmCan, type CrmPerm } from "@/src/domain/services/crm-permissions";
 import { container } from "@/src/infrastructure/di/container";
 import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
+import { customerClaimPath } from "@/src/infrastructure/auth/customer-claim";
+import { getBaseUrl } from "@/src/presentation/lib/base-url";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { Card } from "@/src/presentation/components/ui/Card";
 import { StatCard } from "@/src/presentation/components/ui/StatCard";
@@ -25,6 +27,17 @@ export async function loadCrmCustomerOr404(shopId: string, id: string) {
   const customer = await container.customerRepository.findById(shopId, id);
   if (!customer) notFound();
   return customer;
+}
+
+/**
+ * Customer card QR: an https claim URL on this shop's domain (phone camera →
+ * /s/<slug>/member/claim → one tap links the device). Staff scanners still
+ * read the code from the URL. Falls back to the bare code without a secret.
+ */
+async function customerQrDataUrl(shopId: string, code: string): Promise<string> {
+  const shop = await container.shopRepository.findById(shopId);
+  const path = shop ? customerClaimPath(shop.slug, code) : null;
+  return renderQrDataUrl(path ? `${await getBaseUrl()}${path}` : code);
 }
 
 /** Customer CRM detail — shared by /shop/customers/[id] and /staff/customers/[id]. */
@@ -54,7 +67,7 @@ export async function CustomerDetailView({
     crm.timeline(shopId, customer.id, 30),
     container.loyaltyPointsBalanceRepository.findByCustomer(shopId, customer.id),
     container.loyaltyPointsRewardRepository.listByShop(shopId, { activeOnly: true }),
-    renderQrDataUrl(customer.publicCode),
+    customerQrDataUrl(shopId, customer.publicCode),
     customer.onlineOrderReviewedBy ? container.userRepository.findById(customer.onlineOrderReviewedBy) : null,
   ]);
   const actorIds = [...new Set(timeline.map((e) => e.actorUserId).filter((x): x is string => !!x))].slice(0, 20);
@@ -125,8 +138,11 @@ export async function CustomerDetailView({
             </div>
           )}
         </div>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={qr} alt={t("qrAlt")} className="size-32 self-center rounded-lg border border-border sm:self-start" />
+        <div className="flex flex-col items-center gap-1 self-center sm:self-start">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={qr} alt={t("qrAlt")} data-testid="customer-claim-qr" className="size-32 rounded-lg border border-border" />
+          <p className="max-w-[8rem] text-center text-xs text-muted">{t("qrHint")}</p>
+        </div>
       </Card>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

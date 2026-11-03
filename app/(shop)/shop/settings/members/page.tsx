@@ -95,6 +95,7 @@ export default async function ShopMemberSettingsPage() {
           bounds={MEMBER_POLICY_BOUNDS}
           memberOtpEnabled={shop.memberOtpEnabled}
           memberSignupPaused={shop.memberSignupPaused}
+          customerLinkMode={shop.customerLinkMode}
         />
       </Card>
     </div>
