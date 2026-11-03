@@ -64,7 +64,18 @@
     "orderGateTitle": "Scan the shop's QR to order",
     "orderGateDesc": "Online ordering opens after you scan this shop's QR code. You can browse the menu meanwhile.",
     "orderGateMenu": "View menu",
-    "orderGateBook": "Menu book"
+    "orderGateBook": "Menu book",
+    "notBoundTitle": "See your order history",
+    "notBoundDesc": "Your next online order will remember this device automatically — or ask the shop to show your customer-card QR and scan it with your phone camera.",
+    "memberCardLabel": "Shop member",
+    "memberNoName": "Member",
+    "memberSince": "Member since",
+    "memberOrderCount": "Orders",
+    "memberPoints": "Points",
+    "memberUnlink": "Not me / sign out of membership",
+    "memberUnlinkConfirm": "Unlink this device from the member? History and points are kept; relink anytime with the customer-card QR.",
+    "memberUnlinked": "Signed out of membership on this device",
+    "navMember": "Member account"
   },
   "shop": {
     "setOnlineOrderingLabel": "Accept online orders (from the web shop page)",
@@ -239,6 +250,7 @@
     "navShopHome": "Home",
     "navShopOrder": "Order",
     "navShopOrders": "My orders",
+    "navManageShop": "Manage shop",
     "navLoyalty": "Loyalty",
     "navPromotions": "Promotions",
     "moreMenuAria": "More menu",
@@ -246,7 +258,8 @@
     "navUsers": "Users",
     "navGuides": "Guides",
     "navQr": "Print QR",
-    "navCredit": "Credit"
+    "navCredit": "Credit",
+    "navMember": "Member account"
   },
   "sell": {
     "heroTagline": "Put a tablet on the counter and turn it into a self-ordering station — customers tap to order, the shop manages one live queue.",
