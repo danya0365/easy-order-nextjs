@@ -55,3 +55,27 @@ export async function CreditHeaderBadge({ status }: { status: CreditStatus }) {
     </Link>
   );
 }
+
+/**
+ * Layout-wide strip shown when credit is low / empty / blocked (replaces the
+ * old subscription suspension + daily-fee nag banners). Hidden when ok/off.
+ */
+export async function CreditLowBanner({ status }: { status: CreditStatus }) {
+  if (!status.enabled || status.gate.level === "ok") return null;
+  const t = await getTranslations("credit");
+  const { level } = status.gate;
+  const amount = satangToBaht(status.balanceSatang);
+  const msg = level === "low" ? t("lowWarn", { amount }) : level === "empty" ? t("emptyWarn", { amount }) : t("blockedWarn", { amount });
+  return (
+    <Link
+      href="/shop/credit"
+      data-testid="credit-low-banner"
+      data-level={level}
+      className={`flex items-center gap-2 px-4 py-2 text-sm text-foreground ${level === "low" ? "bg-warning-surface" : "bg-error-surface"}`}
+    >
+      <AlertTriangle className={`size-4 shrink-0 ${level === "low" ? "text-warning" : "text-error"}`} />
+      <span className="min-w-0 flex-1">{msg}</span>
+      <span className="shrink-0 font-semibold text-brand-600">{t("topupCta")}</span>
+    </Link>
+  );
+}

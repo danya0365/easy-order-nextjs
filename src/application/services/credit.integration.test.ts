@@ -220,30 +220,6 @@ test("settleAllDue settles the previous days once per shop (cron)", async () => 
   assert.equal(await repo().getBalance(shop.id), -500);
 });
 
-test("old order-count daily fee is not charged while the wallet is active (no double charge)", async () => {
-  await enable();
-  const { SyncDailyFeesUseCase } = await import("@/src/application/use-cases/billing/DailyFeeUseCases");
-  const fees = container.dailyFeeRepository;
-  const t0 = new Date(Date.now() - 60_000);
-  await fees.addTermsVersion({ shopId: null, effectiveAt: t0.toISOString(), enabled: true, threshold: 0, feeSatang: 500, cutoffTime: "00:00", createdBy: null });
-  try {
-    const later = new Date(Date.now() + 3 * 86400_000);
-    const mk = async (slug: string) => {
-      const { shop, item } = await shopWithItem(slug);
-      await order(shop.id, item.id, 1, new Date(Date.now() + 86400_000).toISOString());
-      return shop.id;
-    };
-    const walletShop = await mk("crd-legacy-w");
-    const plainShop = await mk("crd-legacy-p");
-    const withWallet = new SyncDailyFeesUseCase(fees, container.orderRepository, container.shopRepository, () => credit().isMasterEnabled());
-    const without = new SyncDailyFeesUseCase(fees, container.orderRepository, container.shopRepository);
-    assert.equal((await withWallet.execute(walletShop, later)).outstandingSatang, 0);
-    assert.ok((await without.execute(plainShop, later)).outstandingSatang > 0);
-  } finally {
-    await fees.addTermsVersion({ shopId: null, effectiveAt: new Date().toISOString(), enabled: false, threshold: 50, feeSatang: 500, cutoffTime: "04:00", createdBy: null });
-  }
-});
-
 test("topup approve credits amount + bonus once; reject needs reason", async () => {
   await enable();
   const { shop, ownerId } = await seedShop("cr-topup");

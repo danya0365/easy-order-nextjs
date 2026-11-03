@@ -98,6 +98,8 @@ export interface ICreditRepository {
   /** Shops the daily job considers (id, name, own billing cutoff). */
   listShopsForSettlement(): Promise<Array<{ id: string; name: string; billingCutoffTime: string | null }>>;
   findShopCutoff(shopId: string): Promise<{ exists: boolean; billingCutoffTime: string | null }>;
+  /** Per-shop business-day cutoff override (shops.billing_cutoff_time); null = platform default. */
+  setShopCutoff(shopId: string, cutoff: string | null): Promise<void>;
   findSettlement(shopId: string, businessDate: string): Promise<CreditDailySettlement | null>;
   findSettlementById(id: string): Promise<CreditDailySettlement | null>;
   /** Insert; returns null when (shop, date) already exists. */
