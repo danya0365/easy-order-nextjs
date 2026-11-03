@@ -26,12 +26,12 @@ const TEMPLATES: {
  * Palette button (badge = current skin) that opens a small menu — saves header
  * space. Both write the same persisted theme store.
  */
-export function ThemeSwitcher() {
+export function ThemeSwitcher({ labels = true }: { labels?: boolean } = {}) {
   return (
     <>
       <MobileThemeMenu />
       <div className="hidden sm:block">
-        <InlineThemeSwitcher />
+        <InlineThemeSwitcher labels={labels} />
       </div>
     </>
   );
@@ -141,7 +141,7 @@ function MobileThemeMenu() {
   );
 }
 
-function InlineThemeSwitcher() {
+function InlineThemeSwitcher({ labels }: { labels: boolean }) {
   const tr = useTranslations("theme");
   const template = useThemeStore((s) => s.template);
   const dark = useThemeStore((s) => s.dark);
@@ -159,6 +159,7 @@ function InlineThemeSwitcher() {
             type="button"
             onClick={() => setTemplate(tpl.value)}
             title={label}
+            aria-label={label}
             aria-pressed={template === tpl.value}
             className={cn(
               "inline-flex items-center rounded-full px-2.5 py-1 text-sm transition",
@@ -168,7 +169,7 @@ function InlineThemeSwitcher() {
             )}
           >
             <Icon className="size-4" />
-            <span className="ml-1 hidden sm:inline">{label}</span>
+            {labels && <span className="ml-1 hidden sm:inline">{label}</span>}
           </button>
         );
       })}

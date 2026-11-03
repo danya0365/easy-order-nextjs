@@ -1,4 +1,5 @@
 import { CustomerTabBar } from "@/src/presentation/components/layout/CustomerTabBar";
+import { PublicSiteHeader } from "@/src/presentation/components/layout/PublicSiteHeader";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 import { GroupIntlProvider } from "@/src/i18n/GroupIntlProvider";
 
@@ -16,6 +17,7 @@ export default function PublicLayout({
   return (
     <GroupIntlProvider group="public">
     <div className="pb-[calc(env(safe-area-inset-bottom)+4rem)]">
+      <PublicSiteHeader />
       {children}
       <AppVersion />
       <CustomerTabBar />

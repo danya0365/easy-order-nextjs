@@ -3,6 +3,7 @@ import { Bike } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { getSessionRider } from "@/src/infrastructure/auth/rider-session";
+import { SiteHeader } from "@/src/presentation/components/layout/SiteHeader";
 import { RiderBottomNav } from "@/src/presentation/components/rider/RiderBottomNav";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,19 @@ export default async function RiderLayout({ children }: { children: React.ReactN
   }
   return (
     <div className="mx-auto min-h-dvh max-w-md pb-24">
+      <SiteHeader
+        sticky
+        width="max-w-md"
+        themeLabels={false}
+        left={
+          <>
+            <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+              <Bike className="size-4" />
+            </span>
+            <span className="truncate text-sm font-bold text-foreground">{(await getTranslations("rider"))("rpTitle")}</span>
+          </>
+        }
+      />
       {children}
       <RiderBottomNav />
     </div>
