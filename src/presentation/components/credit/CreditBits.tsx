@@ -117,20 +117,13 @@ export async function LedgerTypeFilter({ basePath, current }: { basePath: string
 
 export async function CreditRuleSummary({ config }: { config: EffectiveCreditConfig }) {
   const t = await getTranslations("credit");
-  const d = config.deduction;
+  const d = config.daily;
   const lb = config.lowBalance;
-  const fee = satangToBaht(d.fixedSatang);
-  const rule =
-    d.mode === "fixed" ? t("ruleFixed", { fee }) : d.mode === "percent" ? t("rulePercent", { percent: d.percent }) : d.mode === "fixed_percent" ? t("ruleFixedPercent", { fee, percent: d.percent }) : t("ruleTiered");
-  const trig = d.trigger === "placed" ? t("triggerPlaced") : d.trigger === "accepted" ? t("triggerAccepted") : t("triggerCompleted");
-  const low = lb.mode === "warn" ? t("lowModeWarn") : lb.mode === "block" ? t("lowModeBlock") : t("lowModeGrace", { orders: lb.graceOrders || "∞", neg: lb.negativeLimitSatang ? satangToBaht(lb.negativeLimitSatang) : "∞" });
+  const low = lb.mode === "warn" ? t("lowModeWarn") : t("lowModeBlock");
   return (
     <ul className="flex flex-col gap-1 text-sm text-foreground" data-testid="credit-rule">
-      <li className="font-medium">{rule}</li>
-      {d.mode === "tiered" && d.tiers.map((x, i) => <li key={i} className="pl-3 text-xs text-muted">{t("tierRow", { min: satangToBaht(x.minTotalSatang), fee: satangToBaht(x.feeSatang) })}</li>)}
-      {(d.minSatang > 0 || d.maxSatang > 0) && <li className="text-xs text-muted">{t("ruleMinMax", { min: satangToBaht(d.minSatang), max: d.maxSatang ? satangToBaht(d.maxSatang) : "∞" })}</li>}
-      {(d.freePerDay > 0 || d.freePerMonth > 0) && <li className="text-xs text-muted">{t("ruleFree", { day: d.freePerDay, month: d.freePerMonth })}</li>}
-      <li className="text-xs text-muted">{trig} · {d.refundOnCancel ? t("refundOn") : t("refundOff")}</li>
+      <li className="font-medium">{t(d.inclusive ? "ruleDaily" : "ruleDailyStrict", { threshold: satangToBaht(d.thresholdSatang), fee: satangToBaht(d.feeSatang) })}</li>
+      <li className="text-xs text-muted">{t("ruleDailyCount", { statuses: d.countStatuses.map((s) => t(`status_${s}`)).join(", "), cutoff: d.cutoffTime })}</li>
       <li className="text-xs text-muted">{low}</li>
     </ul>
   );

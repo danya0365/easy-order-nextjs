@@ -10,6 +10,7 @@ import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { CreditDashCard } from "@/src/presentation/components/credit/CreditBalanceAlert";
 import { CreditLedgerList, CreditRuleSummary, CREDIT_PAGE_SIZE, LedgerTypeFilter, Pager, TopupStatusBadge, pageParam } from "@/src/presentation/components/credit/CreditBits";
 import { CreditTopupForm } from "@/src/presentation/components/credit/CreditTopupForm";
+import { CreditTodayCard } from "@/src/presentation/components/credit/CreditDailyBits";
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { formatDateTime } from "@/src/presentation/lib/format-date";
 
@@ -32,9 +33,10 @@ export default async function ShopCreditPage({ searchParams }: { searchParams: P
   const page = pageParam(sp.page);
   const typeRaw = typeof sp.type === "string" ? sp.type : null;
   const type = CREDIT_ENTRY_TYPES.includes(typeRaw as CreditEntryType) ? (typeRaw as CreditEntryType) : null;
-  const [ledger, topups] = await Promise.all([
+  const [ledger, topups, today] = await Promise.all([
     container.creditRepository.pageLedger(shopId, { page, pageSize: CREDIT_PAGE_SIZE, type }),
     container.creditRepository.pageTopups({ page: 1, pageSize: 5, shopId }),
+    container.creditService.getTodayProgress(shopId),
   ]);
   const topup = status.config.topup;
 
@@ -45,6 +47,7 @@ export default async function ShopCreditPage({ searchParams }: { searchParams: P
         <p className="mt-1 text-sm text-muted">{t("subtitle")}</p>
       </div>
       <CreditDashCard status={status} />
+      {today && <CreditTodayCard p={today} href="/shop/credit/daily" />}
       <Card>
         <CardHeader title={t("ruleTitle")} />
         <CreditRuleSummary config={status.config} />

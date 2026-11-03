@@ -1,4 +1,4 @@
-import { bindings, defineConfig, defineWorker } from "cf/config";
+import { bindings, defineConfig, defineWorker, triggers } from "cf/config";
 
 // Dual-worker scaffolding:
 // - production (default / --mode production / no mode): "easy-order"
@@ -10,7 +10,11 @@ export default defineConfig((ctx) => {
   return {
     worker: defineWorker({
       name: isDevMode ? "easy-order-dev" : "easy-order",
-      entrypoint: "vinext/server/fetch-handler",
+      // vinext app + Cloudflare cron `scheduled` handler (worker/entry.ts).
+      entrypoint: isDevMode ? "./worker/entry.ts" : "vinext/server/fetch-handler",
+      // Hourly: settle the prepaid-credit daily fee (idempotent). Staging only
+      // until the daily model is approved for production.
+      ...(isDevMode ? { triggers: [triggers.scheduled({ schedule: "5 * * * *" })] } : {}),
       compatibilityDate: "2026-10-27",
       compatibilityFlags: ["nodejs_compat"],
       assets: {

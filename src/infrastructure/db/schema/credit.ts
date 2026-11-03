@@ -86,3 +86,36 @@ export const creditTopups = sqliteTable(
     index("credit_topups_status_created_idx").on(t.status, t.createdAt),
   ],
 );
+
+/**
+ * One row per shop per settled business day (daily threshold fee). Unique
+ * (shop_id, business_date) makes settlement idempotent; the ledger entry it
+ * points to carries idempotency key `daily:<shopId>:<businessDate>`.
+ */
+export const creditDailySettlements = sqliteTable(
+  "credit_daily_settlements",
+  {
+    id: id(),
+    shopId: text()
+      .notNull()
+      .references(() => shops.id, { onDelete: "cascade" }),
+    businessDate: text().notNull(),
+    periodStart: text().notNull(),
+    periodEnd: text().notNull(),
+    cutoffTime: text().notNull(),
+    salesSatang: integer().notNull(),
+    orderCount: integer().notNull(),
+    thresholdSatang: integer().notNull(),
+    feeSatang: integer().notNull(),
+    /** Amount actually deducted (0 = below threshold). */
+    chargedSatang: integer().notNull(),
+    ledgerEntryId: text(),
+    /** "cron" | "admin:<userId>" */
+    settledBy: text(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("credit_daily_shop_date_unique").on(t.shopId, t.businessDate),
+    index("credit_daily_date_idx").on(t.businessDate),
+  ],
+);

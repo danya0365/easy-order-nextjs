@@ -24,6 +24,7 @@ export default async function AdminShopBillingPage({ params }: { params: Promise
     container.dailyFeeRepository,
     container.orderRepository,
     container.shopRepository,
+    () => container.creditService.isMasterEnabled(),
   ).execute(shopId);
 
   return (

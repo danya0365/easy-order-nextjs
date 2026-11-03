@@ -42,6 +42,23 @@ export interface CreditWalletRow {
   updatedAt: string | null;
 }
 
+export interface CreditDailySettlement {
+  id: string;
+  shopId: string;
+  businessDate: string;
+  periodStart: string;
+  periodEnd: string;
+  cutoffTime: string;
+  salesSatang: number;
+  orderCount: number;
+  thresholdSatang: number;
+  feeSatang: number;
+  chargedSatang: number;
+  ledgerEntryId: string | null;
+  settledBy: string | null;
+  createdAt: string;
+}
+
 export interface NumberedPage<T> {
   items: T[];
   total: number;
@@ -74,10 +91,16 @@ export interface ICreditRepository {
   findEntryByKey(key: string): Promise<CreditLedgerEntry | null>;
   findEntry(id: string): Promise<CreditLedgerEntry | null>;
   pageLedger(shopId: string, opts: { page: number; pageSize: number; type?: CreditEntryType | null }): Promise<NumberedPage<CreditLedgerEntry>>;
-  /** Deduction rows (charged or free) since an ISO instant. */
-  countDeductionsSince(shopId: string, sinceISO: string): Promise<number>;
-  /** Deductions made since the balance last was > 0 (grace counter). */
-  graceUsed(shopId: string): Promise<number>;
+  /** Sales sum + count of orders created in [from, to) with a status in `statuses`. */
+  sumSalesBetween(shopId: string, fromISO: string, toISO: string, statuses: string[], basis: "total" | "subtotal"): Promise<{ salesSatang: number; orderCount: number }>;
+  /** Shops the daily job considers (id, name, own billing cutoff). */
+  listShopsForSettlement(): Promise<Array<{ id: string; name: string; billingCutoffTime: string | null }>>;
+  findShopCutoff(shopId: string): Promise<{ exists: boolean; billingCutoffTime: string | null }>;
+  findSettlement(shopId: string, businessDate: string): Promise<CreditDailySettlement | null>;
+  findSettlementById(id: string): Promise<CreditDailySettlement | null>;
+  /** Insert; returns null when (shop, date) already exists. */
+  insertSettlement(input: Omit<CreditDailySettlement, "id" | "createdAt">): Promise<CreditDailySettlement | null>;
+  pageSettlements(shopId: string, opts: { page: number; pageSize: number }): Promise<NumberedPage<CreditDailySettlement>>;
   pageWallets(opts: { page: number; pageSize: number; q?: string | null }): Promise<NumberedPage<CreditWalletRow>>;
 
   createTopup(input: Omit<CreditTopup, "id" | "status" | "reviewedBy" | "reviewedAt" | "rejectReason" | "createdAt">): Promise<CreditTopup>;
