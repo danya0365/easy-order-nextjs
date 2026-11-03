@@ -48,10 +48,10 @@ test("paginate clamps page and reports totals", () => {
   assert.equal(paginate([], 5, 12).page, 1);
 });
 
-test("isPublicMenuItem respects availability, category active + ownership", () => {
+test("isPublicMenuItem keeps sold-out; checks category active + ownership", () => {
   const c = cat("c1");
   assert.equal(isPublicMenuItem(item("a", "c1"), c), true);
-  assert.equal(isPublicMenuItem(item("a", "c1", { isAvailable: false }), c), false);
+  assert.equal(isPublicMenuItem(item("a", "c1", { isAvailable: false }), c), true); // sold-out stays visible
   assert.equal(isPublicMenuItem(item("a", "c1"), cat("c1", { isActive: false })), false);
   assert.equal(isPublicMenuItem(item("a", "c1"), null), false);
   assert.equal(isPublicMenuItem(item("a", "c2"), c), false);

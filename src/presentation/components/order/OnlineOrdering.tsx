@@ -3,7 +3,8 @@
 import { useCallback, useMemo, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Check, MapPin, Minus, Plus, ShoppingBag } from "lucide-react";
+import { Ban, Check, MapPin, Minus, Plus, ShoppingBag } from "lucide-react";
+import { SoldOutOverlay } from "@/src/presentation/components/public-menu/MenuItemCard";
 
 import type {
   FulfillmentType,
@@ -251,13 +252,14 @@ export function OnlineOrdering({
               const withOptions = hasGroups(item.id);
               const qty = withOptions ? mc.qtyOfItem(item.id) : cart[item.id] ?? 0;
               const imageSrc = menuImageSrc(item);
+              const soldOut = !item.isAvailable;
               return (
                 <div
                   key={item.id}
                   className="flex flex-col justify-between gap-3 rounded-2xl border border-border bg-card p-4"
                 >
                   <div
-                    {...(canOpenDetail(item.id)
+                    {...(!soldOut && canOpenDetail(item.id)
                       ? {
                           role: "button",
                           tabIndex: 0,
@@ -271,7 +273,8 @@ export function OnlineOrdering({
                       : {})}
                   >
                     {imageSrc && (
-                      // eslint-disable-next-line @next/next/no-img-element -- served from our own API route, not a remote CDN
+                      <div className="relative mb-3 overflow-hidden rounded-xl">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- served from our own API route, not a remote CDN */}
                       <img
                         src={imageSrc}
                         alt={item.name}
@@ -279,23 +282,32 @@ export function OnlineOrdering({
                         decoding="async"
                         width={400}
                         height={400}
-                        className="mb-3 aspect-square w-full rounded-xl border border-border bg-muted-surface object-cover"
+                        className={`aspect-square w-full rounded-xl border border-border bg-muted-surface object-cover${soldOut ? " opacity-60 grayscale" : ""}`}
                       />
+                      {soldOut && <SoldOutOverlay />}
+                      </div>
                     )}
-                    <p className="font-semibold text-foreground">{item.name}</p>
+                    <p className={soldOut ? "font-semibold text-muted" : "font-semibold text-foreground"}>{item.name}</p>
                     {item.description && (
                       <p className="mt-0.5 text-sm text-muted">
                         {item.description}
                       </p>
                     )}
                     <p className="mt-1 text-base font-medium text-brand-700">
-                      ฿{satangToBaht(item.priceSatang)}
+                      <span className={soldOut ? "text-muted line-through decoration-red-500 decoration-2" : undefined}>
+                        ฿{satangToBaht(item.priceSatang)}
+                      </span>
                       {withOptions && (
                         <span className="ml-2 text-xs font-normal text-muted">{tOpt("hasOptions")}</span>
                       )}
                     </p>
                   </div>
-                  {withOptions ? (
+                  {soldOut ? (
+                    <Button fullWidth disabled variant="ghost" className="bg-muted-surface !text-red-600" data-testid="menu-item-soldout">
+                      <Ban className="size-4" />
+                      หมด
+                    </Button>
+                  ) : withOptions ? (
                     <Button fullWidth onClick={() => setDetailItem(item)} data-testid="menu-item-add-options">
                       <Plus className="size-4" />
                       {t("add")}

@@ -123,7 +123,7 @@ export default async function OnlineOrderPage({
   const sections = await new GetKioskMenuUseCase(
     container.menuCategoryRepository,
     container.menuItemRepository,
-  ).execute(shop.id);
+  ).execute(shop.id, { includeSoldOut: true });
 
   // Delivery map: open on the shop's pinned branch, else Thailand overview.
   const branches = shop.deliveryEnabled

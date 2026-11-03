@@ -22,13 +22,12 @@ export function parsePageParam(v: string | string[] | undefined): number {
   return Number.isFinite(n) && n >= 1 ? n : 1;
 }
 
-/** Only items a customer could see: available + in an active category of the same shop. */
+/** Items a customer could see: in an active category of the same shop (sold-out items stay visible). */
 export function isPublicMenuItem(
   item: MenuItem,
   category: MenuCategory | null | undefined,
 ): boolean {
   return (
-    item.isAvailable &&
     !!category &&
     category.isActive &&
     category.id === item.categoryId &&
