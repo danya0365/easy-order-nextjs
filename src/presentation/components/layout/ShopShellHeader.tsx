@@ -23,8 +23,7 @@ export async function ShopShellHeader({
   return (
     <SiteHeader
       sticky
-      width="max-w-md"
-      themeLabels={false}
+      width="max-w-md sm:max-w-4xl"
       left={
         <Link
           href={`/s/${slug}`}
