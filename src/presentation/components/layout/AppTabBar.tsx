@@ -30,6 +30,7 @@ import {
   type LucideIcon, KeyRound,
   Bike,
   QrCode,
+  Wallet,
 } from "lucide-react";
 
 import { cn } from "@/src/presentation/components/ui/cn";
@@ -63,7 +64,8 @@ type NavLabelKey =
   | "navShops"
   | "navPayments"
   | "navContacts"
-  | "navPlatformSettings";
+  | "navPlatformSettings"
+  | "navCredit";
 
 interface NavItem {
   href: string;
@@ -95,6 +97,7 @@ const NAVS = {
     { href: "/shop/analytics", label: "navAnalytics", icon: BarChart3 },
     { href: "/shop/promote", label: "navPromote", icon: Megaphone },
     { href: "/shop/billing", label: "navBilling", icon: CreditCard },
+    { href: "/shop/credit", label: "navCredit", icon: Wallet },
     { href: "/shop/branches", label: "navBranches", icon: Building2 },
     { href: "/shop/staff", label: "navStaff", icon: UserCog },
     { href: "/shop/settings", label: "navSettings", icon: Settings },
@@ -109,6 +112,7 @@ const NAVS = {
     { href: "/admin/payments", label: "navPayments", icon: CreditCard },
     { href: "/admin/notifications", label: "navNotifications", icon: Bell },
     // Overflow
+    { href: "/admin/credit", label: "navCredit", icon: Wallet },
     { href: "/admin/contacts", label: "navContacts", icon: MessageSquare },
     { href: "/admin/reviews", label: "navReviews", icon: Star },
     { href: "/admin/analytics", label: "navAnalytics", icon: BarChart3 },
@@ -157,12 +161,15 @@ export function AppTabBar({
   nav,
   hideBillingNav = false,
   hideAdminNav = false,
+  hideCreditNav = false,
 }: {
   nav: keyof typeof NAVS;
   /** Hide the navBilling link (platform billing-UI switch → pure white-label). */
   hideBillingNav?: boolean;
   /** Hide the platform-admin settings link (kept for symmetry / future hinges). */
   hideAdminNav?: boolean;
+  /** Hide the shop credit link while the prepaid-credit master switch is off. */
+  hideCreditNav?: boolean;
 }) {
   const t = useTranslations("layout");
   let links: NavItem[] = NAVS[nav];
@@ -170,6 +177,7 @@ export function AppTabBar({
   // notice when the toggle is off, so a stale link is harmless — but the entry
   // shouldn't be discoverable.
   if (hideBillingNav) links = links.filter((l) => l.href !== "/shop/billing");
+  if (hideCreditNav) links = links.filter((l) => l.href !== "/shop/credit");
   if (hideAdminNav) links = links.filter((l) => l.href !== "/admin/settings");
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);

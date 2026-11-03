@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Bell, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -15,6 +16,8 @@ interface AppHeaderProps {
   userEmail: string;
   /** Bell link + unread badge; omit to hide the bell (e.g. staff). */
   notifications?: { href: string; unread: number };
+  /** Extra header action rendered before the bell (e.g. the credit balance pill). */
+  extra?: ReactNode;
 }
 
 /**
@@ -28,6 +31,7 @@ export function AppHeader({
   role,
   userEmail,
   notifications,
+  extra,
 }: AppHeaderProps) {
   const t = useTranslations("layout");
   return (
@@ -40,7 +44,9 @@ export function AppHeader({
         </>
       }
       actions={
-        notifications && (
+        <>
+        {extra}
+        {notifications && (
           <Link
             href={notifications.href}
             aria-label={
@@ -57,7 +63,8 @@ export function AppHeader({
               </span>
             )}
           </Link>
-        )
+        )}
+        </>
       }
       trailing={
         <>

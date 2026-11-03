@@ -248,6 +248,8 @@ export async function convertLeadToShopAction(
       ),
       performedBy: user.id,
     });
+    // Prepaid credit: one-time starting balance (no-op while credit is off).
+    await container.creditService.grantStartingCredit(shop.id).catch(() => {});
     // The detail page stays mounted (ConvertLeadButton renders in every state),
     // so this refresh flows `convertedSlug` in without dropping the credentials
     // handoff — its state lives in the (preserved) client component.
