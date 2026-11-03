@@ -4,6 +4,7 @@ import { and, asc, eq, isNull } from "drizzle-orm";
 import { generateStaticJoinToken } from "@/src/domain/services/static-join-guard";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { Shop } from "@/src/domain/entities";
+import { toCustomerLinkMode } from "@/src/domain/entities";
 import type {
   CreateShopInput,
   IShopRepository,
@@ -38,6 +39,7 @@ function toShop(r: Row): Shop {
     stampCardEnabled: r.stampCardEnabled,
     spendPointsEnabled: r.spendPointsEnabled,
     memberOtpEnabled: r.memberOtpEnabled,
+    customerLinkMode: toCustomerLinkMode(r.customerLinkMode),
     memberSignupPaused: r.memberSignupPaused,
     memberPolicyOverrides: {
       newMemberOrderCapThb: r.memberOrderCapThb ?? null,
@@ -146,6 +148,9 @@ export class DrizzleShopRepository implements IShopRepository {
               memberPendingExpiryHours: input.memberPolicy.pendingExpiryHours,
               memberRejectCooldownDays: input.memberPolicy.rejectCooldownDays,
             }
+          : {}),
+        ...(input.customerLinkMode !== undefined
+          ? { customerLinkMode: input.customerLinkMode }
           : {}),
         ...(input.memberSignupPaused !== undefined
           ? { memberSignupPaused: input.memberSignupPaused }

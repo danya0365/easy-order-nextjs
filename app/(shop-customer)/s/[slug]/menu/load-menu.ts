@@ -34,10 +34,10 @@ export const loadPublicMenuShop = (slug: string) => requestMemo(`publicMenuShop:
   return { shop, view };
 });
 
-/** Active categories with available items only (same read model as the kiosk). */
+/** Active categories with all items (sold-out ones flagged via isAvailable=false) (same read model as the kiosk). */
 export const loadPublicMenuSections = (shopId: string) =>
   requestMemo(`publicMenuSections:${shopId}`, () =>
-    new GetKioskMenuUseCase(container.menuCategoryRepository, container.menuItemRepository).execute(shopId),
+    new GetKioskMenuUseCase(container.menuCategoryRepository, container.menuItemRepository).execute(shopId, { includeSoldOut: true }),
   );
 
 /** One public item (+ its category); shared by the [itemId] layout gate, metadata and page. */

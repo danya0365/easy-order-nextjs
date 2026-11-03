@@ -21,6 +21,7 @@ import {
   MEMBER_POLICY_KEYS,
   type MemberPolicy,
 } from "@/src/domain/services/member-policy";
+import { toCustomerLinkMode } from "@/src/domain/entities";
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
 import { getClientIp } from "@/src/presentation/lib/request-ip";
 
@@ -236,6 +237,9 @@ export async function updateMemberSettingsAction(
       policy,
       memberOtpEnabled: formData.get("memberOtpEnabled") === "on",
       memberSignupPaused: formData.get("memberSignupPaused") === "on",
+      customerLinkMode: formData.has("customerLinkMode")
+        ? toCustomerLinkMode(formData.get("customerLinkMode"))
+        : undefined,
     });
     await audit(AUDIT_ACTIONS.memberSettingsUpdated, actor, shopId, "shop", shopId, {
       before,

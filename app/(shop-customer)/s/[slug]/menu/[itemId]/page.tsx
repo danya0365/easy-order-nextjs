@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, BookOpen, QrCode, ShoppingBag, UtensilsCrossed } from "lucide-react";
+import { ArrowLeft, BookOpen, Ban, QrCode, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -9,6 +9,7 @@ import { getOrderAccess } from "@/src/infrastructure/auth/order-access";
 import { loadOrderingExtras } from "@/src/application/use-cases/menu/MenuOptionUseCases";
 import { menuImageSrc } from "@/src/presentation/lib/menu-image";
 import { satangToBaht } from "@/src/presentation/lib/money";
+import { SoldOutOverlay } from "@/src/presentation/components/public-menu/MenuItemCard";
 import { MenuPrintButton } from "@/src/presentation/components/public-menu/MenuPrintButton";
 import { loadPublicMenuItem, loadPublicMenuShop } from "../load-menu";
 
@@ -59,15 +60,16 @@ export default async function PublicMenuItemPage({ params }: { params: Params })
       </div>
 
       <article className="menu-detail overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border md:grid md:grid-cols-2">
-        <div className="aspect-square w-full bg-muted-surface">
+        <div className="relative aspect-square w-full bg-muted-surface">
           {src ? (
             // eslint-disable-next-line @next/next/no-img-element -- internal image route
-            <img src={src} alt={item.name} className="size-full object-cover" />
+            <img src={src} alt={item.name} className={item.isAvailable ? "size-full object-cover" : "size-full object-cover opacity-60 grayscale"} />
           ) : (
             <div className="flex size-full items-center justify-center text-muted">
               <UtensilsCrossed className="size-12 opacity-40" />
             </div>
           )}
+          {!item.isAvailable && <SoldOutOverlay />}
         </div>
         <div className="flex flex-col gap-3 p-5">
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
@@ -76,7 +78,12 @@ export default async function PublicMenuItemPage({ params }: { params: Params })
             </Link>
           </p>
           <h1 className="text-2xl font-bold text-foreground">{item.name}</h1>
-          <p className="text-2xl font-extrabold text-brand-700">฿{satangToBaht(item.priceSatang)}</p>
+          <p className={item.isAvailable ? "text-2xl font-extrabold text-brand-700" : "text-2xl font-extrabold text-muted line-through decoration-red-500 decoration-2"}>฿{satangToBaht(item.priceSatang)}</p>
+          {!item.isAvailable && (
+            <p className="inline-flex w-fit items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-sm font-semibold text-red-600 ring-1 ring-red-200" data-testid="menu-item-soldout">
+              <Ban className="size-4" aria-hidden /> เมนูนี้หมดชั่วคราว
+            </p>
+          )}
           {item.description && (
             <p className="whitespace-pre-line leading-relaxed text-foreground">{item.description}</p>
           )}

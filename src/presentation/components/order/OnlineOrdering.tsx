@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Check, MapPin, Minus, Plus, ShoppingBag } from "lucide-react";
+import { Ban, Check, MapPin, Minus, Plus, ShoppingBag, X } from "lucide-react";
+import { SoldOutOverlay } from "@/src/presentation/components/public-menu/MenuItemCard";
 
 import type {
+  CustomerLinkMode,
   FulfillmentType,
   MenuItem,
   MenuOptionGroup,
@@ -55,7 +57,13 @@ export function OnlineOrdering({
   lastDelivery,
   optionGroups = null,
   itemDetailEnabled = false,
+  rememberedContact = null,
+  customerLinkMode = "auto",
 }: {
+  /** Name + phone of the customer this device is remembered for (member cookie). */
+  rememberedContact?: { name: string; phone: string } | null;
+  /** Shop setting: link the order's customer + remember this device. */
+  customerLinkMode?: CustomerLinkMode;
   /** Option groups (only when menu options are effective for the shop). */
   optionGroups?: MenuOptionGroup[] | null;
   /** Platform switch: tap a menu item to open the detail sheet. */
@@ -88,8 +96,37 @@ export function OnlineOrdering({
   const [fulfillmentType, setFulfillmentType] = useState<FulfillmentType>(
     pickupEnabled ? "pickup" : "delivery",
   );
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerName, setCustomerName] = useState(rememberedContact?.name ?? "");
+  const [customerPhone, setCustomerPhone] = useState(rememberedContact?.phone ?? "");
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [linkConsent, setLinkConsent] = useState(false);
+  const contactKey = `eo_contact_${slug}`;
+  // Remembered device fallback: prefill from localStorage when the server
+  // didn't (no member cookie yet). Never overwrites what's already typed.
+  function prefillFromStorage() {
+    if (rememberedContact || customerLinkMode === "off") return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(contactKey) ?? "null") as
+        | { name?: string; phone?: string }
+        | null;
+      if (saved?.name) setCustomerName((cur) => cur || saved.name || "");
+      if (saved?.phone) setCustomerPhone((cur) => cur || saved.phone || "");
+    } catch {
+      /* ignore corrupt storage */
+    }
+  }
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setSheetOpen(false);
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [sheetOpen]);
   const [address, setAddress] = useState(lastDelivery?.address ?? "");
   const [landmark, setLandmark] = useState(lastDelivery?.landmark ?? "");
   const [pin, setPin] = useState<LatLng | null>(
@@ -118,12 +155,37 @@ export function OnlineOrdering({
     fulfillmentType === "delivery" ? deliveryFeeSatang : 0;
   const totalSatang = subtotalSatang + deliveryFee;
   const belowMin = minOrderSatang !== null && subtotalSatang < minOrderSatang;
-  const canSubmit =
-    count > 0 &&
-    customerName.trim().length > 0 &&
-    customerPhone.trim().length >= 9 &&
-    (fulfillmentType === "pickup" || (address.trim().length > 0 && pin !== null)) &&
-    !belowMin;
+  const canOpenSheet = count > 0 && !belowMin;
+
+  function validate(): Record<string, string> {
+    const e: Record<string, string> = {};
+    if (!customerName.trim()) e.name = t("errName");
+    const digits = customerPhone.replace(/\D/g, "");
+    if (digits.length < 9 || digits.length > 10) e.phone = t("errPhone");
+    if (fulfillmentType === "delivery") {
+      if (!pin) e.pin = t("errPin");
+      if (!address.trim()) e.address = t("errAddress");
+    }
+    if (count === 0) e.cart = t("cartEmpty");
+    return e;
+  }
+
+  /** Drop a field's validation message as soon as the customer edits it. */
+  function clearError(key: string) {
+    setErrors((cur) => {
+      if (!(key in cur) && !("form" in cur)) return cur;
+      const next = { ...cur };
+      delete next[key];
+      delete next.form;
+      return next;
+    });
+  }
+
+  function confirmOrder() {
+    const e = validate();
+    setErrors(e);
+    if (Object.keys(e).length === 0) placeOrder();
+  }
 
   const setQty = mc.setLineQty;
   const hasGroups = (id: string) => (mc.groupsByItem.get(id)?.length ?? 0) > 0;
@@ -145,9 +207,25 @@ export function OnlineOrdering({
         deliveryLng: fulfillmentType === "delivery" ? pin?.lng ?? null : null,
         deliveryLandmark:
           fulfillmentType === "delivery" ? landmark.trim() || null : null,
+        linkConsent: customerLinkMode === "confirm" ? linkConsent : undefined,
       });
-      if (res.ok) setResult(res);
-      else toast.error(res.error || t("orderError"));
+      if (res.ok) {
+        if (res.linked) {
+          try {
+            localStorage.setItem(
+              contactKey,
+              JSON.stringify({ name: customerName.trim(), phone: customerPhone.trim() }),
+            );
+          } catch {
+            /* storage unavailable */
+          }
+        }
+        setSheetOpen(false);
+        setResult(res);
+      } else {
+        setErrors({ form: res.error || t("orderError") });
+        toast.error(res.error || t("orderError"));
+      }
     });
   }
 
@@ -251,13 +329,14 @@ export function OnlineOrdering({
               const withOptions = hasGroups(item.id);
               const qty = withOptions ? mc.qtyOfItem(item.id) : cart[item.id] ?? 0;
               const imageSrc = menuImageSrc(item);
+              const soldOut = !item.isAvailable;
               return (
                 <div
                   key={item.id}
                   className="flex flex-col justify-between gap-3 rounded-2xl border border-border bg-card p-4"
                 >
                   <div
-                    {...(canOpenDetail(item.id)
+                    {...(!soldOut && canOpenDetail(item.id)
                       ? {
                           role: "button",
                           tabIndex: 0,
@@ -271,7 +350,8 @@ export function OnlineOrdering({
                       : {})}
                   >
                     {imageSrc && (
-                      // eslint-disable-next-line @next/next/no-img-element -- served from our own API route, not a remote CDN
+                      <div className="relative mb-3 overflow-hidden rounded-xl">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- served from our own API route, not a remote CDN */}
                       <img
                         src={imageSrc}
                         alt={item.name}
@@ -279,23 +359,32 @@ export function OnlineOrdering({
                         decoding="async"
                         width={400}
                         height={400}
-                        className="mb-3 aspect-square w-full rounded-xl border border-border bg-muted-surface object-cover"
+                        className={`aspect-square w-full rounded-xl border border-border bg-muted-surface object-cover${soldOut ? " opacity-60 grayscale" : ""}`}
                       />
+                      {soldOut && <SoldOutOverlay />}
+                      </div>
                     )}
-                    <p className="font-semibold text-foreground">{item.name}</p>
+                    <p className={soldOut ? "font-semibold text-muted" : "font-semibold text-foreground"}>{item.name}</p>
                     {item.description && (
                       <p className="mt-0.5 text-sm text-muted">
                         {item.description}
                       </p>
                     )}
                     <p className="mt-1 text-base font-medium text-brand-700">
-                      ฿{satangToBaht(item.priceSatang)}
+                      <span className={soldOut ? "text-muted line-through decoration-red-500 decoration-2" : undefined}>
+                        ฿{satangToBaht(item.priceSatang)}
+                      </span>
                       {withOptions && (
                         <span className="ml-2 text-xs font-normal text-muted">{tOpt("hasOptions")}</span>
                       )}
                     </p>
                   </div>
-                  {withOptions ? (
+                  {soldOut ? (
+                    <Button fullWidth disabled variant="ghost" className="bg-muted-surface !text-red-600" data-testid="menu-item-soldout">
+                      <Ban className="size-4" />
+                      หมด
+                    </Button>
+                  ) : withOptions ? (
                     <Button fullWidth onClick={() => setDetailItem(item)} data-testid="menu-item-add-options">
                       <Plus className="size-4" />
                       {t("add")}
@@ -373,90 +462,203 @@ export function OnlineOrdering({
         />
       )}
 
-      {/* Identity + contact */}
-      <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-foreground">
-          {t("onlineContactTitle")}
-        </h3>
-        <Input
-          maxLength={80}
-          required
-          placeholder={t("onlineNamePlaceholder")}
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-        />
-        <Input
-          type="tel"
-          inputMode="numeric"
-          maxLength={20}
-          required
-          placeholder={t("onlinePhonePlaceholder")}
-          value={customerPhone}
-          onChange={(e) => setCustomerPhone(e.target.value)}
-        />
-        {fulfillmentType === "delivery" && (
-          <div className="space-y-2" data-testid="delivery-location">
-            <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-              <MapPin className="size-4 text-brand-600" />
-              {t("deliveryPinTitle")}
-            </p>
-            <LocationPicker
-              value={pin}
-              fallbackCenter={{ lat: mapCenter.lat, lng: mapCenter.lng }}
-              fallbackZoom={mapCenter.zoom}
-              onChange={setPin}
-              onPlaceLabel={onPlaceLabel}
-            />
-            {!pin && (
-              <p className="text-xs text-amber-700">{t("deliveryPinRequired")}</p>
-            )}
-            <Textarea
-              rows={2}
-              maxLength={300}
-              required
-              placeholder={t("onlineAddressPlaceholder")}
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-            />
-            <Input
-              maxLength={120}
-              placeholder={t("deliveryLandmarkPlaceholder")}
-              value={landmark}
-              onChange={(e) => setLandmark(e.target.value)}
-            />
-          </div>
-        )}
-        <Textarea
-          rows={2}
-          maxLength={200}
-          placeholder={t("notePlaceholder")}
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-        />
-      </div>
+      {sheetOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t("sheetTitle")}
+          onClick={() => setSheetOpen(false)}
+          data-testid="order-sheet"
+        >
+          <div
+            className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-card sm:rounded-3xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border px-5 py-3">
+              <h2 className="text-lg font-bold text-foreground">{t("sheetTitle")}</h2>
+              <button
+                type="button"
+                onClick={() => setSheetOpen(false)}
+                aria-label={t("sheetClose")}
+                className="inline-flex size-9 items-center justify-center rounded-full bg-muted-surface text-foreground"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
+              {/* Cart summary */}
+              <div className="flex flex-col gap-1 rounded-2xl border border-border p-3" data-testid="sheet-cart">
+                <ul className="flex flex-col divide-y divide-border">
+                  {mc.lines.map((l) => (
+                    <li key={l.key} className="flex items-start justify-between gap-2 py-1.5 text-sm">
+                      <span className="min-w-0">
+                        <span className="text-foreground">{l.qty} × {l.item.name}</span>
+                        {l.options.length > 0 && (
+                          <span className="block text-xs text-muted">{formatOrderLineOptions(l.options)}</span>
+                        )}
+                      </span>
+                      <span className="shrink-0 text-muted">฿{satangToBaht(l.unitSatang * l.qty)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-1 flex justify-between border-t border-border pt-2 text-sm text-muted">
+                  <span>{t("sheetSubtotal")}</span>
+                  <span>฿{satangToBaht(subtotalSatang)}</span>
+                </div>
+                {deliveryFee > 0 && (
+                  <div className="flex justify-between text-sm text-muted">
+                    <span>{t("sheetDeliveryFee")}</span>
+                    <span>฿{satangToBaht(deliveryFee)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-base font-semibold text-foreground">
+                  <span>{t("sheetTotal")}</span>
+                  <span>฿{satangToBaht(totalSatang)}</span>
+                </div>
+                {errors.cart && <FieldError>{errors.cart}</FieldError>}
+              </div>
 
-      {/* Payment */}
-      <div>
-        <p className="mb-2 text-sm font-medium text-foreground">
-          {t("paymentTitle")}
-        </p>
-        {hasPromptPay ? (
-          <div className="grid grid-cols-2 gap-2">
-            <PayChoice
-              active={method === "promptpay_qr"}
-              label={t("payPromptpay")}
-              onClick={() => setMethod("promptpay_qr")}
-            />
-            <PayChoice
-              active={method === "cash"}
-              label={t("payCash")}
-              onClick={() => setMethod("cash")}
-            />
+            {/* Identity + contact */}
+            <div className="flex flex-col gap-3">
+              <h3 className="text-sm font-semibold text-foreground">
+                {t("onlineContactTitle")}
+              </h3>
+              <Input
+                maxLength={80}
+                required
+                placeholder={t("onlineNamePlaceholder")}
+                value={customerName}
+                onChange={(e) => {
+            setCustomerName(e.target.value);
+            clearError("name");
+          }}
+                aria-invalid={!!errors.name}
+                data-testid="sheet-name"
+              />
+              {errors.name && <FieldError>{errors.name}</FieldError>}
+              <Input
+                type="tel"
+                inputMode="numeric"
+                maxLength={20}
+                required
+                placeholder={t("onlinePhonePlaceholder")}
+                value={customerPhone}
+                onChange={(e) => {
+            setCustomerPhone(e.target.value);
+            clearError("phone");
+          }}
+                aria-invalid={!!errors.phone}
+                data-testid="sheet-phone"
+              />
+              {errors.phone && <FieldError>{errors.phone}</FieldError>}
+              {fulfillmentType === "delivery" && (
+                <div className="space-y-2" data-testid="delivery-location">
+                  <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                    <MapPin className="size-4 text-brand-600" />
+                    {t("deliveryPinTitle")}
+                  </p>
+                  <LocationPicker
+                    value={pin}
+                    fallbackCenter={{ lat: mapCenter.lat, lng: mapCenter.lng }}
+                    fallbackZoom={mapCenter.zoom}
+                    onChange={(v) => {
+                setPin(v);
+                clearError("pin");
+              }}
+                    onPlaceLabel={onPlaceLabel}
+                  />
+                  {errors.pin ? (
+                    <FieldError>{errors.pin}</FieldError>
+                  ) : (
+                    !pin && <p className="text-xs text-amber-700">{t("deliveryPinRequired")}</p>
+                  )}
+                  <Textarea
+                    rows={2}
+                    maxLength={300}
+                    required
+                    placeholder={t("onlineAddressPlaceholder")}
+                    value={address}
+                    onChange={(e) => {
+            setAddress(e.target.value);
+            clearError("address");
+          }}
+                    aria-invalid={!!errors.address}
+                  />
+                  {errors.address && <FieldError>{errors.address}</FieldError>}
+                  <Input
+                    maxLength={120}
+                    placeholder={t("deliveryLandmarkPlaceholder")}
+                    value={landmark}
+                    onChange={(e) => setLandmark(e.target.value)}
+                  />
+                </div>
+              )}
+              <Textarea
+                rows={2}
+                maxLength={200}
+                placeholder={t("notePlaceholder")}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                data-testid="sheet-note"
+              />
+            </div>
+
+            {/* Payment */}
+            <div>
+              <p className="mb-2 text-sm font-medium text-foreground">
+                {t("paymentTitle")}
+              </p>
+              {hasPromptPay ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <PayChoice
+                    active={method === "promptpay_qr"}
+                    label={t("payPromptpay")}
+                    onClick={() => setMethod("promptpay_qr")}
+                  />
+                  <PayChoice
+                    active={method === "cash"}
+                    label={t("payCash")}
+                    onClick={() => setMethod("cash")}
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-muted">{t("cashOnly")}</p>
+              )}
+            </div>
+
+              {customerLinkMode === "confirm" && (
+                <label className="flex items-start gap-3 text-sm text-foreground" data-testid="sheet-link-consent">
+                  <input
+                    type="checkbox"
+                    checked={linkConsent}
+                    onChange={(e) => setLinkConsent(e.target.checked)}
+                    className="mt-1"
+                  />
+                  <span>{t("linkConsentLabel")}</span>
+                </label>
+              )}
+              {errors.form && (
+                <p role="alert" className="rounded-xl bg-error-surface px-3 py-2 text-sm text-error" data-testid="sheet-error">
+                  {errors.form}
+                </p>
+              )}
+            </div>
+            <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+              <Button
+                size="lg"
+                fullWidth
+                onClick={confirmOrder}
+                disabled={pending}
+                loading={pending}
+                data-testid="sheet-confirm"
+              >
+                {pending ? t("placing") : t("sheetConfirm", { amount: satangToBaht(totalSatang) })}
+              </Button>
+            </div>
           </div>
-        ) : (
-          <p className="text-sm text-muted">{t("cashOnly")}</p>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Sticky cart / place order bar — sits above the fixed shop tab bar
           (h-16 + safe-area inset), so it's never hidden behind it. */}
@@ -476,11 +678,15 @@ export function OnlineOrdering({
           <Button
             size="lg"
             className="ml-auto"
-            onClick={placeOrder}
-            disabled={!canSubmit || pending}
-            loading={pending}
+            onClick={() => {
+              setErrors({});
+              prefillFromStorage();
+              setSheetOpen(true);
+            }}
+            disabled={!canOpenSheet || pending}
+            data-testid="open-order-sheet"
           >
-            {pending ? t("placing") : t("placeOrder")}
+            {t("placeOrder")}
           </Button>
         </div>
       </div>
@@ -537,5 +743,13 @@ function PayChoice({
     >
       {label}
     </button>
+  );
+}
+
+function FieldError({ children }: { children: React.ReactNode }) {
+  return (
+    <p role="alert" className="-mt-1 text-xs text-error">
+      {children}
+    </p>
   );
 }

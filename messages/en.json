@@ -37,7 +37,19 @@
     "deliveryPinRequired": "Please pin the delivery location first",
     "deliveryLandmarkPlaceholder": "Landmark (e.g. blue building next to 7-Eleven)",
     "deliveryLandmarkLabel": "Landmark",
-    "navigate": "Navigate"
+    "navigate": "Navigate",
+    "sheetTitle": "Confirm order",
+    "sheetClose": "Close",
+    "sheetConfirm": "Place order ฿{amount}",
+    "sheetSubtotal": "Subtotal",
+    "sheetDeliveryFee": "Delivery fee",
+    "sheetTotal": "Total",
+    "errName": "Please enter your name",
+    "errPhone": "Please enter a valid phone (9–10 digits)",
+    "errAddress": "Please enter a delivery address",
+    "errPin": "Please pin the delivery location",
+    "linkConsentLabel": "Remember this device and link to my customer account",
+    "cartEmpty": "Your cart is empty"
   },
   "publicPages": {
     "onlineOrderMetaTitle": "Order online · {name}",
@@ -150,7 +162,15 @@
     "dailyFeeNag": "Outstanding daily fees ฿{amount} — view details",
     "legacyBillingTitle": "Legacy top-up history",
     "legacyBillingSubtitle": "The day-based top-up system is retired; shown for reference only.",
-    "qrHubLink": "All QR codes in “Print QR”"
+    "qrHubLink": "All QR codes in “Print QR”",
+    "customerLinkModeLabel": "Link customer account on online orders",
+    "customerLinkModeDesc": "Match the phone to an existing customer (or create one) and remember the device",
+    "customerLinkMode_auto": "Automatic (recommended)",
+    "customerLinkMode_autoDesc": "Link and remember the device after ordering",
+    "customerLinkMode_confirm": "Ask the customer",
+    "customerLinkMode_confirmDesc": "Show a consent checkbox on the order sheet",
+    "customerLinkMode_off": "Off",
+    "customerLinkMode_offDesc": "Do not remember the device"
   },
   "admin": {
     "settingsBillingUiLabel": "Show monthly billing UI",
@@ -644,7 +664,8 @@
     "callCustomer": "Call customer",
     "orderTitle": "Order",
     "paid": "Paid",
-    "unpaid": "Unpaid"
+    "unpaid": "Unpaid",
+    "qrHint": "Customer scans with phone camera to link this card"
   },
   "promote": {
     "ctaScanJoinLine": "Scan to join and order",
@@ -1023,5 +1044,18 @@
     "ruleDailyOrders": "Days with {threshold}+ orders: deduct {fee} baht (otherwise nothing)",
     "ruleDailyOrdersStrict": "Days with more than {threshold} orders: deduct {fee} baht",
     "cutoffTitle": "Shop business-day cutoff"
+  },
+  "memberClaim": {
+    "title": "Link {shop} customer card to this device",
+    "desc": "One tap links this device to view orders, points and autofill next time.",
+    "name": "Name",
+    "phone": "Phone",
+    "confirm": "Confirm, link this device",
+    "alreadyTitle": "This device is already linked",
+    "openOrders": "View orders",
+    "invalidTitle": "Invalid customer card link",
+    "blockedTitle": "This customer card is unavailable",
+    "invalidDesc": "Ask the shop to show the customer QR again.",
+    "backToShop": "Back to shop"
   }
 }

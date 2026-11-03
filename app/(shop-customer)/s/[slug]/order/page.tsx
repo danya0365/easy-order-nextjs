@@ -123,7 +123,7 @@ export default async function OnlineOrderPage({
   const sections = await new GetKioskMenuUseCase(
     container.menuCategoryRepository,
     container.menuItemRepository,
-  ).execute(shop.id);
+  ).execute(shop.id, { includeSoldOut: true });
 
   // Delivery map: open on the shop's pinned branch, else Thailand overview.
   const branches = shop.deliveryEnabled
@@ -137,12 +137,19 @@ export default async function OnlineOrderPage({
     : { lat: 13.7563, lng: 100.5018, zoom: 6 };
 
   // Remember the last pin for a bound member device of THIS shop.
+  // A remembered device (member cookie for THIS shop) also prefills the
+  // order sheet's name + phone.
   let lastDelivery = null;
-  const memberToken = shop.deliveryEnabled ? await getMemberToken(slug) : null;
+  let rememberedContact: { name: string; phone: string } | null = null;
+  const memberToken = await getMemberToken(slug);
   if (memberToken) {
     const bound = await container.customerDeviceRepository.findByToken(memberToken);
     const c = bound?.customer;
+    if (c && c.shopId === shop.id && !c.blockedAt) {
+      rememberedContact = { name: c.displayName ?? "", phone: c.phone };
+    }
     if (
+      shop.deliveryEnabled &&
       c &&
       c.shopId === shop.id &&
       c.lastDeliveryLat != null &&
@@ -181,6 +188,8 @@ export default async function OnlineOrderPage({
         lastDelivery={lastDelivery}
         optionGroups={extras.optionGroups}
         itemDetailEnabled={extras.itemDetailEnabled}
+        rememberedContact={rememberedContact}
+        customerLinkMode={shop.customerLinkMode}
       />
     </main>
   );

@@ -12,6 +12,7 @@ import type {
   MemberPolicy,
   MemberPolicyKey,
 } from "@/src/domain/services/member-policy";
+import { CUSTOMER_LINK_MODES, type CustomerLinkMode } from "@/src/domain/entities";
 import { Input } from "@/src/presentation/components/ui/Input";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { FormField } from "@/src/presentation/components/ui/FormField";
@@ -32,12 +33,14 @@ export function MemberSettingsForm({
   bounds,
   memberOtpEnabled,
   memberSignupPaused,
+  customerLinkMode,
 }: {
   policy: MemberPolicy;
   defaults: MemberPolicy;
   bounds: Record<MemberPolicyKey, [number, number]>;
   memberOtpEnabled: boolean;
   memberSignupPaused: boolean;
+  customerLinkMode: CustomerLinkMode;
 }) {
   const t = useTranslations("shopPages");
   const toast = useToast();
@@ -81,6 +84,27 @@ export function MemberSettingsForm({
           </span>
         </span>
       </label>
+
+      <fieldset className="flex flex-col gap-2" data-testid="customer-link-mode">
+        <legend className="font-medium">{t("customerLinkModeLabel")}</legend>
+        <p className="text-sm text-muted">{t("customerLinkModeDesc")}</p>
+        {CUSTOMER_LINK_MODES.map((m) => (
+          <label key={m} className="flex items-start gap-3 rounded-lg border border-border px-3 py-2">
+            <input
+              type="radio"
+              name="customerLinkMode"
+              value={m}
+              defaultChecked={customerLinkMode === m}
+              className="mt-1"
+              data-testid={`customer-link-mode-${m}`}
+            />
+            <span>
+              <span className="font-medium">{t(`customerLinkMode_${m}`)}</span>
+              <span className="block text-sm text-muted">{t(`customerLinkMode_${m}Desc`)}</span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
 
       <div className="grid gap-4 sm:grid-cols-2">
         {FIELDS.map((k) => {
