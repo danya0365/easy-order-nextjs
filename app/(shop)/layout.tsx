@@ -8,6 +8,7 @@ import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
 import { container } from "@/src/infrastructure/di/container";
 import { requestMemo } from "@/src/infrastructure/request/request-memo";
+import { shopCreditStatus } from "@/src/infrastructure/request/credit";
 import { AppHeader } from "@/src/presentation/components/layout/AppHeader";
 import { AppTabBar } from "@/src/presentation/components/layout/AppTabBar";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
@@ -17,6 +18,7 @@ import { PreExpiryBanner } from "@/src/presentation/components/billing/PreExpiry
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { PausedBanner } from "@/src/presentation/components/billing/PausedBanner";
 import { GroupIntlProvider } from "@/src/i18n/GroupIntlProvider";
+import { CreditHeaderBadge } from "@/src/presentation/components/credit/CreditBalanceAlert";
 
 export default async function ShopLayout({
   children,
@@ -25,22 +27,23 @@ export default async function ShopLayout({
 }) {
   // One memoized bundle: vinext probes the layout before rendering it, so this
   // runs once per request instead of twice; independent reads run in parallel.
-  const { user, impersonating, t, status, billingUiEnabled, pathname, unread, outstandingSatang, shop } =
+  const { user, impersonating, t, status, billingUiEnabled, pathname, unread, outstandingSatang, shop, credit } =
     await requestMemo("layout:shop", async () => {
       const { user, shopId, impersonating } = await requireShopAccess();
-      const [t, { status, billingUiEnabled }, h, unread, shop] = await Promise.all([
+      const [t, { status, billingUiEnabled }, h, unread, shop, credit] = await Promise.all([
         getTranslations("shopPages"),
         getBillingState(shopId),
         headers(),
         // Impersonating admins have no shop-owner notifications of their own.
         impersonating ? Promise.resolve(0) : container.notificationRepository.countUnread(user.id),
         impersonating ? container.shopRepository.findById(shopId) : Promise.resolve(null),
+        shopCreditStatus(shopId),
       ]);
       // Daily-fee balance nag (never blocks — no suspension for daily fees).
       const outstandingSatang = billingUiEnabled
         ? await container.dailyFeeRepository.outstandingSatang(shopId)
         : 0;
-      return { user, shopId, impersonating, t, status, billingUiEnabled, pathname: h.get("x-pathname") ?? "", unread, outstandingSatang, shop };
+      return { user, shopId, impersonating, t, status, billingUiEnabled, pathname: h.get("x-pathname") ?? "", unread, outstandingSatang, shop, credit };
     });
 
   // Suspended: block everything except the billing page (so they can pay).
@@ -65,6 +68,7 @@ export default async function ShopLayout({
         role={impersonating ? t("roleImpersonating") : t("roleShop")}
         userEmail={user.email}
         notifications={{ href: "/shop/notifications", unread }}
+        extra={<CreditHeaderBadge status={credit} />}
       />
       {billingUiEnabled && (
         <>
@@ -87,7 +91,7 @@ export default async function ShopLayout({
         {children}
         <AppVersion />
       </main>
-      <AppTabBar nav="shop" hideBillingNav={!billingUiEnabled} />
+      <AppTabBar nav="shop" hideBillingNav={!billingUiEnabled} hideCreditNav={!credit.enabled} />
     </div>
     </GroupIntlProvider>
   );

@@ -110,6 +110,13 @@ export async function placeOrderAction(
       }
     }
 
+    // Prepaid credit (block mode only): no new customer orders once the wallet is empty.
+    try {
+      await container.creditService.assertCanTakeOrder(shopId);
+    } catch (e) {
+      return { error: (e as Error).message };
+    }
+
     const order = await new PlaceOrderUseCase(
       container.orderRepository,
       container.menuItemRepository,
@@ -237,6 +244,13 @@ export async function placeOnlineOrderAction(
 
     if (input.paymentMethod === "promptpay_qr" && !shop.promptpayTarget) {
       return { error: "ร้านยังไม่ได้ตั้งค่า PromptPay กรุณาเลือกจ่ายเงินสด" };
+    }
+
+    // Prepaid credit (block mode only): no new customer orders once the wallet is empty.
+    try {
+      await container.creditService.assertCanTakeOrder(shop.id);
+    } catch (e) {
+      return { error: (e as Error).message };
     }
 
     const order = await new PlaceOrderUseCase(

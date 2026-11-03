@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { CreditDashCard } from "@/src/presentation/components/credit/CreditBalanceAlert";
+import { shopCreditStatus } from "@/src/infrastructure/request/credit";
+import { CreditTodayCard } from "@/src/presentation/components/credit/CreditDailyBits";
 import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
@@ -54,6 +57,9 @@ export default async function ShopDashboardPage() {
         <p className="mt-1 text-sm text-muted">{t("dashRemaining", { remaining })}</p>
       </div>
 
+      <CreditDashCard status={await shopCreditStatus(shopId)} />
+      <CreditTodaySlot shopId={shopId} />
+
       <QrHubDashCard shopId={shopId} orderQrOn={!!shop?.onlineOrderingEnabled} />
 
       <FeatureCarousel />
@@ -92,4 +98,9 @@ export default async function ShopDashboardPage() {
       </Card>
     </div>
   );
+}
+
+async function CreditTodaySlot({ shopId }: { shopId: string }) {
+  const p = await container.creditService.getTodayProgress(shopId).catch(() => null);
+  return p ? <CreditTodayCard p={p} href="/shop/credit/daily" /> : null;
 }

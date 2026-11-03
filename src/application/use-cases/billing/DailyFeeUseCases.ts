@@ -48,11 +48,18 @@ export class SyncDailyFeesUseCase {
     private readonly fees: IDailyFeeRepository,
     private readonly orders: IOrderRepository,
     private readonly shops: IShopRepository,
+    /**
+     * No double charge: while the prepaid-credit wallet is active its daily
+     * fee is the payment source, so the legacy order-count daily fee records
+     * closed days as "none" (amount 0) instead of "due".
+     */
+    private readonly walletActive: () => Promise<boolean> = async () => false,
   ) {}
 
   async execute(shopId: string, now: Date = new Date()): Promise<DailyFeeOverview> {
     const shop = await this.shops.findById(shopId);
     if (!shop) throw new Error("ไม่พบร้านค้า");
+    const wallet = await this.walletActive().catch(() => false);
     const versions = await this.fees.listTermsVersions(shopId);
     const last = await this.fees.lastCharge(shopId);
 
@@ -69,7 +76,7 @@ export class SyncDailyFeesUseCase {
           day.start.toISOString(),
           day.end.toISOString(),
         );
-        const amount = dailyFeeFor(orderCount, day.terms);
+        const amount = wallet ? 0 : dailyFeeFor(orderCount, day.terms);
         await this.fees.insertCharge({
           shopId,
           businessDate: day.businessDate,

@@ -13,11 +13,11 @@ export const BASE_NAMESPACES = ["common", "error", "layout", "theme"] as const;
 export const GROUP_NAMESPACES = {
   auth: ["auth", "admin"],
   kiosk: ["kiosk", "menuOptions"],
-  platform: ["admin", "adminConfig", "adminUsers", "analytics", "auth", "channels", "leads", "loyalty", "promotions", "reviews"],
+  platform: ["admin", "adminConfig", "adminUsers", "analytics", "auth", "channels", "credit", "leads", "loyalty", "promotions", "reviews"],
   public: ["map", "auth"],
   rider: ["rider"],
   shop: [
-    "admin", "analytics", "auth", "billing", "channels", "customerDetail", "customersCrm", "kiosk", "loyalty", "map",
+    "admin", "analytics", "auth", "billing", "channels", "credit", "customerDetail", "customersCrm", "kiosk", "loyalty", "map",
     "menu", "menuBulk", "menuOptions", "order", "promote", "promotions", "publicMenu", "qrHub", "reviews", "rider", "shop", "shopPages",
   ],
   shopCustomer: ["loyalty", "map", "menuOptions", "order", "publicMenu", "reviews", "shop", "shopPages"],

@@ -123,6 +123,8 @@ export async function createShopAction(
       ),
       promptpayTarget: String(formData.get("promptpayTarget") ?? "") || null,
     });
+    // Prepaid credit: one-time starting balance (no-op while credit is off).
+    await container.creditService.grantStartingCredit(shop.id).catch(() => {});
     revalidatePath("/admin/shops");
     return {
       success: "สร้างร้านค้าและบัญชีเจ้าของร้านแล้ว",
