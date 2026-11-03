@@ -7,8 +7,6 @@ import { requestMemo } from "@/src/infrastructure/request/request-memo";
 import { AppHeader } from "@/src/presentation/components/layout/AppHeader";
 import { AppTabBar } from "@/src/presentation/components/layout/AppTabBar";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
-import { SuspensionBanner } from "@/src/presentation/components/billing/SuspensionBanner";
-import { PreExpiryBanner } from "@/src/presentation/components/billing/PreExpiryBanner";
 import { GroupIntlProvider } from "@/src/i18n/GroupIntlProvider";
 
 export default async function StaffLayout({
@@ -17,18 +15,17 @@ export default async function StaffLayout({
   children: React.ReactNode;
 }) {
   // Memoized: vinext probes then renders the layout — run once, in parallel.
-  const { user, t, status, billingUiEnabled, unread } = await requestMemo("layout:staff", async () => {
+  const { user, t, status, unread } = await requestMemo("layout:staff", async () => {
     const user = await requireRole("branch_staff");
-    const [t, { status, billingUiEnabled }, unread] = await Promise.all([
+    const [t, { status }, unread] = await Promise.all([
       getTranslations("staffPages"),
       getBillingState(user.shopId!),
       container.notificationRepository.countUnread(user.id),
     ]);
-    return { user, t, status, billingUiEnabled, unread };
+    return { user, t, status, unread };
   });
 
-  const blocked =
-    status.isPaused || (status.isSuspended && billingUiEnabled);
+  const blocked = status.isPaused || status.isSuspended;
 
   return (
     <GroupIntlProvider group="staff">
@@ -38,12 +35,6 @@ export default async function StaffLayout({
         userEmail={user.email}
         notifications={{ href: "/staff/notifications", unread }}
       />
-      {billingUiEnabled && (
-        <>
-          <SuspensionBanner status={status} />
-          <PreExpiryBanner status={status} />
-        </>
-      )}
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
         {status.isPaused ? (
           <div className="rounded-2xl bg-amber-50 p-6 text-center">

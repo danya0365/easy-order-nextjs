@@ -4,7 +4,7 @@ import {
   Bell,
   Building2,
   ClipboardList,
-  CreditCard,
+  Wallet,
   Megaphone,
   MonitorSmartphone,
   Settings,
@@ -44,7 +44,7 @@ export async function FeatureGrid() {
     { id: "staff", icon: UserCog, label: t("featStaffLabel"), description: t("featStaffDesc"), href: "/shop/staff" },
     { id: "kiosk", icon: MonitorSmartphone, label: t("featKioskLabel"), description: t("featKioskDesc"), href: "/shop/kiosk" },
     { id: "notifications", icon: Bell, label: t("featNotificationsLabel"), description: t("featNotificationsDesc"), href: "/shop/notifications" },
-    { id: "billing", icon: CreditCard, label: t("featBillingLabel"), description: t("featBillingDesc"), href: "/shop/billing" },
+    { id: "credit", icon: Wallet, label: t("featCreditLabel"), description: t("featCreditDesc"), href: "/shop/credit" },
     { id: "settings", icon: Settings, label: t("featSettingsLabel"), description: t("featSettingsDesc"), href: "/shop/settings" },
   ];
 

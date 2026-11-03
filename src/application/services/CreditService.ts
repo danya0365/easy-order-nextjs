@@ -155,6 +155,14 @@ export class CreditService {
     return { config, cutoff: creditCutoffFor(config.daily, shop.billingCutoffTime) };
   }
 
+  /** Admin: set / clear a shop's business-day cutoff ("HH:MM" Bangkok, null = platform default). */
+  async setShopCutoff(shopId: string, cutoff: string | null): Promise<void> {
+    const v = cutoff?.trim() || null;
+    if (v !== null && !/^([01]\d|2[0-3]):[0-5]\d$/.test(v)) throw new Error("เวลาตัดรอบต้องเป็นรูปแบบ HH:MM");
+    if (!(await this.repo.findShopCutoff(shopId)).exists) throw new Error("ไม่พบร้านค้า");
+    await this.repo.setShopCutoff(shopId, v);
+  }
+
   /** Today's (open business day) sales vs the threshold, for the shop dashboard. */
   async getTodayProgress(shopId: string, now: Date = new Date()): Promise<CreditTodayProgress | null> {
     if (!(await this.isMasterEnabled())) return null;

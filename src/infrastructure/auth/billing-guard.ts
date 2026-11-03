@@ -10,18 +10,16 @@ export function getBillingState(shopId: string): Promise<BillingState> {
   return new GetBillingStateUseCase(
     container.shopRepository,
     container.subscriptionRepository,
-    container.platformSettingsRepository,
-    container.orderRepository,
   ).execute(shopId);
 }
 
-/** Throw if the shop can't operate (suspended/overdue-past-grace, or paused). */
+/** Throw if the shop can't operate (admin-suspended or paused). Credit balance is gated separately.. */
 export async function assertShopActive(shopId: string): Promise<void> {
   const { status } = await getBillingState(shopId);
   if (status.isPaused) {
     throw new Error("ร้านปิดชั่วคราวอยู่ กรุณาเปิดร้านอีกครั้งก่อนใช้งาน");
   }
   if (status.isSuspended) {
-    throw new Error("ร้านถูกระงับเนื่องจากค้างชำระ กรุณาชำระเงินก่อนใช้งาน");
+    throw new Error("ร้านถูกระงับโดยผู้ดูแลระบบ กรุณาติดต่อผู้ดูแล");
   }
 }

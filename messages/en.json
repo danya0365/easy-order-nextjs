@@ -63,7 +63,9 @@
     "setDeliveryNotesLabel": "Delivery notes",
     "setDeliveryNotesPlaceholder": "e.g. served areas, delivery hours (optional)",
     "setMinOrderLabel": "Minimum order (baht)",
-    "setMinOrderHint": "Leave empty = no minimum"
+    "setMinOrderHint": "Leave empty = no minimum",
+    "featCreditLabel": "Credit",
+    "featCreditDesc": "Top up credit, see balance and daily deductions"
   },
   "shopPages": {
     "billingHiddenTitle": "As configured — billing is currently hidden",
@@ -206,7 +208,10 @@
     "settingsSubtitle": "Whole-system billing and suspension switches",
     "billingUiOffNote": "Billing UI is off (shops don't see the billing page) — price submissions still arrive normally",
     "leadsSellGuide": "Sales playbook",
-    "dailyFeeLink": "Daily fees"
+    "dailyFeeLink": "Daily fees",
+    "statPendingTopups": "Credit top-ups to review",
+    "settingsCreditLink": "Credit settings (daily fee / low balance)",
+    "creditLink": "Credit"
   },
   "layout": {
     "navMore": "More",
@@ -1016,6 +1021,7 @@
     "dMetric": "Metric",
     "ordersUnit": "{n} orders",
     "ruleDailyOrders": "Days with {threshold}+ orders: deduct {fee} baht (otherwise nothing)",
-    "ruleDailyOrdersStrict": "Days with more than {threshold} orders: deduct {fee} baht"
+    "ruleDailyOrdersStrict": "Days with more than {threshold} orders: deduct {fee} baht",
+    "cutoffTitle": "Shop business-day cutoff"
   }
 }

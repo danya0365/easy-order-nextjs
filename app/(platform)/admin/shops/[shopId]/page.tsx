@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink, Receipt } from "lucide-react";
+import { ArrowLeft, ExternalLink, Wallet } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
@@ -35,8 +35,8 @@ export default async function AdminShopConfigPage({ params }: { params: Promise<
         <Link href={`/s/${shop.slug}`} className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline">
           <ExternalLink className="size-4" /> /s/{shop.slug}
         </Link>
-        <Link href={`/admin/shops/${shop.id}/billing`} className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline">
-          <Receipt className="size-4" /> {t("billingLink")}
+        <Link href={`/admin/credit/shops/${shop.id}`} className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline">
+          <Wallet className="size-4" /> {t("billingLink")}
         </Link>
       </div>
       <Card>
