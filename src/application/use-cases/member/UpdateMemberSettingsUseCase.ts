@@ -1,3 +1,4 @@
+import { toCustomerLinkMode, type CustomerLinkMode } from "@/src/domain/entities";
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import {
   type MemberPolicy,
@@ -9,6 +10,8 @@ export interface UpdateMemberSettingsInput {
   policy: MemberPolicy;
   memberOtpEnabled: boolean;
   memberSignupPaused: boolean;
+  /** Optional so older callers keep the stored mode. */
+  customerLinkMode?: CustomerLinkMode;
 }
 
 export interface UpdateMemberSettingsResult {
@@ -31,11 +34,15 @@ export class UpdateMemberSettingsUseCase {
       policy: effectiveMemberPolicy(shop.memberPolicyOverrides),
       memberOtpEnabled: shop.memberOtpEnabled,
       memberSignupPaused: shop.memberSignupPaused,
+      customerLinkMode: shop.customerLinkMode,
     };
+    const customerLinkMode =
+      input.customerLinkMode === undefined ? shop.customerLinkMode : toCustomerLinkMode(input.customerLinkMode);
     await this.shops.updateSettings(shopId, {
       memberPolicy: policy,
       memberOtpEnabled: input.memberOtpEnabled,
       memberSignupPaused: input.memberSignupPaused,
+      customerLinkMode,
     });
     return {
       before,
@@ -43,6 +50,7 @@ export class UpdateMemberSettingsUseCase {
         policy,
         memberOtpEnabled: input.memberOtpEnabled,
         memberSignupPaused: input.memberSignupPaused,
+        customerLinkMode,
       },
     };
   }

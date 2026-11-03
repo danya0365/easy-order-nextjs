@@ -1,3 +1,4 @@
+import { extractCustomerCode } from "@/src/domain/services/customer-claim";
 /**
  * Pure CRM helpers for /shop/customers (tabs, filters, sort, summary, CSV).
  * Kept framework-free so they are unit-testable.
@@ -75,7 +76,8 @@ export function normalizeQuery(q: CrmQuery): Required<CrmQuery> & { tab: CrmTab;
   return {
     tab: (CRM_TABS as readonly string[]).includes(q.tab ?? "") ? (q.tab as CrmTab) : "active",
     sort: (CRM_SORTS as readonly string[]).includes(q.sort ?? "") ? (q.sort as CrmSort) : "recent",
-    q: (q.q ?? "").trim().slice(0, 64),
+    // A scanned customer QR (claim URL) searches by its code.
+    q: extractCustomerCode(q.q ?? "").slice(0, 64),
     channel: q.channel === "static" || q.channel === "instore" ? q.channel : "",
   };
 }

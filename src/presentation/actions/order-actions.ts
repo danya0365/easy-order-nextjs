@@ -10,6 +10,8 @@ import {
 import { requireKioskShop } from "@/src/infrastructure/auth/kiosk";
 import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
 import { requireOrderAccess } from "@/src/infrastructure/auth/order-access";
+import { getMemberToken, setMemberCookie } from "@/src/infrastructure/auth/member";
+import { LinkOrderCustomerDeviceUseCase } from "@/src/application/use-cases/member/LinkOrderCustomerDeviceUseCase";
 import { PlaceOrderUseCase } from "@/src/application/use-cases/order/PlaceOrderUseCase";
 import { AdvanceOrderStatusUseCase } from "@/src/application/use-cases/order/AdvanceOrderStatusUseCase";
 import { ConfirmOrderPaymentUseCase } from "@/src/application/use-cases/order/ConfirmOrderPaymentUseCase";
@@ -203,12 +205,16 @@ export interface PlaceOnlineOrderActionInput extends PlaceOrderActionInput {
   deliveryLat?: number | null;
   deliveryLng?: number | null;
   deliveryLandmark?: string | null;
+  /** Order-sheet consent to link + remember this device ("confirm" mode). */
+  linkConsent?: boolean;
 }
 
 export interface PlaceOnlineOrderResult extends PlaceOrderResult {
   /** Shop slug + fulfillment echo for the success screen. */
   shopSlug?: string;
   fulfillmentType?: FulfillmentType;
+  /** True when this device is now remembered for the order's customer. */
+  linked?: boolean;
 }
 
 /**
@@ -283,11 +289,36 @@ export async function placeOnlineOrderAction(
       linkUrl: "/shop/orders",
     });
 
+    // Customer account linking (shop setting): remember this device for the
+    // customer the order was attached to. Fail-soft — never fails the order.
+    let linked = false;
+    try {
+      const link = await new LinkOrderCustomerDeviceUseCase(
+        container.customerDeviceRepository,
+      ).execute({
+        shopId: shop.id,
+        mode: shop.customerLinkMode,
+        customerId: order.customerId ?? null,
+        consent: input.linkConsent === true,
+        currentToken: await getMemberToken(shop.slug),
+      });
+      if (link) await setMemberCookie(shop.slug, link.token);
+      linked =
+        !!order.customerId &&
+        shop.customerLinkMode !== "off" &&
+        (shop.customerLinkMode !== "confirm" || input.linkConsent === true);
+    } catch {
+      /* ignore — linking is a convenience */
+    }
+
     const res = await buildOrderResult(shop.id, order, input.customerPhone ?? null);
     return {
       ...res,
+      // Already remembered → the "scan to view history" QR is redundant.
+      bindQrDataUrl: linked ? undefined : res.bindQrDataUrl,
       shopSlug: shop.slug,
       fulfillmentType: input.fulfillmentType,
+      linked,
     };
   } catch (e) {
     return { error: (e as Error).message };
