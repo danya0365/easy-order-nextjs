@@ -62,6 +62,9 @@ export default async function OnlineOrderPage({
 
   try {
     await assertShopActive(shop.id);
+    // Prepaid credit wallet: block mode closes online ordering with a friendly message.
+    const credit = await container.creditService.getStatus(shop.id).catch(() => null);
+    if (credit?.enabled && !credit.gate.allowed) throw new Error("credit-blocked");
   } catch {
     return (
       <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 px-4 py-10">

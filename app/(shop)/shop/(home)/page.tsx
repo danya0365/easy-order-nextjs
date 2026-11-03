@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { CreditDashCard } from "@/src/presentation/components/credit/CreditBalanceAlert";
+import { shopCreditStatus } from "@/src/infrastructure/request/credit";
 import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
@@ -53,6 +55,8 @@ export default async function ShopDashboardPage() {
         <h1 className="text-xl font-bold text-foreground">{shop?.name}</h1>
         <p className="mt-1 text-sm text-muted">{t("dashRemaining", { remaining })}</p>
       </div>
+
+      <CreditDashCard status={await shopCreditStatus(shopId)} />
 
       <QrHubDashCard shopId={shopId} orderQrOn={!!shop?.onlineOrderingEnabled} />
 
