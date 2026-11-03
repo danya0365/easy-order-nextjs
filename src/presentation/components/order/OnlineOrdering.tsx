@@ -170,6 +170,17 @@ export function OnlineOrdering({
     return e;
   }
 
+  /** Drop a field's validation message as soon as the customer edits it. */
+  function clearError(key: string) {
+    setErrors((cur) => {
+      if (!(key in cur) && !("form" in cur)) return cur;
+      const next = { ...cur };
+      delete next[key];
+      delete next.form;
+      return next;
+    });
+  }
+
   function confirmOrder() {
     const e = validate();
     setErrors(e);
@@ -518,7 +529,10 @@ export function OnlineOrdering({
                 required
                 placeholder={t("onlineNamePlaceholder")}
                 value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
+                onChange={(e) => {
+            setCustomerName(e.target.value);
+            clearError("name");
+          }}
                 aria-invalid={!!errors.name}
                 data-testid="sheet-name"
               />
@@ -530,7 +544,10 @@ export function OnlineOrdering({
                 required
                 placeholder={t("onlinePhonePlaceholder")}
                 value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
+                onChange={(e) => {
+            setCustomerPhone(e.target.value);
+            clearError("phone");
+          }}
                 aria-invalid={!!errors.phone}
                 data-testid="sheet-phone"
               />
@@ -545,7 +562,10 @@ export function OnlineOrdering({
                     value={pin}
                     fallbackCenter={{ lat: mapCenter.lat, lng: mapCenter.lng }}
                     fallbackZoom={mapCenter.zoom}
-                    onChange={setPin}
+                    onChange={(v) => {
+                setPin(v);
+                clearError("pin");
+              }}
                     onPlaceLabel={onPlaceLabel}
                   />
                   {errors.pin ? (
@@ -559,7 +579,10 @@ export function OnlineOrdering({
                     required
                     placeholder={t("onlineAddressPlaceholder")}
                     value={address}
-                    onChange={(e) => setAddress(e.target.value)}
+                    onChange={(e) => {
+            setAddress(e.target.value);
+            clearError("address");
+          }}
                     aria-invalid={!!errors.address}
                   />
                   {errors.address && <FieldError>{errors.address}</FieldError>}
