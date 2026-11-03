@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { History, ShoppingBag, Store } from "lucide-react";
+import { History, ShoppingBag, Store, UserRound } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+
+import { getMemberToken } from "@/src/infrastructure/auth/member";
 
 import { ShopOwnerShortcut } from "@/src/presentation/components/layout/ShopOwnerShortcut";
 import { HEADER_ICON_BTN, SiteHeader } from "@/src/presentation/components/layout/SiteHeader";
@@ -21,6 +23,9 @@ export async function ShopShellHeader({
   profileImageId: string | null;
 }) {
   const t = await getTranslations("layout");
+  // Cookie presence only (no DB): bound devices get a "my member account"
+  // entry that jumps to the member card on the history page.
+  const isMember = !!(await getMemberToken(slug));
   return (
     <SiteHeader
       sticky
@@ -54,6 +59,11 @@ export async function ShopShellHeader({
           <Link href={`/s/${slug}/orders`} aria-label={t("navShopOrders")} title={t("navShopOrders")} className={HEADER_ICON_BTN} data-testid="header-my-orders">
             <History className="size-5" />
           </Link>
+          {isMember ? (
+            <Link href={`/s/${slug}/orders#member`} aria-label={t("navMember")} title={t("navMember")} className={HEADER_ICON_BTN} data-testid="header-member">
+              <UserRound className="size-5" />
+            </Link>
+          ) : null}
         </>
       }
     />

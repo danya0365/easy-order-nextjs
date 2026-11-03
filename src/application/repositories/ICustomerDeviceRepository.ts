@@ -5,6 +5,8 @@ export interface ICustomerDeviceRepository {
   create(customerId: string): Promise<{ token: string }>;
   /** Resolve a device token to its customer (joins customers). */
   findByToken(token: string): Promise<{ customer: Customer } | null>;
+  /** Unlink ONE device ("ไม่ใช่ฉัน"); other devices of the customer stay bound. */
+  deleteByToken(token: string): Promise<void>;
   /** Remove all device bindings for a customer (e.g. on PDPA erasure). */
   deleteByCustomer(customerId: string): Promise<void>;
 }

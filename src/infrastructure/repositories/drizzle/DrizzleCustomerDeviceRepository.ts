@@ -55,12 +55,20 @@ export class DrizzleCustomerDeviceRepository
       .where(eq(schema.customerDevices.id, token))
       .limit(1);
     if (!row) return null;
-    // Best-effort touch of lastSeenAt (fire-and-forget).
-    void db
+    // Best-effort touch of lastSeenAt. Drizzle builders are lazy (they only
+    // run when awaited/then'd) — the old `void db.update(...)` never executed.
+    await db
       .update(schema.customerDevices)
       .set({ lastSeenAt: new Date().toISOString() })
-      .where(eq(schema.customerDevices.id, token));
+      .where(eq(schema.customerDevices.id, token))
+      .catch(() => {});
     return { customer: toCustomer(row.customer) };
+  }
+
+  async deleteByToken(token: string): Promise<void> {
+    await db
+      .delete(schema.customerDevices)
+      .where(eq(schema.customerDevices.id, token));
   }
 
   async deleteByCustomer(customerId: string): Promise<void> {

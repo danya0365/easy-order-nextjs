@@ -40,3 +40,14 @@ export async function setMemberCookie(
     expires: new Date(Date.now() + MEMBER_TTL_MS),
   });
 }
+
+/** Drop the member cookie for a shop (unlink this device). */
+export async function clearMemberCookie(slug: string): Promise<void> {
+  (await cookies()).set(memberCookieName(slug), "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
+}

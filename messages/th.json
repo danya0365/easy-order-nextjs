@@ -595,7 +595,8 @@
     "navUsers": "ผู้ใช้",
     "navGuides": "คู่มือร้าน",
     "navQr": "พิมพ์ QR",
-    "navCredit": "เครดิต"
+    "navCredit": "เครดิต",
+    "navMember": "บัญชีสมาชิก"
   },
   "map": {
     "noPinnedShops": "ยังไม่มีร้านค้าที่ปักหมุดตำแหน่ง",
@@ -1081,7 +1082,7 @@
     "myOrdersSubtitle": "ที่ {shop}",
     "noOrdersYet": "ยังไม่มีประวัติการสั่ง",
     "notBoundTitle": "ดูประวัติการสั่งของคุณ",
-    "notBoundDesc": "สั่งที่ร้านโดยใส่ชื่อ + เบอร์มือถือ แล้วสแกน QR ที่จอเพื่อเปิดดูประวัติบนมือถือของคุณ",
+    "notBoundDesc": "สั่งออนไลน์ครั้งถัดไป ระบบจะจำเครื่องนี้ให้อัตโนมัติ — หรือขอให้ร้านแสดง QR บัตรลูกค้า แล้วสแกนด้วยกล้องมือถือ",
     "orderItemsSummary": "{count} รายการ · {amount}",
     "myShopsTitle": "ร้านของฉัน",
     "myShopsSubtitle": "ร้านที่คุณผูกไว้บนเครื่องนี้",
@@ -1114,7 +1115,16 @@
     "orderGateTitle": "สแกน QR ที่ร้านเพื่อสั่งอาหาร",
     "orderGateDesc": "การสั่งอาหารออนไลน์จะเปิดให้ใช้หลังจากสแกน QR ของร้าน ระหว่างนี้ดูเมนูได้เลย",
     "orderGateMenu": "ดูเมนู",
-    "orderGateBook": "เล่มเมนู"
+    "orderGateBook": "เล่มเมนู",
+    "memberCardLabel": "สมาชิกร้าน",
+    "memberNoName": "สมาชิก",
+    "memberSince": "เป็นสมาชิกตั้งแต่",
+    "memberOrderCount": "ออเดอร์",
+    "memberPoints": "แต้มสะสม",
+    "memberUnlink": "ไม่ใช่ฉัน / ออกจากระบบสมาชิก",
+    "memberUnlinkConfirm": "ยกเลิกการผูกเครื่องนี้กับสมาชิก? ประวัติและแต้มยังอยู่ครบ ผูกใหม่ได้ด้วย QR บัตรลูกค้า",
+    "memberUnlinked": "ออกจากระบบสมาชิกบนเครื่องนี้แล้ว",
+    "navMember": "บัญชีสมาชิก"
   },
   "menu": {
     "addCategoryTitle": "เพิ่มหมวดเมนู",
