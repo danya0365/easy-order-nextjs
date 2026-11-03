@@ -827,5 +827,13 @@
     "dashWarnTitle": "Order QR expiring / expired",
     "dashDesc": "Order QR · Menu QR · One-sheet menu · Poster",
     "dashCta": "Print QR"
+  },
+  "theme": {
+    "cafe": "Café",
+    "minimal": "Minimal",
+    "retro": "Retro",
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode",
+    "skin": "Skin"
   }
 }

@@ -632,7 +632,8 @@
     "minimal": "มินิมอล",
     "retro": "เรโทร",
     "lightMode": "โหมดสว่าง",
-    "darkMode": "โหมดมืด"
+    "darkMode": "โหมดมืด",
+    "skin": "สกิน"
   },
   "shopPages": {
     "menuTitle": "จัดการเมนู",
