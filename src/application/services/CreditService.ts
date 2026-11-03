@@ -60,20 +60,35 @@ export interface CreditStatus {
 const MAX_SLIP_BYTES = 5 * 1024 * 1024;
 const SLIP_TYPES = ["image/png", "image/jpeg", "image/webp", "image/heic"];
 
+export type CreditMemo = <T>(key: string, fn: () => Promise<T>) => Promise<T>;
+
 export class CreditService {
   constructor(
     private readonly repo: ICreditRepository,
     private readonly slipStorage: ISlipStorage,
     private readonly verifier: ICreditSlipVerifier = new ManualCreditSlipVerifier(),
+    /** Optional request-scoped memo (container injects requestMemo) so the platform config is read once per request. */
+    private readonly memo: CreditMemo = (_k, fn) => fn(),
   ) {}
 
+  /** Bumped on every save so a read later in the same request never sees a stale memo. */
+  private configVersion = 0;
+
   async getPlatformConfig(): Promise<CreditPlatformConfig> {
-    return normalizePlatformConfig((await this.repo.getConfigRaw(PLATFORM_CONFIG_ID)) ?? {});
+    return this.memo(`credit:platform-config:${this.configVersion}`, async () =>
+      normalizePlatformConfig((await this.repo.getConfigRaw(PLATFORM_CONFIG_ID)) ?? {}),
+    );
+  }
+
+  /** Single cheap check (memoised per request): is the master switch on? */
+  async isMasterEnabled(): Promise<boolean> {
+    return (await this.getPlatformConfig()).enabled;
   }
 
   async savePlatformConfig(raw: unknown, by: string | null): Promise<CreditPlatformConfig> {
     const cfg = normalizePlatformConfig(raw);
     await this.repo.saveConfig(PLATFORM_CONFIG_ID, null, cfg, by);
+    this.configVersion++;
     return cfg;
   }
 
@@ -92,9 +107,20 @@ export class CreditService {
     return effectiveConfig(p, o);
   }
 
-  async getStatus(shopId: string): Promise<CreditStatus> {
-    const config = await this.getEffective(shopId);
-    const balanceSatang = await this.repo.getBalance(shopId);
+  /**
+   * Wallet status. While the master switch is off this costs one (memoised)
+   * config read and no wallet queries, unless `withBalance` is set (admin views).
+   */
+  async getStatus(shopId: string, opts: { withBalance?: boolean } = {}): Promise<CreditStatus> {
+    const platform = await this.getPlatformConfig();
+    if (!platform.enabled) {
+      const balanceSatang = opts.withBalance ? await this.repo.getBalance(shopId) : 0;
+      return { enabled: false, balanceSatang, gate: { allowed: true, level: "ok" }, config: effectiveConfig(platform, null) };
+    }
+    const [config, balanceSatang] = await Promise.all([
+      this.getShopOverride(shopId).then((o) => effectiveConfig(platform, o)),
+      this.repo.getBalance(shopId),
+    ]);
     const graceUsed = config.enabled && balanceSatang <= 0 && config.lowBalance.mode === "grace" ? await this.repo.graceUsed(shopId) : 0;
     const gate = config.enabled ? orderGate(config.lowBalance, balanceSatang, graceUsed) : { allowed: true, level: "ok" as const };
     return { enabled: config.enabled, balanceSatang, gate, config };
@@ -102,6 +128,7 @@ export class CreditService {
 
   /** Throws CreditBlockedError if the shop's credit rule blocks new orders. */
   async assertCanTakeOrder(shopId: string): Promise<void> {
+    if (!(await this.isMasterEnabled())) return;
     const s = await this.getStatus(shopId);
     if (s.enabled && !s.gate.allowed) throw new CreditBlockedError();
   }
@@ -111,6 +138,9 @@ export class CreditService {
    * refund on cancel. Idempotent via deduct:/refund: keys.
    */
   async onOrderEvent(order: OrderCreditEvent): Promise<CreditLedgerEntry | null> {
+    // Fast path: master off → nothing to deduct. Cancels still look for a past
+    // deduction to refund (rare event, so the extra read is fine).
+    if (order.status !== "cancelled" && !(await this.isMasterEnabled())) return null;
     const cfg = await this.getEffective(order.shopId);
     if (order.status === "cancelled") return this.refundOrder(order, cfg);
     if (!cfg.enabled) return null;
