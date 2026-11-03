@@ -9,6 +9,8 @@ import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
 import { getMemberToken } from "@/src/infrastructure/auth/member";
+import { GetMemberCardUseCase } from "@/src/application/use-cases/member/GetMemberCardUseCase";
+import { MemberCard } from "@/src/presentation/components/member/MemberCard";
 import { GetCustomerOrderHistoryUseCase } from "@/src/application/use-cases/member/GetCustomerOrderHistoryUseCase";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Badge } from "@/src/presentation/components/ui/Badge";
@@ -58,10 +60,10 @@ export default async function ShopCustomerOrdersPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ bind?: string }>;
+  searchParams: Promise<{ bind?: string; unlinked?: string }>;
 }) {
   const { slug } = await params;
-  const { bind } = await searchParams;
+  const { bind, unlinked } = await searchParams;
   const t = await getTranslations("publicPages");
   const tOrder = await getTranslations("order");
   const tRider = await getTranslations("rider");
@@ -75,6 +77,12 @@ export default async function ShopCustomerOrdersPage({
     container.customerDeviceRepository,
     container.orderRepository,
   ).execute(slug, token);
+  const card = history
+    ? await new GetMemberCardUseCase(
+        container.customerCrmRepository,
+        container.loyaltyPointsBalanceRepository,
+      ).execute(shop, history.customer)
+    : null;
 
   // Rider phase 1: show the assigned rider (first name + call) while en route.
   const riderIds = [
@@ -104,8 +112,9 @@ export default async function ShopCustomerOrdersPage({
         </p>
       </div>
 
-      {history ? (
+      {history && card ? (
         <>
+          <MemberCard slug={slug} card={card} />
           <Card>
             <CardHeader title={shop.name} />
             {history.orders.items.length === 0 ? (
@@ -185,6 +194,13 @@ export default async function ShopCustomerOrdersPage({
           description={t("bindInvalidDesc")}
         />
       ) : (
+        <>
+        {unlinked ? (
+          <p data-testid="member-unlinked" className="flex items-center gap-2 text-sm text-success">
+            <CheckCircle2 className="size-4 shrink-0" />
+            {t("memberUnlinked")}
+          </p>
+        ) : null}
         <Card className="bg-brand-50 ring-brand-100">
           <p className="flex items-center gap-2 text-sm text-brand-700">
             <Smartphone className="size-5 shrink-0" />
@@ -193,6 +209,7 @@ export default async function ShopCustomerOrdersPage({
             </span>
           </p>
         </Card>
+        </>
       )}
 
       <div className="mt-auto flex justify-center gap-4 text-xs text-muted">
