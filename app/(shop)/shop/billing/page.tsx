@@ -24,6 +24,7 @@ export default async function ShopBillingPage() {
     container.dailyFeeRepository,
     container.orderRepository,
     container.shopRepository,
+    () => container.creditService.isMasterEnabled(),
   ).execute(shopId);
   const paymentsPage = await container.paymentRepository.pageByShop(shopId);
   const topupsPage = await container.topupTransactionRepository.pageByShop(shopId);

@@ -1,18 +1,20 @@
 import {
-  bangkokPeriodStarts,
-  computeDeduction,
+  addDaysYmd,
+  creditCutoffFor,
+  creditDayOf,
+  creditDayWindow,
+  dailyCreditFee,
   effectiveConfig,
   normalizePlatformConfig,
   normalizeShopOverride,
   orderGate,
   resolveCreditTopup,
-  shouldDeductAt,
   type CreditGate,
   type CreditPlatformConfig,
   type CreditShopOverride,
   type EffectiveCreditConfig,
 } from "@/src/domain/services/credit";
-import type { CreditLedgerEntry, CreditTopup, ICreditRepository } from "@/src/application/repositories/ICreditRepository";
+import type { CreditDailySettlement, CreditTopup, ICreditRepository } from "@/src/application/repositories/ICreditRepository";
 import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
 import { isSupportedImage } from "@/src/domain/services/image-signature";
 
@@ -41,14 +43,23 @@ export class ManualCreditSlipVerifier implements ICreditSlipVerifier {
   }
 }
 
-export interface OrderCreditEvent {
-  id: string;
-  shopId: string;
-  status: string;
-  totalSatang: number;
-  subtotalSatang: number;
-  orderNo?: number;
+export interface CreditTodayProgress {
+  businessDate: string;
+  cutoffTime: string;
+  salesSatang: number;
+  orderCount: number;
+  thresholdSatang: number;
+  feeSatang: number;
+  reached: boolean;
 }
+
+export interface SettleDayResult {
+  settlement: CreditDailySettlement;
+  /** false = the day had already been settled (idempotent no-op). */
+  created: boolean;
+}
+
+const YMD = /^\d{4}-\d{2}-\d{2}$/;
 
 export interface CreditStatus {
   enabled: boolean;
@@ -87,6 +98,9 @@ export class CreditService {
 
   async savePlatformConfig(raw: unknown, by: string | null): Promise<CreditPlatformConfig> {
     const cfg = normalizePlatformConfig(raw);
+    // First switch-on stamps the start date so the daily job never bills days
+    // from before the wallet existed.
+    if (cfg.enabled && !cfg.daily.startDate) cfg.daily.startDate = creditDayOf(new Date(), cfg.daily.cutoffTime);
     await this.repo.saveConfig(PLATFORM_CONFIG_ID, null, cfg, by);
     this.configVersion++;
     return cfg;
@@ -121,67 +135,137 @@ export class CreditService {
       this.getShopOverride(shopId).then((o) => effectiveConfig(platform, o)),
       this.repo.getBalance(shopId),
     ]);
-    const graceUsed = config.enabled && balanceSatang <= 0 && config.lowBalance.mode === "grace" ? await this.repo.graceUsed(shopId) : 0;
-    const gate = config.enabled ? orderGate(config.lowBalance, balanceSatang, graceUsed) : { allowed: true, level: "ok" as const };
+    const gate = config.enabled ? orderGate(config.lowBalance, balanceSatang) : { allowed: true, level: "ok" as const };
     return { enabled: config.enabled, balanceSatang, gate, config };
   }
 
-  /** Throws CreditBlockedError if the shop's credit rule blocks new orders. */
+  /** Throws CreditBlockedError if the shop's low-balance rule (block mode) closes new orders. */
   async assertCanTakeOrder(shopId: string): Promise<void> {
     if (!(await this.isMasterEnabled())) return;
     const s = await this.getStatus(shopId);
     if (s.enabled && !s.gate.allowed) throw new CreditBlockedError();
   }
 
-  /**
-   * React to an order reaching a status: deduct at the configured trigger,
-   * refund on cancel. Idempotent via deduct:/refund: keys.
-   */
-  async onOrderEvent(order: OrderCreditEvent): Promise<CreditLedgerEntry | null> {
-    // Fast path: master off → nothing to deduct. Cancels still look for a past
-    // deduction to refund (rare event, so the extra read is fine).
-    if (order.status !== "cancelled" && !(await this.isMasterEnabled())) return null;
-    const cfg = await this.getEffective(order.shopId);
-    if (order.status === "cancelled") return this.refundOrder(order, cfg);
-    if (!cfg.enabled) return null;
-    if (!shouldDeductAt(cfg.deduction.trigger, order.status)) return null;
-    const key = `deduct:${order.id}`;
-    if (await this.repo.findEntryByKey(key)) return null;
-    const { dayStart, monthStart } = bangkokPeriodStarts(new Date());
-    const [usedToday, usedMonth] = await Promise.all([
-      cfg.deduction.freePerDay > 0 ? this.repo.countDeductionsSince(order.shopId, dayStart) : Promise.resolve(0),
-      cfg.deduction.freePerMonth > 0 ? this.repo.countDeductionsSince(order.shopId, monthStart) : Promise.resolve(0),
-    ]);
-    const base = cfg.deduction.basis === "subtotal" ? order.subtotalSatang : order.totalSatang;
-    const q = computeDeduction(cfg.deduction, base, usedToday, usedMonth);
-    const res = await this.repo.applyEntry({
-      shopId: order.shopId,
-      type: "deduction",
-      amountSatang: -q.amountSatang,
-      reason: q.free ? `ออเดอร์ฟรีตามโควตา (${q.reason})` : `หักค่าบริการออเดอร์${order.orderNo ? ` #${order.orderNo}` : ""}`,
-      orderId: order.id,
-      idempotencyKey: key,
-      meta: { rule: cfg.deduction.mode, trigger: cfg.deduction.trigger, baseSatang: base, free: q.free, quota: q.reason },
-    });
-    return res.applied ? res.entry : null;
+  /** Cutoff + effective config for a shop (null when the shop does not exist). */
+  private async shopDayContext(shopId: string) {
+    const [shop, config] = await Promise.all([this.repo.findShopCutoff(shopId), this.getEffective(shopId)]);
+    if (!shop.exists) return null;
+    return { config, cutoff: creditCutoffFor(config.daily, shop.billingCutoffTime) };
   }
 
-  private async refundOrder(order: OrderCreditEvent, cfg: EffectiveCreditConfig): Promise<CreditLedgerEntry | null> {
-    // Refund rule follows the shop's config at cancel time; a refund is only
-    // ever issued against a real (non-zero) deduction for this order.
-    if (!cfg.deduction.refundOnCancel) return null;
-    const ded = await this.repo.findEntryByKey(`deduct:${order.id}`);
-    if (!ded || ded.amountSatang >= 0) return null;
-    const res = await this.repo.applyEntry({
-      shopId: order.shopId,
-      type: "refund",
-      amountSatang: -ded.amountSatang,
-      reason: `คืนเครดิต: ยกเลิกออเดอร์${order.orderNo ? ` #${order.orderNo}` : ""}`,
-      orderId: order.id,
-      idempotencyKey: `refund:${order.id}`,
-      meta: { deductionId: ded.id },
+  /** Today's (open business day) sales vs the threshold, for the shop dashboard. */
+  async getTodayProgress(shopId: string, now: Date = new Date()): Promise<CreditTodayProgress | null> {
+    if (!(await this.isMasterEnabled())) return null;
+    const ctx = await this.shopDayContext(shopId);
+    if (!ctx || !ctx.config.enabled) return null;
+    const d = ctx.config.daily;
+    const businessDate = creditDayOf(now, ctx.cutoff);
+    const w = creditDayWindow(businessDate, ctx.cutoff);
+    const s = await this.repo.sumSalesBetween(shopId, w.start.toISOString(), now.toISOString(), d.countStatuses, d.basis);
+    return {
+      businessDate,
+      cutoffTime: ctx.cutoff,
+      salesSatang: s.salesSatang,
+      orderCount: s.orderCount,
+      thresholdSatang: d.thresholdSatang,
+      feeSatang: d.feeSatang,
+      reached: dailyCreditFee(d, s.salesSatang) > 0,
+    };
+  }
+
+  /**
+   * Settle one CLOSED business day for one shop: sum its counted sales, and if
+   * they reach the threshold deduct the daily fee. Idempotent twice over: the
+   * unique (shop, date) settlement row and the ledger key daily:<shop>:<date>.
+   */
+  async settleDay(shopId: string, businessDate: string, opts: { by?: string; now?: Date; force?: boolean } = {}): Promise<SettleDayResult> {
+    if (!YMD.test(businessDate)) throw new Error("วันที่ไม่ถูกต้อง");
+    const existing = await this.repo.findSettlement(shopId, businessDate);
+    if (existing) return { settlement: existing, created: false };
+    if (!(await this.isMasterEnabled())) throw new Error("ระบบเครดิตยังไม่เปิดใช้งาน");
+    const ctx = await this.shopDayContext(shopId);
+    if (!ctx) throw new Error("ไม่พบร้านค้า");
+    if (!ctx.config.enabled) throw new Error("ร้านนี้ได้รับยกเว้นระบบเครดิต");
+    const now = opts.now ?? new Date();
+    const w = creditDayWindow(businessDate, ctx.cutoff);
+    if (w.end.getTime() > now.getTime()) throw new Error("วันนี้ยังไม่ปิดรอบ — ตัดยอดได้หลังเวลาตัดรอบ");
+    const d = ctx.config.daily;
+    if (!opts.force && d.startDate && businessDate < d.startDate) throw new Error(`เริ่มคิดค่าบริการรายวันตั้งแต่ ${d.startDate}`);
+    const s = await this.repo.sumSalesBetween(shopId, w.start.toISOString(), w.end.toISOString(), d.countStatuses, d.basis);
+    const fee = dailyCreditFee(d, s.salesSatang);
+    let ledgerEntryId: string | null = null;
+    if (fee > 0) {
+      const res = await this.repo.applyEntry({
+        shopId,
+        type: "deduction",
+        amountSatang: -fee,
+        reason: `ค่าบริการรายวัน ${businessDate} (ยอด ${(s.salesSatang / 100).toFixed(2)} บาท)`,
+        idempotencyKey: `daily:${shopId}:${businessDate}`,
+        meta: { businessDate, salesSatang: s.salesSatang, orderCount: s.orderCount, thresholdSatang: d.thresholdSatang, cutoff: ctx.cutoff, statuses: d.countStatuses },
+      });
+      ledgerEntryId = res.entry?.id ?? (await this.repo.findEntryByKey(`daily:${shopId}:${businessDate}`))?.id ?? null;
+    }
+    const row = await this.repo.insertSettlement({
+      shopId,
+      businessDate,
+      periodStart: w.start.toISOString(),
+      periodEnd: w.end.toISOString(),
+      cutoffTime: ctx.cutoff,
+      salesSatang: s.salesSatang,
+      orderCount: s.orderCount,
+      thresholdSatang: d.thresholdSatang,
+      feeSatang: d.feeSatang,
+      chargedSatang: fee,
+      ledgerEntryId,
+      settledBy: opts.by ?? "cron",
     });
-    return res.applied ? res.entry : null;
+    if (row) return { settlement: row, created: true };
+    // Lost a race with a concurrent settle — the ledger key kept it single-charge.
+    return { settlement: (await this.repo.findSettlement(shopId, businessDate))!, created: false };
+  }
+
+  /**
+   * Daily job: for every non-exempt shop settle each closed business day in
+   * the last `lookbackDays` (default 3) that is not settled yet. Safe to run
+   * hourly — already-settled days are skipped.
+   */
+  async settleAllDue(now: Date = new Date(), lookbackDays = 3): Promise<{ shops: number; settled: number; charged: number; errors: number }> {
+    const out = { shops: 0, settled: 0, charged: 0, errors: 0 };
+    const platform = await this.getPlatformConfig();
+    if (!platform.enabled) return out;
+    const shops = await this.repo.listShopsForSettlement();
+    for (const shop of shops) {
+      out.shops++;
+      try {
+        const override = await this.getShopOverride(shop.id);
+        const cfg = effectiveConfig(platform, override);
+        if (!cfg.enabled) continue;
+        const cutoff = creditCutoffFor(cfg.daily, shop.billingCutoffTime);
+        const lastClosed = addDaysYmd(creditDayOf(now, cutoff), -1);
+        for (let i = lookbackDays - 1; i >= 0; i--) {
+          const day = addDaysYmd(lastClosed, -i);
+          if (cfg.daily.startDate && day < cfg.daily.startDate) continue;
+          if (await this.repo.findSettlement(shop.id, day)) continue;
+          const r = await this.settleDay(shop.id, day, { by: "cron", now });
+          if (r.created) {
+            out.settled++;
+            if (r.settlement.chargedSatang > 0) out.charged++;
+          }
+        }
+      } catch (e) {
+        out.errors++;
+        console.error("[credit] daily settle failed", shop.id, (e as Error).message);
+      }
+    }
+    return out;
+  }
+
+  async pageSettlements(shopId: string, page: number, pageSize = 20) {
+    return this.repo.pageSettlements(shopId, { page, pageSize });
+  }
+
+  async getSettlement(id: string) {
+    return this.repo.findSettlementById(id);
   }
 
   /** One-time starting credit for a newly created shop (no-op when off / 0). */

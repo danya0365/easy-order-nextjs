@@ -1,59 +1,52 @@
 /**
  * Prepaid CREDIT wallet — pure rules (no I/O).
  *
- * A shop holds a baht balance (satang). Orders deduct credit according to a
- * configurable fee rule; cancelled orders are refunded; the shop tops up via
+ * A shop holds a baht balance (satang). Once per business day a daily job
+ * settles the previous day: if its sales reached the threshold (default
+ * ฿50) the daily fee (default ฿5) is deducted. The shop tops up via
  * PromptPay slips reviewed by an admin. Everything is driven by a JSON config:
- * platform defaults + optional per-shop overrides (deduction / low-balance).
+ * platform defaults + optional per-shop overrides (daily / low-balance).
  *
  * Independent of the legacy day-subscription and daily-fee billing — each has
  * its own master switch.
  */
 
-export const CREDIT_DEDUCTION_MODES = ["fixed", "percent", "fixed_percent", "tiered"] as const;
-export type CreditDeductionMode = (typeof CREDIT_DEDUCTION_MODES)[number];
+export const CREDIT_COUNT_STATUSES = ["pending", "preparing", "ready", "completed"] as const;
+export type CreditCountStatus = (typeof CREDIT_COUNT_STATUSES)[number];
 
-export const CREDIT_TRIGGERS = ["placed", "accepted", "completed"] as const;
-export type CreditTrigger = (typeof CREDIT_TRIGGERS)[number];
-
-export const CREDIT_LOW_MODES = ["warn", "block", "grace"] as const;
+export const CREDIT_LOW_MODES = ["warn", "block"] as const;
 export type CreditLowMode = (typeof CREDIT_LOW_MODES)[number];
 
 export const CREDIT_ENTRY_TYPES = ["topup", "deduction", "refund", "adjust", "bonus", "starting"] as const;
 export type CreditEntryType = (typeof CREDIT_ENTRY_TYPES)[number];
 
-export interface CreditTier {
-  /** Applies to orders with total >= this (satang). */
-  minTotalSatang: number;
+/**
+ * DAILY threshold fee: once per shop per business day, if that day's sales
+ * (orders in `countStatuses`, cancelled never count) reach `thresholdSatang`,
+ * deduct `feeSatang` from the wallet. Below the threshold: nothing.
+ */
+export interface CreditDailyConfig {
+  thresholdSatang: number;
   feeSatang: number;
-}
-
-export interface CreditDeductionConfig {
-  mode: CreditDeductionMode;
-  fixedSatang: number;
-  /** Percent of the order total, e.g. 2.5 = 2.5 %. */
-  percent: number;
-  tiers: CreditTier[];
-  /** 0 = no floor / no cap. */
-  minSatang: number;
-  maxSatang: number;
-  /** Free (uncharged) orders per Bangkok day / month. 0 = none. */
-  freePerDay: number;
-  freePerMonth: number;
-  trigger: CreditTrigger;
-  refundOnCancel: boolean;
-  /** Fee base: full total (incl. delivery fee) or items subtotal. */
+  /** "HH:MM" Asia/Bangkok — start of the business day. Default midnight. */
+  cutoffTime: string;
+  /** Use the shop's billing cutoff (shops.billing_cutoff_time) when it has one. */
+  useShopCutoff: boolean;
+  countStatuses: CreditCountStatus[];
+  /** Sales base: full total (incl. delivery fee) or items subtotal. */
   basis: "total" | "subtotal";
+  /** true: sales >= threshold charges; false: strictly greater. */
+  inclusive: boolean;
+  /** First business date (YYYY-MM-DD) that may be settled; "" = no limit. Set when the wallet is first switched on. */
+  startDate: string;
 }
 
 export interface CreditLowBalanceConfig {
   /** Warn when balance <= this (satang). */
   warnSatang: number;
-  /** Behaviour once balance <= 0. */
+  /** Behaviour once balance <= 0: warn only (default) or close new orders. */
   mode: CreditLowMode;
-  /** grace: orders still allowed after reaching <= 0 (0 = unlimited by count). */
-  graceOrders: number;
-  /** grace: allow down to -negativeLimitSatang (0 = no negative limit). */
+  /** block: still allow orders down to -negativeLimitSatang (0 = block at 0). */
   negativeLimitSatang: number;
 }
 
@@ -76,22 +69,22 @@ export interface CreditTopupConfig {
 export interface CreditPlatformConfig {
   enabled: boolean;
   startingCreditSatang: number;
-  deduction: CreditDeductionConfig;
+  daily: CreditDailyConfig;
   lowBalance: CreditLowBalanceConfig;
   topup: CreditTopupConfig;
 }
 
-/** Per-shop override: any subset of deduction / lowBalance, plus a kill switch. */
+/** Per-shop override: any subset of daily / lowBalance, plus a kill switch. */
 export interface CreditShopOverride {
   /** false = this shop is exempt (never charged / blocked). */
   enabled?: boolean;
-  deduction?: Partial<CreditDeductionConfig>;
+  daily?: Partial<CreditDailyConfig>;
   lowBalance?: Partial<CreditLowBalanceConfig>;
 }
 
 export interface EffectiveCreditConfig {
   enabled: boolean;
-  deduction: CreditDeductionConfig;
+  daily: CreditDailyConfig;
   lowBalance: CreditLowBalanceConfig;
   topup: CreditTopupConfig;
 }
@@ -99,20 +92,17 @@ export interface EffectiveCreditConfig {
 export const DEFAULT_CREDIT_CONFIG: CreditPlatformConfig = {
   enabled: false,
   startingCreditSatang: 0,
-  deduction: {
-    mode: "fixed",
-    fixedSatang: 100,
-    percent: 0,
-    tiers: [],
-    minSatang: 0,
-    maxSatang: 0,
-    freePerDay: 0,
-    freePerMonth: 0,
-    trigger: "completed",
-    refundOnCancel: true,
+  daily: {
+    thresholdSatang: 5000,
+    feeSatang: 500,
+    cutoffTime: "00:00",
+    useShopCutoff: true,
+    countStatuses: ["completed"],
     basis: "total",
+    inclusive: true,
+    startDate: "",
   },
-  lowBalance: { warnSatang: 5000, mode: "warn", graceOrders: 0, negativeLimitSatang: 0 },
+  lowBalance: { warnSatang: 5000, mode: "warn", negativeLimitSatang: 0 },
   topup: {
     promptpayId: "",
     minSatang: 10000,
@@ -140,26 +130,23 @@ const pick = <T extends string>(v: unknown, list: readonly T[], d: T): T =>
 const obj = (v: unknown): Record<string, unknown> =>
   v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
 
-export function normalizeDeduction(raw: unknown, base = DEFAULT_CREDIT_CONFIG.deduction): CreditDeductionConfig {
+const CUT_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+export function normalizeDaily(raw: unknown, base = DEFAULT_CREDIT_CONFIG.daily): CreditDailyConfig {
   const r = obj(raw);
-  const tiers = Array.isArray(r.tiers)
-    ? (r.tiers as unknown[])
-        .map((t) => ({ minTotalSatang: int(obj(t).minTotalSatang, 0), feeSatang: int(obj(t).feeSatang, 0) }))
-        .sort((a, b) => a.minTotalSatang - b.minTotalSatang)
-        .slice(0, 20)
-    : base.tiers;
+  const statuses = Array.isArray(r.countStatuses)
+    ? CREDIT_COUNT_STATUSES.filter((x) => (r.countStatuses as unknown[]).includes(x))
+    : base.countStatuses;
   return {
-    mode: pick(r.mode, CREDIT_DEDUCTION_MODES, base.mode),
-    fixedSatang: int(r.fixedSatang ?? base.fixedSatang, base.fixedSatang),
-    percent: num(r.percent ?? base.percent, base.percent),
-    tiers,
-    minSatang: int(r.minSatang ?? base.minSatang, base.minSatang),
-    maxSatang: int(r.maxSatang ?? base.maxSatang, base.maxSatang),
-    freePerDay: int(r.freePerDay ?? base.freePerDay, base.freePerDay, 0, 100_000),
-    freePerMonth: int(r.freePerMonth ?? base.freePerMonth, base.freePerMonth, 0, 1_000_000),
-    trigger: pick(r.trigger, CREDIT_TRIGGERS, base.trigger),
-    refundOnCancel: typeof r.refundOnCancel === "boolean" ? r.refundOnCancel : base.refundOnCancel,
+    thresholdSatang: int(r.thresholdSatang ?? base.thresholdSatang, base.thresholdSatang),
+    feeSatang: int(r.feeSatang ?? base.feeSatang, base.feeSatang),
+    cutoffTime: typeof r.cutoffTime === "string" && CUT_RE.test(r.cutoffTime) ? r.cutoffTime : base.cutoffTime,
+    useShopCutoff: typeof r.useShopCutoff === "boolean" ? r.useShopCutoff : base.useShopCutoff,
+    countStatuses: statuses.length ? statuses : ["completed"],
     basis: pick(r.basis, ["total", "subtotal"] as const, base.basis),
+    inclusive: typeof r.inclusive === "boolean" ? r.inclusive : base.inclusive,
+    startDate: typeof r.startDate === "string" && (r.startDate === "" || DATE_RE.test(r.startDate)) ? r.startDate : base.startDate,
   };
 }
 
@@ -167,8 +154,8 @@ export function normalizeLowBalance(raw: unknown, base = DEFAULT_CREDIT_CONFIG.l
   const r = obj(raw);
   return {
     warnSatang: int(r.warnSatang ?? base.warnSatang, base.warnSatang),
-    mode: pick(r.mode, CREDIT_LOW_MODES, base.mode),
-    graceOrders: int(r.graceOrders ?? base.graceOrders, base.graceOrders, 0, 100_000),
+    // Legacy "grace" (per-order era) maps to block with its negative limit.
+    mode: r.mode === "grace" ? "block" : pick(r.mode, CREDIT_LOW_MODES, base.mode),
     negativeLimitSatang: int(r.negativeLimitSatang ?? base.negativeLimitSatang, base.negativeLimitSatang),
   };
 }
@@ -190,7 +177,7 @@ export function normalizePlatformConfig(raw: unknown): CreditPlatformConfig {
   return {
     enabled: typeof r.enabled === "boolean" ? r.enabled : d.enabled,
     startingCreditSatang: int(r.startingCreditSatang ?? d.startingCreditSatang, 0),
-    deduction: normalizeDeduction(r.deduction),
+    daily: normalizeDaily(r.daily),
     lowBalance: normalizeLowBalance(r.lowBalance),
     topup: {
       promptpayId: String(t.promptpayId ?? d.topup.promptpayId).replace(/[^0-9]/g, "").slice(0, 15),
@@ -207,7 +194,7 @@ export function normalizeShopOverride(raw: unknown): CreditShopOverride {
   const r = obj(raw);
   const out: CreditShopOverride = {};
   if (typeof r.enabled === "boolean") out.enabled = r.enabled;
-  if (r.deduction && typeof r.deduction === "object") out.deduction = obj(r.deduction) as Partial<CreditDeductionConfig>;
+  if (r.daily && typeof r.daily === "object") out.daily = obj(r.daily) as Partial<CreditDailyConfig>;
   if (r.lowBalance && typeof r.lowBalance === "object") out.lowBalance = obj(r.lowBalance) as Partial<CreditLowBalanceConfig>;
   return out;
 }
@@ -217,77 +204,46 @@ export function effectiveConfig(platform: CreditPlatformConfig, override: Credit
   const o = override ?? {};
   return {
     enabled: platform.enabled && o.enabled !== false,
-    deduction: o.deduction ? normalizeDeduction({ ...platform.deduction, ...o.deduction }, platform.deduction) : platform.deduction,
+    daily: o.daily ? normalizeDaily({ ...platform.daily, ...o.daily }, platform.daily) : platform.daily,
     lowBalance: o.lowBalance ? normalizeLowBalance({ ...platform.lowBalance, ...o.lowBalance }, platform.lowBalance) : platform.lowBalance,
     topup: platform.topup,
   };
 }
 
-/** Raw (pre-clamp) fee for an order total under a rule. */
-function rawFee(cfg: CreditDeductionConfig, totalSatang: number): number {
-  const pct = Math.round((totalSatang * cfg.percent) / 100);
-  switch (cfg.mode) {
-    case "fixed":
-      return cfg.fixedSatang;
-    case "percent":
-      return pct;
-    case "fixed_percent":
-      return cfg.fixedSatang + pct;
-    case "tiered": {
-      let fee = 0;
-      for (const t of cfg.tiers) if (totalSatang >= t.minTotalSatang) fee = t.feeSatang;
-      return fee;
-    }
-  }
+/** Fee for one closed business day with `salesSatang` of counted sales. */
+export function dailyCreditFee(cfg: CreditDailyConfig, salesSatang: number): number {
+  if (cfg.feeSatang <= 0) return 0;
+  const hit = cfg.inclusive ? salesSatang >= cfg.thresholdSatang : salesSatang > cfg.thresholdSatang;
+  return hit ? cfg.feeSatang : 0;
 }
 
-export interface DeductionQuote {
-  amountSatang: number;
-  /** True when covered by the free daily/monthly quota. */
-  free: boolean;
-  reason: string;
+/** Cutoff in force for a shop: its own billing cutoff when allowed and set. */
+export function creditCutoffFor(cfg: CreditDailyConfig, shopCutoff: string | null | undefined): string {
+  return cfg.useShopCutoff && shopCutoff && CUT_RE.test(shopCutoff) ? shopCutoff : cfg.cutoffTime;
+}
+
+const BKK_MS = 7 * 3600_000;
+const cutMin = (c: string) => Number(c.slice(0, 2)) * 60 + Number(c.slice(3, 5));
+export function addDaysYmd(ymd: string, n: number): string {
+  const [y, mo, d] = ymd.split("-").map(Number);
+  return new Date(Date.UTC(y, mo - 1, d + n)).toISOString().slice(0, 10);
 }
 
 /**
- * Credit to deduct for one order. `usedToday` / `usedMonth` = orders already
- * counted (charged OR free) this Bangkok day / month, excluding this one.
+ * Business day `ymd` = [cutoff on ymd, cutoff on ymd+1) in Asia/Bangkok.
+ * With the default 00:00 cutoff that is exactly the Bangkok calendar day.
  */
-export function computeDeduction(
-  cfg: CreditDeductionConfig,
-  totalSatang: number,
-  usedToday = 0,
-  usedMonth = 0,
-): DeductionQuote {
-  if (cfg.freePerDay > 0 && usedToday < cfg.freePerDay) {
-    return { amountSatang: 0, free: true, reason: `free_day ${usedToday + 1}/${cfg.freePerDay}` };
-  }
-  if (cfg.freePerMonth > 0 && usedMonth < cfg.freePerMonth) {
-    return { amountSatang: 0, free: true, reason: `free_month ${usedMonth + 1}/${cfg.freePerMonth}` };
-  }
-  let fee = Math.max(0, rawFee(cfg, Math.max(0, totalSatang)));
-  if (cfg.minSatang > 0) fee = Math.max(fee, cfg.minSatang);
-  if (cfg.maxSatang > 0) fee = Math.min(fee, cfg.maxSatang);
-  return { amountSatang: fee, free: false, reason: cfg.mode };
+export function creditDayWindow(ymd: string, cutoffTime: string): { start: Date; end: Date } {
+  const [y, mo, d] = ymd.split("-").map(Number);
+  const m = cutMin(cutoffTime);
+  const start = new Date(Date.UTC(y, mo - 1, d, 0, m) - BKK_MS);
+  return { start, end: new Date(Date.UTC(y, mo - 1, d + 1, 0, m) - BKK_MS) };
 }
 
-/** Which order transition triggers the deduction. */
-export function triggerFor(status: "pending" | "preparing" | "ready" | "completed" | "cancelled"): CreditTrigger | null {
-  if (status === "pending") return "placed";
-  if (status === "preparing") return "accepted";
-  if (status === "completed") return "completed";
-  return null;
-}
-
-/**
- * Should a deduction fire for an order that just reached `status`? For
- * "accepted", an order that skipped preparing (e.g. straight to completed) is
- * still charged at the later step — idempotency guarantees it happens once.
- */
-export function shouldDeductAt(trigger: CreditTrigger, status: string): boolean {
-  if (status === "cancelled") return false;
-  const rank: Record<string, number> = { pending: 0, preparing: 1, ready: 2, completed: 3 };
-  const need: Record<CreditTrigger, number> = { placed: 0, accepted: 1, completed: 3 };
-  return (rank[status] ?? -1) >= need[trigger];
+/** Business date (YYYY-MM-DD) containing instant `t`. */
+export function creditDayOf(t: Date, cutoffTime: string): string {
+  const shifted = new Date(t.getTime() + BKK_MS - cutMin(cutoffTime) * 60_000);
+  return shifted.toISOString().slice(0, 10);
 }
 
 export type CreditLevel = "ok" | "low" | "empty" | "blocked";
@@ -297,23 +253,14 @@ export interface CreditGate {
   level: CreditLevel;
 }
 
-/**
- * May the shop take a NEW order? `graceUsed` = orders charged since the
- * balance last dropped to <= 0.
- */
-export function orderGate(cfg: CreditLowBalanceConfig, balanceSatang: number, graceUsed = 0): CreditGate {
+/** May the shop take a NEW order? (Daily model: only the balance matters.) */
+export function orderGate(cfg: CreditLowBalanceConfig, balanceSatang: number): CreditGate {
   if (balanceSatang > 0) {
     return { allowed: true, level: balanceSatang <= cfg.warnSatang ? "low" : "ok" };
   }
   if (cfg.mode === "warn") return { allowed: true, level: "empty" };
-  if (cfg.mode === "block") return { allowed: false, level: "blocked" };
-  // grace
-  const limitByCount = cfg.graceOrders > 0;
-  const limitByNeg = cfg.negativeLimitSatang > 0;
-  if (!limitByCount && !limitByNeg) return { allowed: false, level: "blocked" };
-  if (limitByCount && graceUsed >= cfg.graceOrders) return { allowed: false, level: "blocked" };
-  if (limitByNeg && balanceSatang <= -cfg.negativeLimitSatang) return { allowed: false, level: "blocked" };
-  return { allowed: true, level: "empty" };
+  if (cfg.negativeLimitSatang > 0 && balanceSatang > -cfg.negativeLimitSatang) return { allowed: true, level: "empty" };
+  return { allowed: false, level: "blocked" };
 }
 
 export interface TopupQuote {
@@ -335,13 +282,4 @@ export function resolveCreditTopup(cfg: CreditTopupConfig, input: { packageId?: 
   if (amt < cfg.minSatang) throw new Error(`เติมขั้นต่ำ ${(cfg.minSatang / 100).toFixed(2)} บาท`);
   if (cfg.maxSatang > 0 && amt > cfg.maxSatang) throw new Error(`เติมได้สูงสุด ${(cfg.maxSatang / 100).toFixed(2)} บาท`);
   return { packageId: null, amountSatang: amt, bonusSatang: 0 };
-}
-
-const BKK = 7 * 3600_000;
-/** Bangkok-day and Bangkok-month start instants (ISO) for `now`. */
-export function bangkokPeriodStarts(now: Date): { dayStart: string; monthStart: string } {
-  const b = new Date(now.getTime() + BKK);
-  const day = Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate()) - BKK;
-  const month = Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), 1) - BKK;
-  return { dayStart: new Date(day).toISOString(), monthStart: new Date(month).toISOString() };
 }

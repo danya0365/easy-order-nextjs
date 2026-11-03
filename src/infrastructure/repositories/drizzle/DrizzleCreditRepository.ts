@@ -1,12 +1,13 @@
 import "server-only";
 
-import { and, count, desc, eq, like, or, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, like, lt, or, sql, type SQL } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { CreditEntryType } from "@/src/domain/services/credit";
 import type {
   ApplyCreditEntryInput,
   CreditLedgerEntry,
+  CreditDailySettlement,
   CreditTopup,
   CreditTopupStatus,
   CreditWalletRow,
@@ -41,6 +42,10 @@ function toEntry(r: LedgerRow): CreditLedgerEntry {
     meta: parse(r.meta),
     createdAt: r.createdAt,
   };
+}
+
+function toSettlement(r: typeof schema.creditDailySettlements.$inferSelect): CreditDailySettlement {
+  return { ...r, ledgerEntryId: r.ledgerEntryId ?? null, settledBy: r.settledBy ?? null };
 }
 
 function toTopup(r: TopupRow): CreditTopup {
@@ -144,21 +149,60 @@ export class DrizzleCreditRepository implements ICreditRepository {
     return { items: rows.map(toEntry), total: n, page, pageSize: opts.pageSize };
   }
 
-  async countDeductionsSince(shopId: string, sinceISO: string) {
-    const t = schema.creditLedger;
-    const [{ n }] = await db
-      .select({ n: count() })
-      .from(t)
-      .where(and(eq(t.shopId, shopId), eq(t.type, "deduction"), sql`${t.createdAt} >= ${sinceISO}`));
-    return n;
+  async sumSalesBetween(shopId: string, fromISO: string, toISO: string, statuses: string[], basis: "total" | "subtotal") {
+    const o = schema.orders;
+    const st = statuses.filter((x) => x !== "cancelled");
+    if (st.length === 0) return { salesSatang: 0, orderCount: 0 };
+    const col = basis === "subtotal" ? o.subtotalSatang : o.totalSatang;
+    const [r] = await db
+      .select({ s: sql<number>`COALESCE(SUM(${col}), 0)`, n: count() })
+      .from(o)
+      .where(and(eq(o.shopId, shopId), inArray(o.status, st as (typeof o.status.enumValues)[number][]), gte(o.createdAt, fromISO), lt(o.createdAt, toISO)));
+    return { salesSatang: Number(r?.s ?? 0), orderCount: Number(r?.n ?? 0) };
   }
 
-  async graceUsed(shopId: string) {
-    const r = await db.get<{ n: number }>(sql`SELECT COUNT(*) AS n FROM credit_ledger
-      WHERE shop_id = ${shopId} AND type = 'deduction' AND amount_satang < 0 AND balance_after_satang <= 0
-        AND created_at > COALESCE((SELECT MAX(created_at) FROM credit_ledger
-          WHERE shop_id = ${shopId} AND balance_after_satang > 0), '')`);
-    return Number(r?.n ?? 0);
+  async listShopsForSettlement() {
+    const s = schema.shops;
+    return db.select({ id: s.id, name: s.name, billingCutoffTime: s.billingCutoffTime }).from(s).orderBy(s.createdAt);
+  }
+
+  async findShopCutoff(shopId: string) {
+    const s = schema.shops;
+    const [r] = await db.select({ c: s.billingCutoffTime }).from(s).where(eq(s.id, shopId)).limit(1);
+    return { exists: !!r, billingCutoffTime: r?.c ?? null };
+  }
+
+  async findSettlement(shopId: string, businessDate: string) {
+    const t = schema.creditDailySettlements;
+    const [r] = await db.select().from(t).where(and(eq(t.shopId, shopId), eq(t.businessDate, businessDate))).limit(1);
+    return r ? toSettlement(r) : null;
+  }
+
+  async findSettlementById(id: string) {
+    const t = schema.creditDailySettlements;
+    const [r] = await db.select().from(t).where(eq(t.id, id)).limit(1);
+    return r ? toSettlement(r) : null;
+  }
+
+  async insertSettlement(input: Omit<CreditDailySettlement, "id" | "createdAt">) {
+    const t = schema.creditDailySettlements;
+    const rows = await db
+      .insert(t)
+      .values({ ...input, id: nanoid(), createdAt: new Date().toISOString() })
+      .onConflictDoNothing({ target: [t.shopId, t.businessDate] })
+      .returning();
+    return rows[0] ? toSettlement(rows[0]) : null;
+  }
+
+  async pageSettlements(shopId: string, opts: { page: number; pageSize: number }) {
+    const t = schema.creditDailySettlements;
+    const page = clampPage(opts.page);
+    const where = eq(t.shopId, shopId);
+    const [rows, [{ n }]] = await Promise.all([
+      db.select().from(t).where(where).orderBy(desc(t.businessDate)).limit(opts.pageSize).offset((page - 1) * opts.pageSize),
+      db.select({ n: count() }).from(t).where(where),
+    ]);
+    return { items: rows.map(toSettlement), total: n, page, pageSize: opts.pageSize };
   }
 
   async pageWallets(opts: { page: number; pageSize: number; q?: string | null }): Promise<NumberedPage<CreditWalletRow>> {

@@ -28,11 +28,11 @@ const memoMap = (): CreditMemo => {
   };
 };
 
-test("master switch off: hooks/status cost one memoised config read, no wallet queries", async () => {
+test("master switch off: gate/status/today cost one memoised config read, no wallet queries", async () => {
   const { repo, calls } = fakeRepo({ enabled: false });
   const svc = new CreditService(repo, {} as ISlipStorage, undefined, memoMap());
   await svc.assertCanTakeOrder("s1");
-  assert.equal(await svc.onOrderEvent({ id: "o1", shopId: "s1", status: "completed", totalSatang: 100, subtotalSatang: 100, orderNo: 1 } as never), null);
+  assert.equal(await svc.getTodayProgress("s1"), null);
   const st = await svc.getStatus("s1");
   assert.equal(st.enabled, false);
   assert.equal(st.gate.allowed, true);

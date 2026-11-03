@@ -77,7 +77,22 @@ async function runCleanup(): Promise<{ deletedSessions: number }> {
   return { deletedSessions };
 }
 
+/**
+ * Prepaid credit: settle every shop's closed business day(s) — deduct the
+ * daily fee where sales reached the threshold. Idempotent (unique shop+date),
+ * so the Cloudflare cron can run it hourly.
+ */
+async function runCreditDailySettle() {
+  return container.creditService.settleAllDue(new Date());
+}
+
 export const CRON_JOBS: CronJob[] = [
+  {
+    id: "credit-daily-settle",
+    envKey: "CRON_CREDIT_DAILY",
+    defaultOn: true,
+    run: runCreditDailySettle,
+  },
   {
     id: "lead-follow-ups",
     envKey: "CRON_LEAD_FOLLOWUPS",

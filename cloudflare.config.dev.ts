@@ -1,4 +1,4 @@
-import { bindings, defineConfig, defineWorker } from "cf/config";
+import { bindings, defineConfig, defineWorker, triggers } from "cf/config";
 
 // Static staging-only variant of cloudflare.config.ts.
 // Keep in sync with the context factory version; swap in manually if a static
@@ -6,7 +6,8 @@ import { bindings, defineConfig, defineWorker } from "cf/config";
 export default defineConfig({
   worker: defineWorker({
     name: "easy-order-dev",
-    entrypoint: "vinext/server/fetch-handler",
+    entrypoint: "./worker/entry.ts",
+    triggers: [triggers.scheduled({ schedule: "5 * * * *" })],
     compatibilityDate: "2026-10-27",
     compatibilityFlags: ["nodejs_compat"],
     assets: {
