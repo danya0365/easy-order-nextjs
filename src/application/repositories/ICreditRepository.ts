@@ -52,6 +52,8 @@ export interface CreditDailySettlement {
   salesSatang: number;
   orderCount: number;
   thresholdSatang: number;
+  metric: "orders" | "sales";
+  thresholdOrders: number;
   feeSatang: number;
   chargedSatang: number;
   ledgerEntryId: string | null;

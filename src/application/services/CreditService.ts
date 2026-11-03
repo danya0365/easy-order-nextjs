@@ -49,6 +49,8 @@ export interface CreditTodayProgress {
   salesSatang: number;
   orderCount: number;
   thresholdSatang: number;
+  metric: "orders" | "sales";
+  thresholdOrders: number;
   feeSatang: number;
   reached: boolean;
 }
@@ -168,8 +170,10 @@ export class CreditService {
       salesSatang: s.salesSatang,
       orderCount: s.orderCount,
       thresholdSatang: d.thresholdSatang,
+      metric: d.metric,
+      thresholdOrders: d.thresholdOrders,
       feeSatang: d.feeSatang,
-      reached: dailyCreditFee(d, s.salesSatang) > 0,
+      reached: dailyCreditFee(d, s) > 0,
     };
   }
 
@@ -192,16 +196,16 @@ export class CreditService {
     const d = ctx.config.daily;
     if (!opts.force && d.startDate && businessDate < d.startDate) throw new Error(`เริ่มคิดค่าบริการรายวันตั้งแต่ ${d.startDate}`);
     const s = await this.repo.sumSalesBetween(shopId, w.start.toISOString(), w.end.toISOString(), d.countStatuses, d.basis);
-    const fee = dailyCreditFee(d, s.salesSatang);
+    const fee = dailyCreditFee(d, s);
     let ledgerEntryId: string | null = null;
     if (fee > 0) {
       const res = await this.repo.applyEntry({
         shopId,
         type: "deduction",
         amountSatang: -fee,
-        reason: `ค่าบริการรายวัน ${businessDate} (ยอด ${(s.salesSatang / 100).toFixed(2)} บาท)`,
+        reason: d.metric === "orders" ? `ค่าบริการรายวัน ${businessDate} (${s.orderCount} ออเดอร์)` : `ค่าบริการรายวัน ${businessDate} (ยอด ${(s.salesSatang / 100).toFixed(2)} บาท)`,
         idempotencyKey: `daily:${shopId}:${businessDate}`,
-        meta: { businessDate, salesSatang: s.salesSatang, orderCount: s.orderCount, thresholdSatang: d.thresholdSatang, cutoff: ctx.cutoff, statuses: d.countStatuses },
+        meta: { businessDate, salesSatang: s.salesSatang, orderCount: s.orderCount, thresholdSatang: d.thresholdSatang, metric: d.metric, thresholdOrders: d.thresholdOrders, cutoff: ctx.cutoff, statuses: d.countStatuses },
       });
       ledgerEntryId = res.entry?.id ?? (await this.repo.findEntryByKey(`daily:${shopId}:${businessDate}`))?.id ?? null;
     }
@@ -214,6 +218,8 @@ export class CreditService {
       salesSatang: s.salesSatang,
       orderCount: s.orderCount,
       thresholdSatang: d.thresholdSatang,
+      metric: d.metric,
+      thresholdOrders: d.thresholdOrders,
       feeSatang: d.feeSatang,
       chargedSatang: fee,
       ledgerEntryId,

@@ -49,21 +49,33 @@ function DailyFields({ d, set }: { d: CreditDailyConfig; set: (d: CreditDailyCon
     <>
       <p className="text-xs text-muted">{t("dailyDesc")}</p>
       <div className="grid grid-cols-2 gap-3">
-        <Row label={t("cfgThreshold")}>
-          <input className={field} type="number" min="0" step="1" value={toB(d.thresholdSatang)} onChange={(e) => up({ thresholdSatang: toS(e.target.value) })} data-testid="cfg-threshold" />
+        <Row label={t("cfgMetric")}>
+          <select className={field} value={d.metric} onChange={(e) => up({ metric: e.target.value as CreditDailyConfig["metric"] })} data-testid="cfg-metric">
+            <option value="orders">{t("metricOrders")}</option>
+            <option value="sales">{t("metricSales")}</option>
+          </select>
         </Row>
+        {d.metric === "orders" ? (
+          <Row label={t("cfgThresholdOrders")}>
+            <input className={field} type="number" min="0" step="1" value={d.thresholdOrders} onChange={(e) => up({ thresholdOrders: Math.max(0, Math.floor(Number(e.target.value) || 0)) })} data-testid="cfg-threshold" />
+          </Row>
+        ) : (
+          <Row label={t("cfgThreshold")}>
+            <input className={field} type="number" min="0" step="1" value={toB(d.thresholdSatang)} onChange={(e) => up({ thresholdSatang: toS(e.target.value) })} data-testid="cfg-threshold" />
+          </Row>
+        )}
         <Row label={t("cfgDailyFee")}>
           <input className={field} type="number" min="0" step="0.01" value={toB(d.feeSatang)} onChange={(e) => up({ feeSatang: toS(e.target.value) })} data-testid="cfg-fee" />
         </Row>
         <Row label={t("cfgCutoff")}>
-          <input className={field} type="time" value={d.cutoffTime} onChange={(e) => up({ cutoffTime: e.target.value || "00:00" })} data-testid="cfg-cutoff" />
+          <input className={field} type="time" value={d.cutoffTime} onChange={(e) => up({ cutoffTime: e.target.value || "04:00" })} data-testid="cfg-cutoff" />
         </Row>
-        <Row label={t("cfgBasis")}>
+        {d.metric === "sales" && <Row label={t("cfgBasis")}>
           <select className={field} value={d.basis} onChange={(e) => up({ basis: e.target.value as "total" | "subtotal" })}>
             <option value="total">{t("basisTotal")}</option>
             <option value="subtotal">{t("basisSubtotal")}</option>
           </select>
-        </Row>
+        </Row>}
         <Row label={t("cfgStartDate")}>
           <input className={field} type="date" value={d.startDate} onChange={(e) => up({ startDate: e.target.value })} />
         </Row>

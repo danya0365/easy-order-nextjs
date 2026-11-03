@@ -106,6 +106,9 @@ export const creditDailySettlements = sqliteTable(
     salesSatang: integer().notNull(),
     orderCount: integer().notNull(),
     thresholdSatang: integer().notNull(),
+    /** "orders" | "sales" — what the threshold measured (rows before 0031 = sales). */
+    metric: text().notNull().default("sales"),
+    thresholdOrders: integer().notNull().default(0),
     feeSatang: integer().notNull(),
     /** Amount actually deducted (0 = below threshold). */
     chargedSatang: integer().notNull(),

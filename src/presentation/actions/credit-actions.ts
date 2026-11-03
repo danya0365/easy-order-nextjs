@@ -92,7 +92,7 @@ export async function saveCreditConfigAction(json: string): Promise<CreditFormSt
   try {
     const admin = await requireRole("platform_admin");
     const cfg = await container.creditService.savePlatformConfig(JSON.parse(json), admin.id);
-    await audit(admin, "credit.config_updated", null, "platform", { enabled: cfg.enabled, thresholdSatang: cfg.daily.thresholdSatang, feeSatang: cfg.daily.feeSatang, low: cfg.lowBalance.mode });
+    await audit(admin, "credit.config_updated", null, "platform", { enabled: cfg.enabled, metric: cfg.daily.metric, thresholdOrders: cfg.daily.thresholdOrders, thresholdSatang: cfg.daily.thresholdSatang, cutoff: cfg.daily.cutoffTime, feeSatang: cfg.daily.feeSatang, low: cfg.lowBalance.mode });
     revalidatePath("/admin/credit/settings");
     revalidateCredit();
     return { success: "บันทึกการตั้งค่าแล้ว" };
@@ -166,16 +166,16 @@ export async function settleCreditDayAction(shopId: string, businessDate: string
     const admin = await requireRole("platform_admin");
     const r = await container.creditService.settleDay(shopId, businessDate, { by: `admin:${admin.id}`, force: true });
     if (r.created) {
-      await audit(admin, "credit.daily_settled", null, shopId, { businessDate, chargedSatang: r.settlement.chargedSatang, salesSatang: r.settlement.salesSatang });
+      await audit(admin, "credit.daily_settled", null, shopId, { businessDate, chargedSatang: r.settlement.chargedSatang, salesSatang: r.settlement.salesSatang, orderCount: r.settlement.orderCount, metric: r.settlement.metric });
     }
     revalidatePath(`/admin/credit/shops/${shopId}`);
     revalidateCredit();
     const baht = (n: number) => (n / 100).toFixed(2);
     if (!r.created) return { success: `วันที่ ${businessDate} ตัดยอดไปแล้ว (หัก ${baht(r.settlement.chargedSatang)} บาท)` };
+    const st = r.settlement;
+    const what = st.metric === "orders" ? `${st.orderCount} ออเดอร์ (เกณฑ์ ${st.thresholdOrders})` : `ยอดขาย ${baht(st.salesSatang)} บาท`;
     return {
-      success: r.settlement.chargedSatang > 0
-        ? `ตัดยอด ${businessDate}: ยอดขาย ${baht(r.settlement.salesSatang)} บาท — หัก ${baht(r.settlement.chargedSatang)} บาท`
-        : `ตัดยอด ${businessDate}: ยอดขาย ${baht(r.settlement.salesSatang)} บาท — ไม่ถึงเกณฑ์ ไม่หัก`,
+      success: st.chargedSatang > 0 ? `ตัดยอด ${businessDate}: ${what} — หัก ${baht(st.chargedSatang)} บาท` : `ตัดยอด ${businessDate}: ${what} — ไม่ถึงเกณฑ์ ไม่หัก`,
     };
   } catch (e) {
     return fail(e);

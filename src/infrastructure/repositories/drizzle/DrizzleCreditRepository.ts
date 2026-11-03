@@ -45,7 +45,7 @@ function toEntry(r: LedgerRow): CreditLedgerEntry {
 }
 
 function toSettlement(r: typeof schema.creditDailySettlements.$inferSelect): CreditDailySettlement {
-  return { ...r, ledgerEntryId: r.ledgerEntryId ?? null, settledBy: r.settledBy ?? null };
+  return { ...r, metric: r.metric === "orders" ? "orders" : "sales", ledgerEntryId: r.ledgerEntryId ?? null, settledBy: r.settledBy ?? null };
 }
 
 function toTopup(r: TopupRow): CreditTopup {
