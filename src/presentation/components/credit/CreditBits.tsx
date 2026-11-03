@@ -122,7 +122,9 @@ export async function CreditRuleSummary({ config }: { config: EffectiveCreditCon
   const low = lb.mode === "warn" ? t("lowModeWarn") : t("lowModeBlock");
   return (
     <ul className="flex flex-col gap-1 text-sm text-foreground" data-testid="credit-rule">
-      <li className="font-medium">{t(d.inclusive ? "ruleDaily" : "ruleDailyStrict", { threshold: satangToBaht(d.thresholdSatang), fee: satangToBaht(d.feeSatang) })}</li>
+      <li className="font-medium">{d.metric === "orders"
+          ? t(d.inclusive ? "ruleDailyOrders" : "ruleDailyOrdersStrict", { threshold: d.thresholdOrders, fee: satangToBaht(d.feeSatang) })
+          : t(d.inclusive ? "ruleDaily" : "ruleDailyStrict", { threshold: satangToBaht(d.thresholdSatang), fee: satangToBaht(d.feeSatang) })}</li>
       <li className="text-xs text-muted">{t("ruleDailyCount", { statuses: d.countStatuses.map((s) => t(`status_${s}`)).join(", "), cutoff: d.cutoffTime })}</li>
       <li className="text-xs text-muted">{low}</li>
     </ul>

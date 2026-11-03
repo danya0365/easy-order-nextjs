@@ -15,8 +15,19 @@ before(migrateTestDb);
 const credit = () => container.creditService;
 const repo = () => container.creditRepository;
 
+/** Legacy tests below exercise the "sales" metric option at midnight cutoff; orders tests pass metric "orders". */
 async function enable(over: Record<string, unknown> = {}) {
-  await credit().savePlatformConfig({ enabled: true, daily: { startDate: "2026-01-01" }, ...over }, null);
+  const daily = { startDate: "2026-01-01", metric: "sales", cutoffTime: "00:00", ...((over.daily as object) ?? {}) };
+  await credit().savePlatformConfig({ enabled: true, ...over, daily }, null);
+}
+const enableOrders = (daily: Record<string, unknown> = {}) => enable({ daily: { metric: "orders", thresholdOrders: 50, feeSatang: 500, cutoffTime: "04:00", ...daily } });
+
+/** n completed ฿10 orders pinned at `at` (fast: place then flip status). */
+async function bulk(shopId: string, itemId: string, n: number, at: string, status: "completed" | "cancelled" | "pending" = "completed") {
+  for (let i = 0; i < n; i++) {
+    const o = await order(shopId, itemId, 1, at, "pending");
+    if (status !== "pending") await db.update(schema.orders).set({ status }).where(eq(schema.orders.id, o.id));
+  }
 }
 
 async function shopWithItem(slug: string, priceSatang = 1000) {
@@ -126,6 +137,71 @@ test("open day cannot be settled; config threshold/fee respected; exempt shop sk
   const { shop: ex } = await shopWithItem("crd-exempt");
   await credit().saveShopOverride(ex.id, { enabled: false }, null);
   await assert.rejects(credit().settleDay(ex.id, DAY, { now: NOW }), /ยกเว้น/);
+});
+
+// ── ORDER-COUNT metric (default): 50 orders/day → ฿5, cutoff 04:00 ──
+// 04:00 BKK = 21:00Z previous day. Business day 2026-10-20 = [10-19T21:00Z, 10-20T21:00Z).
+const inOrdersDay = "2026-10-20T05:00:00.000Z"; // 12:00 BKK on the 20th
+
+test("orders: 49 orders → no charge", async () => {
+  await enableOrders();
+  const { shop, item } = await shopWithItem("crd-o49", 100000); // ฿1000 each: sales irrelevant
+  await bulk(shop.id, item.id, 49, inOrdersDay);
+  const r = await credit().settleDay(shop.id, DAY, { now: NOW });
+  assert.equal(r.settlement.metric, "orders");
+  assert.equal(r.settlement.orderCount, 49);
+  assert.equal(r.settlement.thresholdOrders, 50);
+  assert.equal(r.settlement.chargedSatang, 0);
+  assert.equal(await repo().getBalance(shop.id), 0);
+});
+
+test("orders: exactly 50 orders → ฿5; 51 → ฿5 once, idempotent", async () => {
+  await enableOrders();
+  const { shop, item } = await shopWithItem("crd-o50");
+  await bulk(shop.id, item.id, 50, inOrdersDay);
+  const r = await credit().settleDay(shop.id, DAY, { now: NOW });
+  assert.equal(r.settlement.orderCount, 50);
+  assert.equal(r.settlement.chargedSatang, 500);
+  const { shop: s2, item: i2 } = await shopWithItem("crd-o51");
+  await bulk(s2.id, i2.id, 51, inOrdersDay);
+  const all = await Promise.all([1, 2, 3].map(() => credit().settleDay(s2.id, DAY, { now: NOW })));
+  assert.equal(all.filter((x) => x.created).length, 1);
+  assert.equal((await credit().settleDay(s2.id, DAY, { now: NOW })).created, false);
+  assert.equal(await repo().getBalance(s2.id), -500);
+  assert.equal((await repo().pageLedger(s2.id, { page: 1, pageSize: 10, type: "deduction" })).total, 1);
+});
+
+test("orders: cancelled / pending never count (50 placed, 48 completed → free)", async () => {
+  await enableOrders();
+  const { shop, item } = await shopWithItem("crd-ocancel");
+  await bulk(shop.id, item.id, 48, inOrdersDay);
+  await bulk(shop.id, item.id, 1, inOrdersDay, "cancelled");
+  await bulk(shop.id, item.id, 1, inOrdersDay, "pending");
+  const r = await credit().settleDay(shop.id, DAY, { now: NOW });
+  assert.equal(r.settlement.orderCount, 48);
+  assert.equal(r.settlement.chargedSatang, 0);
+});
+
+test("orders: 04:00 cutoff boundary — 03:59 BKK belongs to the previous day", async () => {
+  await enableOrders();
+  const { shop, item } = await shopWithItem("crd-obound");
+  await bulk(shop.id, item.id, 49, inOrdersDay);
+  await bulk(shop.id, item.id, 1, "2026-10-20T20:59:59.000Z"); // 03:59:59 BKK on the 21st → still the 20th → 50
+  await bulk(shop.id, item.id, 1, "2026-10-20T21:00:00.000Z"); // 04:00 BKK on the 21st → the 21st
+  await bulk(shop.id, item.id, 1, "2026-10-19T20:59:59.000Z"); // 03:59:59 BKK on the 20th → the 19th
+  const r = await credit().settleDay(shop.id, DAY, { now: NOW });
+  assert.equal(r.settlement.periodStart, "2026-10-19T21:00:00.000Z");
+  assert.equal(r.settlement.periodEnd, "2026-10-20T21:00:00.000Z");
+  assert.equal(r.settlement.cutoffTime, "04:00");
+  assert.equal(r.settlement.orderCount, 50);
+  assert.equal(r.settlement.chargedSatang, 500);
+});
+
+test("orders: configurable threshold (2 orders) and fee", async () => {
+  await enableOrders({ thresholdOrders: 2, feeSatang: 300 });
+  const { shop, item } = await shopWithItem("crd-o2");
+  await bulk(shop.id, item.id, 2, inOrdersDay);
+  assert.equal((await credit().settleDay(shop.id, DAY, { now: NOW })).settlement.chargedSatang, 300);
 });
 
 test("settleAllDue settles the previous days once per shop (cron)", async () => {

@@ -17,24 +17,42 @@ import {
 
 const daily = (o: Partial<CreditDailyConfig> = {}): CreditDailyConfig => ({ ...DEFAULT_CREDIT_CONFIG.daily, ...o });
 
-test("defaults: ฿50 threshold, ฿5 fee, midnight cutoff, completed only", () => {
+test("defaults: 50 ORDERS threshold, ฿5 fee, 04:00 cutoff, completed only", () => {
   const d = DEFAULT_CREDIT_CONFIG.daily;
-  assert.equal(d.thresholdSatang, 5000);
+  assert.equal(d.metric, "orders");
+  assert.equal(d.thresholdOrders, 50);
   assert.equal(d.feeSatang, 500);
-  assert.equal(d.cutoffTime, "00:00");
+  assert.equal(d.cutoffTime, "04:00");
   assert.deepEqual(d.countStatuses, ["completed"]);
   assert.equal(DEFAULT_CREDIT_CONFIG.lowBalance.mode, "warn");
 });
 
-test("daily fee: below / at / above threshold", () => {
-  assert.equal(dailyCreditFee(daily(), 0), 0);
-  assert.equal(dailyCreditFee(daily(), 4999), 0);
-  assert.equal(dailyCreditFee(daily(), 5000), 500);
-  assert.equal(dailyCreditFee(daily(), 123456), 500);
-  // strict mode: exactly at threshold is free
-  assert.equal(dailyCreditFee(daily({ inclusive: false }), 5000), 0);
-  assert.equal(dailyCreditFee(daily({ inclusive: false }), 5001), 500);
-  assert.equal(dailyCreditFee(daily({ feeSatang: 0 }), 99999), 0);
+const day = (orderCount: number, salesSatang = 0) => ({ orderCount, salesSatang });
+
+test("daily fee (orders): 49 / 50 / 51 orders", () => {
+  assert.equal(dailyCreditFee(daily(), day(0)), 0);
+  assert.equal(dailyCreditFee(daily(), day(49, 9_999_999)), 0); // sales irrelevant in orders mode
+  assert.equal(dailyCreditFee(daily(), day(50)), 500);
+  assert.equal(dailyCreditFee(daily(), day(51)), 500);
+  assert.equal(dailyCreditFee(daily({ inclusive: false }), day(50)), 0);
+  assert.equal(dailyCreditFee(daily({ inclusive: false }), day(51)), 500);
+  assert.equal(dailyCreditFee(daily({ feeSatang: 0 }), day(999)), 0);
+  assert.equal(dailyCreditFee(daily({ thresholdOrders: 2 }), day(2)), 500);
+});
+
+test("daily fee (sales metric option): below / at / above ฿50", () => {
+  const s = daily({ metric: "sales" });
+  assert.equal(dailyCreditFee(s, day(999, 4999)), 0);
+  assert.equal(dailyCreditFee(s, day(1, 5000)), 500);
+  assert.equal(dailyCreditFee(s, day(1, 123456)), 500);
+});
+
+test("normalize: metric + thresholdOrders parsed, junk falls back", () => {
+  const c = normalizePlatformConfig({ daily: { metric: "nope", thresholdOrders: -3 } });
+  assert.equal(c.daily.metric, "orders");
+  assert.ok(c.daily.thresholdOrders >= 0);
+  assert.equal(normalizePlatformConfig({ daily: { metric: "sales", cutoffTime: "00:00" } }).daily.metric, "sales");
+  assert.equal(normalizePlatformConfig({ daily: { cutoffTime: "00:00" } }).daily.cutoffTime, "00:00"); // stored value kept
 });
 
 test("business day window: midnight Bangkok, and custom cutoff", () => {
@@ -56,10 +74,10 @@ test("timezone boundary: 23:59 vs 00:00 Bangkok fall on different days", () => {
 });
 
 test("shop cutoff reuse", () => {
-  assert.equal(creditCutoffFor(daily(), null), "00:00");
+  assert.equal(creditCutoffFor(daily(), null), "04:00");
   assert.equal(creditCutoffFor(daily(), "04:00"), "04:00");
-  assert.equal(creditCutoffFor(daily({ useShopCutoff: false }), "04:00"), "00:00");
-  assert.equal(creditCutoffFor(daily(), "bad"), "00:00");
+  assert.equal(creditCutoffFor(daily({ useShopCutoff: false }), "05:00"), "04:00");
+  assert.equal(creditCutoffFor(daily(), "bad"), "04:00");
 });
 
 test("order gate: warn only by default, block optional", () => {
@@ -91,7 +109,7 @@ test("config normalisation: legacy per-order fields dropped, cancelled never cou
   const p2 = normalizePlatformConfig({ daily: { thresholdSatang: -5, countStatuses: ["cancelled", "ready", "completed"], cutoffTime: "25:00" }, topup: { promptpayId: "08-1234-5678" } });
   assert.equal(p2.daily.thresholdSatang, 0);
   assert.deepEqual(p2.daily.countStatuses, ["ready", "completed"]);
-  assert.equal(p2.daily.cutoffTime, "00:00");
+  assert.equal(p2.daily.cutoffTime, "04:00");
   assert.deepEqual(normalizePlatformConfig({ daily: { countStatuses: ["cancelled"] } }).daily.countStatuses, ["completed"]);
   assert.equal(p2.topup.promptpayId, "0812345678");
   const e = effectiveConfig(p2, { daily: { feeSatang: 1000 }, lowBalance: { mode: "block" } });

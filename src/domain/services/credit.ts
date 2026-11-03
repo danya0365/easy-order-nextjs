@@ -20,15 +20,24 @@ export type CreditLowMode = (typeof CREDIT_LOW_MODES)[number];
 export const CREDIT_ENTRY_TYPES = ["topup", "deduction", "refund", "adjust", "bonus", "starting"] as const;
 export type CreditEntryType = (typeof CREDIT_ENTRY_TYPES)[number];
 
+export const CREDIT_DAILY_METRICS = ["orders", "sales"] as const;
+export type CreditDailyMetric = (typeof CREDIT_DAILY_METRICS)[number];
+
 /**
- * DAILY threshold fee: once per shop per business day, if that day's sales
- * (orders in `countStatuses`, cancelled never count) reach `thresholdSatang`,
- * deduct `feeSatang` from the wallet. Below the threshold: nothing.
+ * DAILY threshold fee: once per shop per business day, if that day's ORDER
+ * COUNT (metric "orders", default) or sales (metric "sales") — counting only
+ * orders in `countStatuses`, cancelled never — reaches the threshold, deduct
+ * `feeSatang` from the wallet. Below the threshold: nothing.
  */
 export interface CreditDailyConfig {
+  /** What the threshold measures. Default: number of orders. */
+  metric: CreditDailyMetric;
+  /** Threshold when metric = "orders". Default 50 orders. */
+  thresholdOrders: number;
+  /** Threshold when metric = "sales" (satang). */
   thresholdSatang: number;
   feeSatang: number;
-  /** "HH:MM" Asia/Bangkok — start of the business day. Default midnight. */
+  /** "HH:MM" Asia/Bangkok — start of the business day. Default 04:00 (same as the old daily-fee billing). */
   cutoffTime: string;
   /** Use the shop's billing cutoff (shops.billing_cutoff_time) when it has one. */
   useShopCutoff: boolean;
@@ -93,9 +102,11 @@ export const DEFAULT_CREDIT_CONFIG: CreditPlatformConfig = {
   enabled: false,
   startingCreditSatang: 0,
   daily: {
+    metric: "orders",
+    thresholdOrders: 50,
     thresholdSatang: 5000,
     feeSatang: 500,
-    cutoffTime: "00:00",
+    cutoffTime: "04:00",
     useShopCutoff: true,
     countStatuses: ["completed"],
     basis: "total",
@@ -139,6 +150,8 @@ export function normalizeDaily(raw: unknown, base = DEFAULT_CREDIT_CONFIG.daily)
     ? CREDIT_COUNT_STATUSES.filter((x) => (r.countStatuses as unknown[]).includes(x))
     : base.countStatuses;
   return {
+    metric: pick(r.metric, CREDIT_DAILY_METRICS, base.metric),
+    thresholdOrders: int(r.thresholdOrders ?? base.thresholdOrders, base.thresholdOrders),
     thresholdSatang: int(r.thresholdSatang ?? base.thresholdSatang, base.thresholdSatang),
     feeSatang: int(r.feeSatang ?? base.feeSatang, base.feeSatang),
     cutoffTime: typeof r.cutoffTime === "string" && CUT_RE.test(r.cutoffTime) ? r.cutoffTime : base.cutoffTime,
@@ -210,10 +223,21 @@ export function effectiveConfig(platform: CreditPlatformConfig, override: Credit
   };
 }
 
-/** Fee for one closed business day with `salesSatang` of counted sales. */
-export function dailyCreditFee(cfg: CreditDailyConfig, salesSatang: number): number {
+/** Threshold value in the configured metric's unit (orders or satang). */
+export function dailyThreshold(cfg: CreditDailyConfig): number {
+  return cfg.metric === "orders" ? cfg.thresholdOrders : cfg.thresholdSatang;
+}
+
+/** Value of the day in the configured metric's unit. */
+export function dailyMeasure(cfg: CreditDailyConfig, day: { orderCount: number; salesSatang: number }): number {
+  return cfg.metric === "orders" ? day.orderCount : day.salesSatang;
+}
+
+/** Fee for one closed business day given its counted orders/sales. */
+export function dailyCreditFee(cfg: CreditDailyConfig, day: { orderCount: number; salesSatang: number }): number {
   if (cfg.feeSatang <= 0) return 0;
-  const hit = cfg.inclusive ? salesSatang >= cfg.thresholdSatang : salesSatang > cfg.thresholdSatang;
+  const v = dailyMeasure(cfg, day), th = dailyThreshold(cfg);
+  const hit = cfg.inclusive ? v >= th : v > th;
   return hit ? cfg.feeSatang : 0;
 }
 
