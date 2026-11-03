@@ -2,6 +2,7 @@ import Link from "next/link";
 import { History, ShoppingBag, Store } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
+import { ShopOwnerShortcut } from "@/src/presentation/components/layout/ShopOwnerShortcut";
 import { HEADER_ICON_BTN, SiteHeader } from "@/src/presentation/components/layout/SiteHeader";
 
 /**
@@ -46,6 +47,7 @@ export async function ShopShellHeader({
       }
       actions={
         <>
+          <ShopOwnerShortcut slug={slug} label={t("navManageShop")} className={HEADER_ICON_BTN} />
           <Link href={`/s/${slug}/order`} aria-label={t("navShopOrder")} title={t("navShopOrder")} className={HEADER_ICON_BTN} data-testid="header-cart">
             <ShoppingBag className="size-5" />
           </Link>

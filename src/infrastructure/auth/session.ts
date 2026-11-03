@@ -9,6 +9,7 @@ import { isProd } from "@/src/infrastructure/config/env";
 import type { KnownAccount, User } from "@/src/domain/entities";
 import type { Role } from "@/src/domain/types/roles";
 import { loginUrlFor } from "@/src/domain/services/safe-next";
+import { SHOP_HINT_COOKIE } from "@/src/infrastructure/auth/shop-hint";
 
 const COOKIE_NAME = process.env.SESSION_COOKIE_NAME || "es_session";
 const SESSION_TTL_DAYS = 7;
@@ -245,6 +246,15 @@ export async function createSession(userId: string): Promise<void> {
     path: "/",
     expires: expiresAt,
   });
+  // Non-sensitive, JS-readable hint ("an operator session may exist") so the
+  // public shop header can skip the owner-check probe for anonymous visitors.
+  (await cookies()).set(SHOP_HINT_COOKIE, "1", {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    expires: expiresAt,
+  });
 }
 
 // Pending 2FA: set after step-1 (password/OTP) succeeds for a 2FA-enabled
@@ -291,6 +301,7 @@ export async function destroySession(): Promise<void> {
     await container.sessionRepository.delete(token);
     store.delete(COOKIE_NAME);
   }
+  store.delete(SHOP_HINT_COOKIE);
 }
 
 function parseAccounts(raw: string | undefined): KnownAccount[] {
