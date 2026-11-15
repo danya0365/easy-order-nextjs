@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
@@ -21,11 +21,23 @@ export function BranchAcceptingToggle({
   const toast = useToast();
   const router = useRouter();
 
+  // Optimistic: flip immediately, revert on error (server refresh can be slow).
+  const [on, setOn] = useState(acceptingOrders);
+  const [seen, setSeen] = useState(acceptingOrders);
+  if (seen !== acceptingOrders) {
+    // Server value changed (refresh) → adopt it.
+    setSeen(acceptingOrders);
+    setOn(acceptingOrders);
+  }
+
   function onChange(next: boolean) {
+    setOn(next);
     start(async () => {
       const res = await setBranchAcceptingOrdersAction(branchId, next);
-      if (res.error) toast.error(res.error);
-      else {
+      if (res.error) {
+        setOn(!next);
+        toast.error(res.error);
+      } else {
         toast.success(next ? t("acceptingNowOn") : t("acceptingNowOff"));
         router.refresh();
       }
@@ -34,12 +46,12 @@ export function BranchAcceptingToggle({
 
   return (
     <ToggleSwitch
-      checked={acceptingOrders}
+      checked={on}
       onChange={onChange}
       disabled={pending}
       testId="branch-accepting-toggle"
-      label={acceptingOrders ? t("acceptingOn") : t("acceptingOff")}
-      hint={acceptingOrders ? t("acceptingOnHint") : t("acceptingOffHint")}
+      label={on ? t("acceptingOn") : t("acceptingOff")}
+      hint={on ? t("acceptingOnHint") : t("acceptingOffHint")}
     />
   );
 }

@@ -263,12 +263,6 @@ export function KioskOrdering({
           <p className="text-lg font-semibold text-success">{t("selfDoneTitle")}</p>
           <p className="text-sm text-muted">{t("resultQueueTitle")}</p>
           <p className="text-7xl font-extrabold text-brand-600">{result.orderNo}</p>
-        {result.branchName && (
-          <p className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700" data-testid="result-branch">
-            <MapPin className="size-4" />
-            {t("resultBranch", { name: result.branchName })}
-          </p>
-        )}
           {result.branchName && (
             <p className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700" data-testid="result-branch">
               <MapPin className="size-4" />
@@ -289,6 +283,12 @@ export function KioskOrdering({
       <>
         <p className="text-lg text-muted">{t("resultQueueTitle")}</p>
         <p className="text-7xl font-extrabold text-brand-600">{result.orderNo}</p>
+        {result.branchName && (
+          <p className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700" data-testid="result-branch">
+            <MapPin className="size-4" />
+            {t("resultBranch", { name: result.branchName })}
+          </p>
+        )}
         <p className="text-xl font-semibold text-foreground">
           {t("resultTotal", { amount: satangToBaht(result.totalSatang ?? 0) })}
         </p>

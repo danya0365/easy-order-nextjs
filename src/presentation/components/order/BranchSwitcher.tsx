@@ -101,7 +101,7 @@ export function BranchSwitcher({
                   data-closed={c.closedReason ? "1" : "0"}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition",
-                    current
+                    current && !c.closedReason
                       ? "border-brand-500 bg-brand-50"
                       : "border-border bg-card hover:bg-muted-surface",
                     c.closedReason && "cursor-not-allowed opacity-60 hover:bg-card",
@@ -114,7 +114,7 @@ export function BranchSwitcher({
                       {c.closedReason ?? c.address ?? t("openNow")}
                     </span>
                   </span>
-                  {current ? (
+                  {current && !c.closedReason ? (
                     <Check className="size-5 shrink-0 text-brand-600" />
                   ) : (
                     !c.closedReason && <ChevronRight className="size-4 shrink-0 text-muted" />
