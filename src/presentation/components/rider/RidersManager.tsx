@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bike, Copy, Link2, Pencil, Plus, RefreshCw } from "lucide-react";
+import { Bike, ChevronRight, Copy, Link2, Pencil, Plus, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import type { Rider, RiderCommissionType } from "@/src/domain/entities";
@@ -50,7 +51,15 @@ const EMPTY: FormState = {
   active: true,
 };
 
-export function RidersManager({ riders }: { riders: RiderRow[] }) {
+export function RidersManager({
+  riders,
+  showAdd = true,
+  detailLinks = true,
+}: {
+  riders: RiderRow[];
+  showAdd?: boolean;
+  detailLinks?: boolean;
+}) {
   const t = useTranslations("rider");
   const commissionText = (r: Rider): string =>
     r.commissionType === "per_trip"
@@ -63,6 +72,8 @@ export function RidersManager({ riders }: { riders: RiderRow[] }) {
   const [pending, start] = useTransition();
   const [form, setForm] = useState<FormState | null>(null);
   const [link, setLink] = useState<{ riderId: string; url: string } | null>(null);
+  const [linked, setLinked] = useState<Set<string>>(new Set());
+  const hasLinkNow = (r: Rider): boolean => r.hasLink || linked.has(r.id);
 
   function edit(r: Rider) {
     setForm({
@@ -88,6 +99,29 @@ export function RidersManager({ riders }: { riders: RiderRow[] }) {
         lineId: form.lineId,
         active: form.active,
       });
+      if (res.duplicate) {
+        if (confirm(res.error)) {
+          const retry = await saveRiderAction(
+            form.id,
+            {
+              name: form.name,
+              phone: form.phone,
+              commissionType: form.commissionType,
+              commissionValue: Number(form.commissionValue) || 0,
+              lineId: form.lineId,
+              active: form.active,
+            },
+            { allowDuplicatePhone: true },
+          );
+          if (retry.error) toast.error(retry.error);
+          else {
+            toast.success(t("saved"));
+            setForm(null);
+            router.refresh();
+          }
+        }
+        return;
+      }
       if (res.error) toast.error(res.error);
       else {
         toast.success(t("saved"));
@@ -98,12 +132,13 @@ export function RidersManager({ riders }: { riders: RiderRow[] }) {
   }
 
   function regenerate(r: Rider) {
-    if (r.hasLink && !confirm(t("regenerateConfirm"))) return;
+    if (hasLinkNow(r) && !confirm(t("regenerateConfirm"))) return;
     start(async () => {
       const res = await regenerateRiderLinkAction(r.id);
       if (res.error || !res.url) toast.error(res.error ?? t("error"));
       else {
         setLink({ riderId: r.id, url: res.url });
+        setLinked((prev) => new Set(prev).add(r.id));
         router.refresh();
       }
     });
@@ -121,10 +156,12 @@ export function RidersManager({ riders }: { riders: RiderRow[] }) {
   return (
     <div className="flex flex-col gap-3">
       <div>
-        <Button onClick={() => setForm({ ...EMPTY })} disabled={pending}>
-          <Plus className="size-4" />
-          {t("add")}
-        </Button>
+        {showAdd && (
+          <Button onClick={() => setForm({ ...EMPTY })} disabled={pending}>
+            <Plus className="size-4" />
+            {t("add")}
+          </Button>
+        )}
       </div>
 
       {form && (
@@ -192,6 +229,12 @@ export function RidersManager({ riders }: { riders: RiderRow[] }) {
                 <p className="text-sm text-muted">{r.phone} · {commissionText(r)}</p>
                 <div className="mt-1.5 flex flex-col gap-1.5">
                   <RiderStatusBadges rider={r} />
+                  {r.status === "invited" && (
+                    <span className="flex flex-col gap-0.5">
+                      <Badge tone="warning">{t("statusInvited")}</Badge>
+                      <span className="text-xs text-muted">{t("invitedHint")}</span>
+                    </span>
+                  )}
                   <RiderContactButtons rider={r} />
                 </div>
               </div>
@@ -204,9 +247,19 @@ export function RidersManager({ riders }: { riders: RiderRow[] }) {
               </Button>
               {r.active && (
                 <Button size="sm" variant="outline" onClick={() => regenerate(r)} disabled={pending}>
-                  {r.hasLink ? <RefreshCw className="size-4" /> : <Link2 className="size-4" />}
-                  {r.hasLink ? t("regenerate") : t("createLink")}
+                  {hasLinkNow(r) ? <RefreshCw className="size-4" /> : <Link2 className="size-4" />}
+                  {hasLinkNow(r) ? t("regenerate") : t("createLink")}
                 </Button>
+              )}
+              {detailLinks && (
+                <Link
+                  href={`/shop/riders/${r.id}`}
+                  data-testid="rider-detail-link"
+                  className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted-surface"
+                >
+                  {t("viewDetail")}
+                  <ChevronRight className="size-4" />
+                </Link>
               )}
             </div>
             {link?.riderId === r.id && (

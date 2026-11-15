@@ -1,4 +1,4 @@
-import type { PlatformSettings } from "@/src/domain/entities";
+import type { PlatformSettings, RiderAvailabilityMode } from "@/src/domain/entities";
 
 export interface UpdatePlatformSettingsInput {
   billingUiEnabled?: boolean;
@@ -11,6 +11,7 @@ export interface UpdatePlatformSettingsInput {
   defaultCutoffTime?: string;
   menuOptionsEnabled?: boolean;
   itemDetailEnabled?: boolean;
+  riderAvailabilityMode?: RiderAvailabilityMode;
 }
 
 /**

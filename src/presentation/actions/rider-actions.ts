@@ -7,7 +7,9 @@ import { requireShopWrite } from "@/src/infrastructure/auth/session";
 import {
   AssignRiderUseCase,
   CreateRiderUseCase,
+  DuplicateRiderPhoneError,
   RegenerateRiderLinkUseCase,
+  RevokeRiderMembershipUseCase,
   UpdateRiderUseCase,
 } from "@/src/application/use-cases/rider/RiderUseCases";
 import { getBaseUrl } from "@/src/presentation/lib/base-url";
@@ -31,7 +33,8 @@ function toRepoValue(input: RiderFormInput): number {
 export async function saveRiderAction(
   riderId: string | null,
   input: RiderFormInput,
-): Promise<{ error?: string }> {
+  opts?: { allowDuplicatePhone?: boolean },
+): Promise<{ error?: string; duplicate?: boolean }> {
   try {
     const { shopId } = await requireShopWrite();
     const data = {
@@ -47,9 +50,29 @@ export async function saveRiderAction(
         active: input.active !== false,
       });
     } else {
-      await new CreateRiderUseCase(container.riderRepository).execute(shopId, data);
+      await new CreateRiderUseCase(container.riderRepository).execute(shopId, data, {
+        allowDuplicatePhone: opts?.allowDuplicatePhone,
+      });
     }
     revalidatePath("/shop/riders");
+    return {};
+  } catch (e) {
+    if (e instanceof DuplicateRiderPhoneError) {
+      return { error: e.message, duplicate: true };
+    }
+    return { error: (e as Error).message };
+  }
+}
+
+/** Shop ends ITS OWN membership (deactivate + kill the link). Other shops untouched. */
+export async function revokeRiderMembershipAction(
+  riderId: string,
+): Promise<{ error?: string }> {
+  try {
+    const { shopId } = await requireShopWrite();
+    await new RevokeRiderMembershipUseCase(container.riderRepository).execute(shopId, riderId);
+    revalidatePath("/shop/riders");
+    revalidatePath(`/shop/riders/${riderId}`);
     return {};
   } catch (e) {
     return { error: (e as Error).message };
@@ -67,6 +90,7 @@ export async function regenerateRiderLinkAction(
       riderId,
     );
     revalidatePath("/shop/riders");
+    revalidatePath(`/shop/riders/${riderId}`);
     return { url: `${await getBaseUrl()}/r/${token}` };
   } catch (e) {
     return { error: (e as Error).message };

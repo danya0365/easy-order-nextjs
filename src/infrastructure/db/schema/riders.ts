@@ -3,10 +3,41 @@ import { id, createdAt, updatedAt } from "./_shared";
 import { shops } from "./shops";
 
 export const RIDER_COMMISSION_TYPES = ["per_trip", "percent_fee", "full_fee"] as const;
+export const RIDER_MEMBERSHIP_STATUSES = ["invited", "approved"] as const;
 
 /**
- * Shop-owned delivery riders. Per shop: the same person riding for two shops
- * is two rows. The rider opens a personal link `/r/<token>`; only the SHA-256
+ * Global rider identity (one person, many shops). A rider logs in once and
+ * sees jobs from every shop where their membership (`riders` row) is approved.
+ * `phoneKey` is the canonical lookup for "add rider by phone" (unique when set);
+ * accounts backfilled from duplicate-phone rows keep it NULL (no auto-merge).
+ * `mergedIntoId` marks an emptied account whose memberships moved to another
+ * account after the rider confirmed "add this shop to my account".
+ */
+export const riderAccounts = sqliteTable(
+  "rider_accounts",
+  {
+    id: id(),
+    name: text().notNull(),
+    phone: text().notNull(),
+    phoneKey: text(),
+    avatarUrl: text(),
+    available: integer({ mode: "boolean" }).notNull().default(true),
+    availableUpdatedAt: text(),
+    /** Bumped to sign out every device of this account (session cookie carries it). */
+    sessionEpoch: integer().notNull().default(0),
+    mergedIntoId: text(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("rider_accounts_phone_key_unique").on(t.phoneKey),
+    index("rider_accounts_phone_idx").on(t.phone),
+  ],
+);
+
+/**
+ * Per-shop rider MEMBERSHIP (commission, active, invite status) of a global
+ * `rider_accounts` identity. orders.rider_id points here. The rider opens a personal link `/r/<token>`; only the SHA-256
  * hash of the token is stored (regenerate = revoke old link).
  */
 export const riders = sqliteTable(
@@ -30,11 +61,17 @@ export const riders = sqliteTable(
     /** Storage key of the rider's profile photo (served via /api/rider-avatars/<id>). */
     avatarUrl: text(),
     accessTokenHash: text(),
+    /** Global identity (nullable in SQL for the additive migration; always set by code). */
+    accountId: text().references(() => riderAccounts.id),
+    /** invited = rider must open the shop link and confirm; approved = sees jobs. */
+    status: text({ enum: RIDER_MEMBERSHIP_STATUSES }).notNull().default("approved"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [
     index("riders_shop_idx").on(t.shopId),
     uniqueIndex("riders_token_hash_unique").on(t.accessTokenHash),
+    uniqueIndex("riders_shop_account_unique").on(t.shopId, t.accountId),
+    index("riders_account_idx").on(t.accountId),
   ],
 );

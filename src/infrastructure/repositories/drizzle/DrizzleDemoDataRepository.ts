@@ -47,8 +47,10 @@ export class DrizzleDemoDataRepository implements IDemoDataRepository {
     const riderIds = plan.riders.map(() => nanoid());
     plan.riders.forEach((r, i) => {
       // Inactive so demo riders never show up for real assignment.
+      // Each demo rider gets its own throw-away account (deterministic id, never claimable by phone).
       stmts.push(
-        db.insert(schema.riders).values({ id: riderIds[i], shopId, name: r.name, phone: r.phone, active: false }),
+        db.insert(schema.riderAccounts).values({ id: `ra_${riderIds[i]}`, name: r.name, phone: r.phone, phoneKey: null }),
+        db.insert(schema.riders).values({ id: riderIds[i], shopId, name: r.name, phone: r.phone, active: false, accountId: `ra_${riderIds[i]}` }),
         track("rider", riderIds[i]),
       );
     });
@@ -132,6 +134,7 @@ export class DrizzleDemoDataRepository implements IDemoDataRepository {
     }
     for (const chunk of chunks(r)) {
       stmts.push(db.delete(schema.riders).where(and(eq(schema.riders.shopId, shopId), inArray(schema.riders.id, chunk))));
+      stmts.push(db.delete(schema.riderAccounts).where(inArray(schema.riderAccounts.id, chunk.map((id) => `ra_${id}`))));
     }
     stmts.push(db.delete(schema.demoDataRows).where(eq(schema.demoDataRows.shopId, shopId)));
     await db.batch(stmts as [BatchItem, ...BatchItem[]]);

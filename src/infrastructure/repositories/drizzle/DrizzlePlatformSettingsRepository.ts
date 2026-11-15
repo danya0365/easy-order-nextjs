@@ -26,6 +26,7 @@ function toSettings(r: Row): PlatformSettings {
     defaultCutoffTime: r.defaultCutoffTime,
     menuOptionsEnabled: r.menuOptionsEnabled,
     itemDetailEnabled: r.itemDetailEnabled,
+    riderAvailabilityMode: r.riderAvailabilityMode === "per_shop" ? "per_shop" : "global",
     updatedAt: r.updatedAt,
   };
 }
@@ -43,6 +44,7 @@ function defaults(): PlatformSettings {
     defaultCutoffTime: "04:00",
     menuOptionsEnabled: false,
     itemDetailEnabled: true,
+    riderAvailabilityMode: "global",
     updatedAt: new Date().toISOString(),
   };
 }
@@ -104,6 +106,9 @@ export class DrizzlePlatformSettingsRepository
           : {}),
         ...(input.itemDetailEnabled !== undefined
           ? { itemDetailEnabled: input.itemDetailEnabled }
+          : {}),
+        ...(input.riderAvailabilityMode !== undefined
+          ? { riderAvailabilityMode: input.riderAvailabilityMode }
           : {}),
       })
       .where(eq(schema.platformSettings.id, SETTINGS_ID))

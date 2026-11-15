@@ -32,7 +32,7 @@ export default async function ShopOrdersPage() {
         historyInitial={hist}
         historyCursor={history.nextCursor}
         riders={riders
-          .filter((r) => r.active)
+          .filter((r) => r.active && r.status === "approved")
           .map((r) => ({
             id: r.id,
             name: r.name,

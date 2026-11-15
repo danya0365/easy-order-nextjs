@@ -81,3 +81,58 @@ export function normalizeLineId(input: string | null | undefined): string | null
 export function riderFirstName(name: string): string {
   return name.trim().split(/\s+/)[0] ?? "";
 }
+
+/** Rider-driven job actions. `cod_delivered` = collect cash and deliver in one step. */
+export type RiderJobAction = "picked_up" | "delivered" | "cod" | "cod_delivered";
+
+/** Facts about an order a rider action is checked against (pure). */
+export interface RiderJobFacts {
+  status: "pending" | "preparing" | "ready" | "completed" | "cancelled";
+  paymentMethod: "promptpay_qr" | "cash";
+  paymentStatus: "unpaid" | "paid";
+  deliveryStatus: DeliveryStatus | null;
+  codCollected: boolean;
+}
+
+/** Cash the rider must collect at the door (cash order not yet paid/collected). */
+export function needsCodCollection(o: Pick<RiderJobFacts, "paymentMethod" | "paymentStatus" | "codCollected">): boolean {
+  return o.paymentMethod === "cash" && o.paymentStatus !== "paid" && !o.codCollected;
+}
+
+/**
+ * Cash a delivered order puts in the rider's hands (owed back to the shop):
+ * collected COD, or a cash order still unpaid after delivery (legacy rows
+ * delivered before the collect-first rule).
+ */
+export function riderCashDue(o: Pick<RiderJobFacts, "paymentMethod" | "paymentStatus" | "codCollected">): boolean {
+  return o.codCollected || (o.paymentMethod === "cash" && o.paymentStatus !== "paid");
+}
+
+/** Shop has accepted the order (rider may pick it up). */
+export function shopAccepted(status: RiderJobFacts["status"]): boolean {
+  return status === "preparing" || status === "ready" || status === "completed";
+}
+
+/**
+ * Why a rider action is not allowed right now (Thai, shown to the rider), or
+ * null when allowed. Rules: shop must accept before pickup; a COD order must
+ * have its cash collected before it can be marked delivered.
+ */
+export function riderActionBlockReason(o: RiderJobFacts, action: RiderJobAction): string | null {
+  if (o.status === "cancelled") return "ออเดอร์ถูกยกเลิกแล้ว";
+  if (!shopAccepted(o.status)) return "ร้านยังไม่ได้รับออเดอร์ — รอร้านกดรับก่อน";
+  if (action === "cod") {
+    if (o.paymentMethod !== "cash") return "ออเดอร์นี้ไม่ใช่เก็บเงินปลายทาง";
+    if (o.deliveryStatus !== "picked_up" && o.deliveryStatus !== "delivered") return "ต้องรับของก่อน";
+    return null;
+  }
+  if (action === "cod_delivered") {
+    if (o.paymentMethod !== "cash") return "ออเดอร์นี้ไม่ใช่เก็บเงินปลายทาง";
+    return canAdvanceDelivery(o.deliveryStatus, "delivered") ? null : "เปลี่ยนสถานะไม่ได้";
+  }
+  if (!canAdvanceDelivery(o.deliveryStatus, action)) return "เปลี่ยนสถานะไม่ได้";
+  if (action === "delivered" && needsCodCollection(o)) {
+    return "ต้องเก็บเงินสดจากลูกค้าก่อน จึงจะกดส่งแล้วได้";
+  }
+  return null;
+}

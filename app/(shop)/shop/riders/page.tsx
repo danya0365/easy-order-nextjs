@@ -1,9 +1,11 @@
+import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import {
-  ListRidersWithLoadUseCase,
+  ListRidersPageUseCase,
   RiderPayoutSummaryUseCase,
 } from "@/src/application/use-cases/rider/RiderUseCases";
 import { RidersManager } from "@/src/presentation/components/rider/RidersManager";
@@ -26,7 +28,7 @@ const YMD = /^\d{4}-\d{2}-\d{2}$/;
 export default async function ShopRidersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; page?: string }>;
 }) {
   const { shopId } = await requireShopAccess();
   const t = await getTranslations("rider");
@@ -36,8 +38,12 @@ export default async function ShopRidersPage({
   const to = sp.to && YMD.test(sp.to) && sp.to >= from ? sp.to : from;
   const toExclusive = new Date(new Date(bkkStartISO(to)).getTime() + 86400_000).toISOString();
 
-  const [riders, payouts] = await Promise.all([
-    new ListRidersWithLoadUseCase(container.riderRepository, container.orderRepository).execute(shopId),
+  const [result, payouts] = await Promise.all([
+    new ListRidersPageUseCase(container.riderRepository, container.orderRepository).execute(
+      shopId,
+      Number(sp.page) || 1,
+      10,
+    ),
     new RiderPayoutSummaryUseCase(container.riderRepository).execute(
       shopId,
       bkkStartISO(from),
@@ -52,6 +58,18 @@ export default async function ShopRidersPage({
     }),
     { trips: 0, commission: 0, cod: 0 },
   );
+  const pageQuery = (p: number): string => {
+    const q = new URLSearchParams();
+    if (sp.from || sp.to) {
+      q.set("from", from);
+      q.set("to", to);
+    }
+    if (p > 1) q.set("page", String(p));
+    const s = q.toString();
+    return s ? `/shop/riders?${s}` : "/shop/riders";
+  };
+  const prevPage = result.page > 1 ? pageQuery(result.page - 1) : null;
+  const nextPage = result.page < result.pageCount ? pageQuery(result.page + 1) : null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -62,7 +80,53 @@ export default async function ShopRidersPage({
         </p>
       </div>
 
-      <RidersManager riders={riders} />
+      <RidersManager riders={result.items} />
+
+      <div data-testid="riders-pagination" className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted">
+          {t("pageOf", { page: result.page, count: result.pageCount })} · {t("totalRiders", { total: result.total })}
+        </p>
+        <div className="flex items-center gap-2">
+          {prevPage ? (
+            <Link
+              href={prevPage}
+              data-testid="riders-prev"
+              className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted-surface"
+            >
+              <ChevronLeft className="size-4" />
+              {t("prevPage")}
+            </Link>
+          ) : (
+            <span
+              data-testid="riders-prev"
+              aria-disabled
+              className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-sm font-medium text-muted opacity-50"
+            >
+              <ChevronLeft className="size-4" />
+              {t("prevPage")}
+            </span>
+          )}
+          {nextPage ? (
+            <Link
+              href={nextPage}
+              data-testid="riders-next"
+              className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted-surface"
+            >
+              {t("nextPage")}
+              <ChevronRight className="size-4" />
+            </Link>
+          ) : (
+            <span
+              data-testid="riders-next"
+              aria-disabled
+              className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-sm font-medium text-muted opacity-50"
+            >
+              {t("nextPage")}
+              <ChevronRight className="size-4" />
+            </span>
+          )}
+        </div>
+      </div>
 
       <Card>
         <h2 className="font-semibold text-foreground">{t("payoutTitle")}</h2>
