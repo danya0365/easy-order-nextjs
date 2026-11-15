@@ -1,9 +1,10 @@
-import { Banknote, CheckCircle2, CircleAlert, Clock, Navigation, Package, Phone, Store } from "lucide-react";
+import { Banknote, CheckCircle2, CircleAlert, Clock, MapPin, Navigation, Package, Phone, Store } from "lucide-react";
 import Link from "next/link";
 
 import { formatOrderLineOptions } from "@/src/domain/services/menu-options";
 import { orderNavigationUrl } from "@/src/domain/services/delivery-location";
 import { needsCodCollection } from "@/src/domain/services/rider";
+import { mainBranchOf } from "@/src/domain/services/branch-ordering";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -47,6 +48,20 @@ export default async function RiderJobsPage({
     ),
   ]);
   const shopPhone = new Map(phones);
+  // Multi-branch shops: tell the rider which branch to pick the order up from
+  // (NULL branch = main branch). Single-branch shops show nothing extra.
+  const branchByShop = new Map(
+    await Promise.all(
+      [...new Set(dash.jobs.map((j) => j.shopId))].map(
+        async (id) => [id, await container.branchRepository.listByShop(id).catch(() => [])] as const,
+      ),
+    ),
+  );
+  const pickupBranch = (shopId: string, branchId: string | null) => {
+    const list = branchByShop.get(shopId) ?? [];
+    if (list.length < 2) return null;
+    return (branchId && list.find((b) => b.id === branchId)) || mainBranchOf(list);
+  };
   const { account } = session;
   const perShop = settings.riderAvailabilityMode === "per_shop";
   const multi = session.memberships.length > 1;
@@ -142,6 +157,18 @@ export default async function RiderJobsPage({
               <p className="inline-flex w-fit items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-sm font-semibold text-brand-700" data-testid="rider-job-shop">
                 <Store className="size-4" /> {shopName}
               </p>
+              {(() => {
+                const pb = pickupBranch(shopId, o.branchId);
+                return pb ? (
+                  <p className="-mt-1 flex items-start gap-1.5 text-sm text-foreground" data-testid="rider-job-branch">
+                    <MapPin className="mt-0.5 size-4 shrink-0 text-brand-700" />
+                    <span>
+                      {t("rpPickupBranch", { name: pb.name })}
+                      {pb.address && <span className="block text-xs text-muted">{pb.address}</span>}
+                    </span>
+                  </p>
+                ) : null;
+              })()}
               <div className="flex items-center justify-between">
                 <p className="text-2xl font-bold text-foreground">#{o.orderNo}</p>
                 <span className="rounded-full bg-muted-surface px-3 py-1 text-sm text-foreground">

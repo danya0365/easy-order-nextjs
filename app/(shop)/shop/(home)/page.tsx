@@ -13,6 +13,11 @@ import { FeatureCarousel } from "@/src/presentation/components/shop/FeatureCarou
 import { FeatureGrid } from "@/src/presentation/components/shop/FeatureGrid";
 import { QrHubDashCard } from "@/src/presentation/components/shop/QrHubDashCard";
 import { OnboardingSuggestions } from "@/src/presentation/components/shop/OnboardingSuggestions";
+import { BreakdownList } from "@/src/presentation/components/analytics/BreakdownList";
+import { namedBranchRows } from "@/src/domain/services/branch-report";
+import { startOfBangkokDayISO } from "@/src/application/use-cases/rider/RiderUseCases";
+import { satangToBaht } from "@/src/presentation/lib/money";
+import type { Branch } from "@/src/domain/entities";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +95,8 @@ export default async function ShopDashboardPage() {
         ))}
       </div>
 
+      {branches.length > 1 && <BranchTodayCard shopId={shopId} branches={branches} />}
+
       <FeatureGrid />
 
       <Card>
@@ -103,4 +110,32 @@ export default async function ShopDashboardPage() {
 async function CreditTodaySlot({ shopId }: { shopId: string }) {
   const p = await container.creditService.getTodayProgress(shopId).catch(() => null);
   return p ? <CreditTodayCard p={p} href="/shop/credit/daily" /> : null;
+}
+
+/** Multi-branch shops: today's orders/sales per branch + total. */
+async function BranchTodayCard({ shopId, branches }: { shopId: string; branches: Branch[] }) {
+  const t = await getTranslations("branch");
+  const rows = namedBranchRows(
+    await container.analyticsRepository.byBranch(shopId, startOfBangkokDayISO(new Date())),
+    branches,
+  );
+  const total = rows.reduce(
+    (a, r) => ({ orders: a.orders + r.orders, revenueSatang: a.revenueSatang + r.revenueSatang }),
+    { orders: 0, revenueSatang: 0 },
+  );
+  return (
+    <Card data-testid="dash-branch-today">
+      <CardHeader title={t("todayByBranchTitle")} />
+      <BreakdownList rows={rows} />
+      <p className="mt-3 flex justify-between border-t border-border pt-3 text-sm font-semibold text-foreground">
+        <span>{t("totalAllBranches")}</span>
+        <span>
+          {t("ordersAndSales", { orders: total.orders, sales: satangToBaht(total.revenueSatang) })}
+        </span>
+      </p>
+      <Link href="/shop/analytics" className="mt-2 block text-sm text-brand-700 underline">
+        {t("viewReport")}
+      </Link>
+    </Card>
+  );
 }

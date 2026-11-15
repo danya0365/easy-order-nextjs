@@ -10,14 +10,24 @@ export default async function StaffHomePage() {
   const shopId = user.shopId;
   if (!shopId) return null;
 
-  const [shop, sections, customers] = await Promise.all([
+  const [shop, allSections, customers, branchSoldOut] = await Promise.all([
     container.shopRepository.findById(shopId),
     new GetKioskMenuUseCase(
       container.menuCategoryRepository,
       container.menuItemRepository,
     ).execute(shopId),
     container.customerRepository.listByShop(shopId),
+    user.branchId
+      ? container.branchRepository.listSoldOutItemIds(user.branchId)
+      : Promise.resolve([] as string[]),
   ]);
+  // Hide items sold out at this staff member's branch (menu is shop-wide).
+  const soldOut = new Set(branchSoldOut);
+  const sections = soldOut.size
+    ? allSections
+        .map((sec) => ({ ...sec, items: sec.items.filter((i) => !soldOut.has(i.id)) }))
+        .filter((sec) => sec.items.length > 0)
+    : allSections;
 
   return (
     <StaffOrderEntry

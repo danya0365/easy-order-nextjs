@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ShoppingBag } from "lucide-react";
+import { MapPin, ShoppingBag } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
 import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
-import { getOrderAccess } from "@/src/infrastructure/auth/order-access";
+import {
+  getOrderAccess,
+  getOrderBranchId,
+} from "@/src/infrastructure/auth/order-access";
+import {
+  branchClosedReason,
+  resolveOrderBranch,
+} from "@/src/domain/services/branch-ordering";
 import { getMemberToken } from "@/src/infrastructure/auth/member";
 import { GetKioskMenuUseCase } from "@/src/application/use-cases/menu/GetKioskMenuUseCase";
 import { loadOrderingExtras } from "@/src/application/use-cases/menu/MenuOptionUseCases";
@@ -120,18 +127,59 @@ export default async function OnlineOrderPage({
     );
   }
 
-  const sections = await new GetKioskMenuUseCase(
-    container.menuCategoryRepository,
-    container.menuItemRepository,
-  ).execute(shop.id, { includeSoldOut: true });
-
-  // Delivery map: open on the shop's pinned branch, else Thailand overview.
-  const branches = shop.deliveryEnabled
-    ? await container.branchRepository.listByShop(shop.id)
-    : [];
-  const pinned = branches.find(
-    (b) => b.latitude !== null && b.longitude !== null,
+  // Branch taking this order: the branch QR this device scanned, else main.
+  const branches = await container.branchRepository.listByShop(shop.id);
+  const branch = resolveOrderBranch(
+    branches,
+    await getOrderBranchId(slug, shop.id),
   );
+  const closed = branchClosedReason(branch);
+  if (closed) {
+    return (
+      <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 px-4 py-10">
+        <EmptyState
+          icon={<ShoppingBag className="size-10 text-muted" />}
+          title={t("onlineOrderClosedTitle")}
+          description={closed}
+        />
+        <Card>
+          <Link
+            href={`/s/${slug}`}
+            className="block rounded-xl bg-brand-500 px-4 py-3 text-center text-sm font-semibold text-on-brand transition hover:bg-brand-600"
+          >
+            {t("onlineOrderBackToShop")}
+          </Link>
+        </Card>
+      </main>
+    );
+  }
+
+  const [rawSections, branchSoldOut] = await Promise.all([
+    new GetKioskMenuUseCase(
+      container.menuCategoryRepository,
+      container.menuItemRepository,
+    ).execute(shop.id, { includeSoldOut: true }),
+    branch
+      ? container.branchRepository.listSoldOutItemIds(branch.id)
+      : Promise.resolve([] as string[]),
+  ]);
+  // Per-branch sold-out override: shared menu, shown as sold out at THIS branch.
+  const soldOut = new Set(branchSoldOut);
+  const sections = soldOut.size
+    ? rawSections.map((sec) => ({
+        ...sec,
+        items: sec.items.map((i) =>
+          soldOut.has(i.id) ? { ...i, isAvailable: false } : i,
+        ),
+      }))
+    : rawSections;
+
+  // Delivery map: open on the ordering branch's pin (else any pinned branch,
+  // else Thailand overview).
+  const pinned =
+    branch && branch.latitude !== null && branch.longitude !== null
+      ? branch
+      : branches.find((b) => b.latitude !== null && b.longitude !== null);
   const mapCenter = pinned
     ? { lat: pinned.latitude as number, lng: pinned.longitude as number, zoom: 15 }
     : { lat: 13.7563, lng: 100.5018, zoom: 6 };
@@ -174,6 +222,15 @@ export default async function OnlineOrderPage({
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-4">
       <h1 className="text-xl font-bold text-foreground">{shop.name}</h1>
+      {branch && branches.length > 1 && (
+        <p
+          className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-0.5 text-sm font-medium text-brand-700"
+          data-testid="order-branch-name"
+        >
+          <MapPin className="size-4" />
+          {t("orderBranchLabel", { name: branch.name })}
+        </p>
+      )}
       <OnlineOrdering
         slug={slug}
         baseHref={`/s/${slug}`}

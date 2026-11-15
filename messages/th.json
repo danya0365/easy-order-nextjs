@@ -1124,7 +1124,8 @@
     "memberUnlink": "ไม่ใช่ฉัน / ออกจากระบบสมาชิก",
     "memberUnlinkConfirm": "ยกเลิกการผูกเครื่องนี้กับสมาชิก? ประวัติและแต้มยังอยู่ครบ ผูกใหม่ได้ด้วย QR บัตรลูกค้า",
     "memberUnlinked": "ออกจากระบบสมาชิกบนเครื่องนี้แล้ว",
-    "navMember": "บัญชีสมาชิก"
+    "navMember": "บัญชีสมาชิก",
+    "orderBranchLabel": "สั่งจากสาขา: {name}"
   },
   "menu": {
     "addCategoryTitle": "เพิ่มหมวดเมนู",
@@ -1964,7 +1965,8 @@
     "revokeConfirm": "ยกเลิกสิทธิ์ไรเดอร์คนนี้ในร้านของคุณ? (ไม่กระทบร้านอื่น)",
     "revoke": "ยกเลิกสิทธิ์ไรเดอร์ร้านนี้",
     "revokeDone": "ยกเลิกสิทธิ์แล้ว",
-    "privacyNote": "หน้านี้แสดงเฉพาะข้อมูลของร้านคุณ"
+    "privacyNote": "หน้านี้แสดงเฉพาะข้อมูลของร้านคุณ",
+    "rpPickupBranch": "รับที่สาขา: {name}"
   },
   "dailyFee": {
     "todayTitle": "วันนี้",
@@ -2491,6 +2493,43 @@
   "branch": {
     "allBranches": "ทุกสาขา",
     "staffQueueUnavailable": "ยังใช้คิวออเดอร์ไม่ได้",
-    "staffQueueBranch": "สาขา: {name}"
+    "staffQueueBranch": "สาขา: {name}",
+    "reportScopeAll": "รายงานรวมทุกสาขา",
+    "reportScopeBranch": "รายงานเฉพาะสาขา: {name}",
+    "byBranchTitle": "แยกตามสาขา",
+    "byBranchSubtitle": "ยอดรวมทุกสาขาในช่วงที่เลือก",
+    "todayByBranchTitle": "วันนี้ แยกตามสาขา",
+    "totalAllBranches": "รวมทุกสาขา",
+    "ordersAndSales": "{orders} ออเดอร์ · ฿{sales}",
+    "viewReport": "ดูรายงาน",
+    "mainBadge": "สาขาหลัก",
+    "statusOpen": "เปิดรับออเดอร์",
+    "statusClosed": "ปิดรับออเดอร์ชั่วคราว",
+    "statusInactive": "ปิดให้บริการ",
+    "noLocation": "ยังไม่ปักหมุดตำแหน่ง",
+    "back": "กลับไปหน้าสาขา",
+    "todayTitle": "วันนี้",
+    "todayOrders": "ออเดอร์วันนี้",
+    "todaySales": "ยอดขายวันนี้",
+    "viewQueue": "ดูคิวออเดอร์สาขานี้",
+    "viewBranchReport": "ดูรายงานสาขานี้",
+    "statusTitle": "สถานะสาขา",
+    "acceptingOn": "เปิดรับออเดอร์อยู่",
+    "acceptingOff": "ปิดรับออเดอร์ชั่วคราว",
+    "acceptingTurnOff": "ปิดรับออเดอร์",
+    "acceptingTurnOn": "เปิดรับออเดอร์",
+    "qrTitle": "QR สั่งออนไลน์ของสาขานี้",
+    "qrHint": "ลูกค้าสแกน QR นี้ ออเดอร์จะเข้าสาขานี้",
+    "qrOff": "เปิดการสั่งออนไลน์ในตั้งค่าร้านก่อน",
+    "staffTitle": "พนักงานสาขานี้",
+    "staffInactive": "ปิดใช้งาน",
+    "noStaff": "ยังไม่มีพนักงานในสาขานี้",
+    "manageStaff": "จัดการพนักงาน",
+    "locationTitle": "ตำแหน่งสาขา (ใช้เป็นจุดเริ่มส่งเดลิเวอรี่)",
+    "soldOutTitle": "เมนูหมดเฉพาะสาขานี้",
+    "soldOutHint": "เมนูใช้ร่วมกันทุกสาขา ติ๊กเมนูที่หมดเฉพาะสาขานี้",
+    "soldOutHere": "หมดที่สาขานี้",
+    "soldOutAll": "หมดทุกสาขา",
+    "noMenu": "ยังไม่มีเมนู"
   }
 }

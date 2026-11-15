@@ -15,6 +15,9 @@ import { BreakdownList } from "@/src/presentation/components/analytics/Breakdown
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { cn } from "@/src/presentation/components/ui/cn";
 import type { OrderStatus } from "@/src/domain/entities";
+import { mainBranchOf } from "@/src/domain/services/branch-ordering";
+import { namedBranchRows } from "@/src/domain/services/branch-report";
+import { BranchFilterChips } from "@/src/presentation/components/order/BranchFilterChips";
 
 export const dynamic = "force-dynamic";
 
@@ -29,17 +32,30 @@ const STATUS_KEY = {
 export default async function ShopAnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string }>;
+  searchParams: Promise<{ days?: string; branch?: string }>;
 }) {
-  const { days } = await searchParams;
+  const { days, branch } = await searchParams;
   const { shopId } = await requireShopAccess();
   const t = await getTranslations("analytics");
   const tOrder = await getTranslations("order");
+  const tb = await getTranslations("branch");
 
   const range = normalizeRange(days);
+  const branches = await container.branchRepository.listByShop(shopId);
+  const mainId = mainBranchOf(branches)?.id ?? null;
+  const selected = branches.find((b) => b.id === branch) ?? null;
   const data = await new GetShopAnalyticsUseCase(
     container.analyticsRepository,
-  ).execute(shopId, range);
+  ).execute(
+    shopId,
+    range,
+    new Date(),
+    selected
+      ? { branchId: selected.id, includeUnassigned: selected.id === mainId }
+      : undefined,
+  );
+  const branchRows = namedBranchRows(data.byBranch, branches);
+  const branchQuery = selected ? `&branch=${encodeURIComponent(selected.id)}` : "";
 
   const statusRows = data.byStatus.map((r) => ({
     ...r,
@@ -52,7 +68,7 @@ export default async function ShopAnalyticsPage({
         {ANALYTICS_RANGES.map((d) => (
           <Link
             key={d}
-            href={`/shop/analytics?days=${d}`}
+            href={`/shop/analytics?days=${d}${branchQuery}`}
             className={cn(
               "rounded-full px-3 py-1 text-xs font-medium transition",
               d === range
@@ -64,6 +80,19 @@ export default async function ShopAnalyticsPage({
           </Link>
         ))}
       </div>
+
+      <BranchFilterChips
+        basePath="/shop/analytics"
+        branches={branches.map((b) => ({ id: b.id, name: b.name }))}
+        selected={selected?.id ?? null}
+        allLabel={tb("allBranches")}
+        extraQuery={`days=${range}`}
+      />
+      {branches.length > 1 && (
+        <p className="text-sm text-muted" data-testid="analytics-scope">
+          {selected ? tb("reportScopeBranch", { name: selected.name }) : tb("reportScopeAll")}
+        </p>
+      )}
 
       <div className="grid grid-cols-3 gap-3">
         <Stat label={t("summaryOrders")} value={String(data.summary.orders)} />
@@ -85,6 +114,13 @@ export default async function ShopAnalyticsPage({
           <DailyTrendChart data={data.daily} />
         )}
       </Card>
+
+      {branches.length > 1 && (
+        <Card data-testid="analytics-by-branch">
+          <CardHeader title={tb("byBranchTitle")} subtitle={tb("byBranchSubtitle")} />
+          <BreakdownList rows={branchRows} />
+        </Card>
+      )}
 
       <Card>
         <CardHeader title={t("byStatusTitle")} />

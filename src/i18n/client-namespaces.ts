@@ -17,7 +17,7 @@ export const GROUP_NAMESPACES = {
   public: ["map", "auth"],
   rider: ["rider"],
   shop: [
-    "admin", "analytics", "auth", "billing", "channels", "credit", "customerDetail", "customersCrm", "kiosk", "loyalty", "map",
+    "admin", "analytics", "auth", "billing", "branch", "channels", "credit", "customerDetail", "customersCrm", "kiosk", "loyalty", "map",
     "menu", "menuBulk", "menuOptions", "order", "promote", "promotions", "publicMenu", "qrHub", "reviews", "rider", "shop", "shopPages",
   ],
   shopCustomer: ["loyalty", "map", "menuOptions", "order", "publicMenu", "reviews", "shop", "shopPages"],
