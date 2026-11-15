@@ -1,13 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 import { container } from "@/src/infrastructure/di/container";
 import {
   requireShopWrite,
   operatorContext,
 } from "@/src/infrastructure/auth/session";
-import { requireKioskShop } from "@/src/infrastructure/auth/kiosk";
+import { requireKioskSession, requireKioskShop } from "@/src/infrastructure/auth/kiosk";
 import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
 import {
   getOrderBranchId,
@@ -32,6 +33,8 @@ import { getBaseUrl } from "@/src/presentation/lib/base-url";
 import { renderPromptPayQR } from "@/src/infrastructure/services/promptpay";
 import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
 import { withCustomerNotes, type QueueOrder } from "@/src/presentation/lib/order-notes";
+import { mainBranchOf } from "@/src/domain/services/branch-ordering";
+import { COUNTER_BRANCH_COOKIE } from "@/src/presentation/lib/counter-branch";
 import type {
   OrderStatus,
   OrderPaymentMethod,
@@ -65,6 +68,8 @@ export interface PlaceOrderResult {
   qrDataUrl?: string;
   /** Bind QR — present when the customer gave a phone; scan to view order history. */
   bindQrDataUrl?: string;
+  /** Branch that took the order — only set for multi-branch shops. */
+  branchName?: string;
 }
 
 /** Untrusted client cart → plain shape (ids as strings, bounded option lists). */
@@ -85,7 +90,14 @@ export interface PlaceOrderActionInput {
   /** Optional walk-in identity entered at checkout. */
   customerName?: string | null;
   customerPhone?: string | null;
+  /**
+   * Counter (walk-in) only: branch picked by the operator. Owners may pick any
+   * of the shop's branches; branch staff may only use their own (server-checked).
+   * Ignored by the kiosk/online actions (their branch comes from the session).
+   */
+  branchId?: string | null;
 }
+
 
 /**
  * Place an order from the kiosk. The shop is derived from the SERVER-validated
@@ -96,7 +108,8 @@ export async function placeOrderAction(
   input: PlaceOrderActionInput,
 ): Promise<PlaceOrderResult> {
   try {
-    const shopId = await requireKioskShop();
+    // Shop + branch come from the server-validated kiosk session (never client input).
+    const { shopId, branchId: kioskBranchId } = await requireKioskSession();
     await assertShopActive(shopId);
 
     const ip = await getClientIp();
@@ -142,6 +155,7 @@ export async function placeOrderAction(
       customerName: input.customerName ?? null,
       customerPhone: input.customerPhone ?? null,
       channel: "kiosk",
+      branchId: kioskBranchId,
       cart: sanitizeCart(input.cart),
     });
 
@@ -195,6 +209,15 @@ async function buildOrderResult(
     }
   }
 
+  // Multi-branch shops: echo the branch on every success screen.
+  let branchName: string | undefined;
+  const branches = await container.branchRepository.listByShop(shopId);
+  if (branches.filter((b) => b.isActive).length > 1) {
+    branchName = (
+      branches.find((b) => b.id === order.branchId) ?? mainBranchOf(branches)
+    )?.name;
+  }
+
   return {
     ok: true,
     orderId: order.id,
@@ -203,6 +226,7 @@ async function buildOrderResult(
     paymentMethod: order.paymentMethod,
     qrDataUrl,
     bindQrDataUrl,
+    branchName,
   };
 }
 
@@ -395,8 +419,30 @@ export async function placeOrderForCustomerAction(
   input: PlaceOrderActionInput,
 ): Promise<PlaceOrderResult> {
   try {
-    const { actor, shopId, branchId } = await operatorContext();
+    const { actor, shopId, branchId: staffBranchId } = await operatorContext();
     await assertShopActive(shopId);
+
+    // Walk-in branch: staff → always their own branch; owner → picked branch
+    // (must belong to this shop), else main branch.
+    const requested = typeof input.branchId === "string" ? input.branchId.trim() : "";
+    let branchId: string | null = null;
+    if (actor.role === "branch_staff") {
+      if (requested && requested !== staffBranchId) {
+        return { error: "พนักงานเปิดออเดอร์ได้เฉพาะสาขาของตัวเอง" };
+      }
+      branchId = staffBranchId;
+    } else if (requested) {
+      const b = await container.branchRepository.findById(requested);
+      if (!b || b.shopId !== shopId) return { error: "ไม่พบสาขาในร้านนี้" };
+      if (!b.isActive) return { error: `สาขา "${b.name}" ปิดให้บริการอยู่` };
+      branchId = b.id;
+      (await cookies()).set(COUNTER_BRANCH_COOKIE, b.id, {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: 180 * 24 * 3600,
+      });
+    }
 
     const guard = await container.sensitiveActionGuard.check({
       key: `order_staff:${shopId}:${actor.id}`,
@@ -483,8 +529,8 @@ export async function advanceOrderStatusAction(
     const scope = await orderQueueScope();
     const { actor, shopId } = scope;
     await assertOrderInQueueScope(scope, orderId);
-    if (scope.isStaff && to === "cancelled") {
-      throw new Error("พนักงานสาขายกเลิกออเดอร์ไม่ได้ กรุณาแจ้งเจ้าของร้าน");
+    if (to === "cancelled" && !scope.canCancel) {
+      throw new Error("ร้านนี้ไม่อนุญาตให้พนักงานสาขายกเลิกออเดอร์ กรุณาแจ้งเจ้าของร้าน");
     }
     const why = typeof reason === "string" ? reason.trim().slice(0, 200) : "";
     await new AdvanceOrderStatusUseCase(container.orderRepository).execute(

@@ -20,8 +20,8 @@ export const GROUP_NAMESPACES = {
     "admin", "analytics", "auth", "billing", "branch", "channels", "credit", "customerDetail", "customersCrm", "kiosk", "loyalty", "map",
     "menu", "menuBulk", "menuOptions", "order", "promote", "promotions", "publicMenu", "qrHub", "reviews", "rider", "shop", "shopPages",
   ],
-  shopCustomer: ["loyalty", "map", "menuOptions", "order", "publicMenu", "reviews", "shop", "shopPages"],
-  staff: ["auth", "channels", "customerDetail", "customersCrm", "loyalty", "order", "rider", "shop", "shopPages"],
+  shopCustomer: ["branch", "loyalty", "map", "menuOptions", "order", "publicMenu", "reviews", "shop", "shopPages"],
+  staff: ["auth", "branch", "channels", "customerDetail", "customersCrm", "loyalty", "order", "rider", "shop", "shopPages"],
 } as const;
 
 export type ClientGroup = keyof typeof GROUP_NAMESPACES;

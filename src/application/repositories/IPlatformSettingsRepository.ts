@@ -13,6 +13,7 @@ export interface UpdatePlatformSettingsInput {
   itemDetailEnabled?: boolean;
   riderAvailabilityMode?: RiderAvailabilityMode;
   branchStaffQueueEnabled?: boolean;
+  branchStaffCancelEnabled?: boolean;
 }
 
 /**

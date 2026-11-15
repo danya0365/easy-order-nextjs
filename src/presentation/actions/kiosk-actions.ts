@@ -11,6 +11,7 @@ import {
   getKioskShopId,
 } from "@/src/infrastructure/auth/kiosk";
 import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
+import { mainBranchOf } from "@/src/domain/services/branch-ordering";
 import { SetKioskPinUseCase } from "@/src/application/use-cases/kiosk/SetKioskPinUseCase";
 import { VerifyKioskPinUseCase } from "@/src/application/use-cases/kiosk/VerifyKioskPinUseCase";
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
@@ -90,7 +91,18 @@ export async function activateKioskAction(
       return { error: "กรุณาตั้ง PIN หน้าร้านก่อนเปิดโหมดหน้าร้าน" };
     }
     const label = String(formData.get("label") ?? "").trim() || null;
-    await startKioskSession(shopId, label);
+    // Multi-branch: the kiosk device is bound to ONE branch (default main).
+    const branches = await container.branchRepository.listByShop(shopId);
+    const requested = String(formData.get("branchId") ?? "").trim();
+    let branchId: string | null =
+      (mainBranchOf(branches.filter((b) => b.isActive)) ?? mainBranchOf(branches))?.id ?? null;
+    if (requested) {
+      const b = branches.find((x) => x.id === requested);
+      if (!b) return { error: "ไม่พบสาขาในร้านนี้" };
+      if (!b.isActive) return { error: `สาขา "${b.name}" ปิดให้บริการอยู่` };
+      branchId = b.id;
+    }
+    await startKioskSession(shopId, label, branchId);
     await container.auditLogger.record({
       actorUserId: actor.id,
       actorRole: actor.role,
@@ -99,7 +111,7 @@ export async function activateKioskAction(
       targetId: shopId,
       shopId,
       ip: await getClientIp(),
-      metadata: label ? { label } : undefined,
+      metadata: { ...(label ? { label } : {}), ...(branchId ? { branchId } : {}) },
     });
   } catch (e) {
     return { error: (e as Error).message };

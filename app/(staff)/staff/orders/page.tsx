@@ -39,6 +39,7 @@ export default async function StaffOrdersPage() {
         historyCursor={q.historyCursor}
         riders={q.riders}
         staffMode
+        canCancel={scope.canCancel}
       />
     </div>
   );

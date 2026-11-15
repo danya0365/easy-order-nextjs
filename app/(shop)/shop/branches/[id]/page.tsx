@@ -16,15 +16,21 @@ import { BranchAcceptingToggle } from "@/src/presentation/components/shop/Branch
 import { BranchLocationEditor } from "@/src/presentation/components/map/BranchLocationEditor";
 import { OrderAccessQrCard } from "@/src/presentation/components/shop/OrderAccessQrCard";
 import { BranchSoldOutList } from "@/src/presentation/components/shop/BranchSoldOutList";
+import { pageParam, Pager } from "@/src/presentation/components/credit/CreditBits";
 
 export const dynamic = "force-dynamic";
 
+const SOLD_OUT_PAGE_SIZE = 20;
+
 export default async function ShopBranchDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
+  const menuPage = pageParam((await searchParams).page);
   const { shopId } = await requireShopAccess();
   const branch = await container.branchRepository.findById(id);
   if (!branch || branch.shopId !== shopId) notFound();
@@ -47,6 +53,12 @@ export default async function ShopBranchDetailPage({
     ),
     shop ? buildBranchOrderQr(shop, branch.id) : Promise.resolve(null),
   ]);
+  // Sold-out list is paginated (menus can be long); state uses the full id list.
+  const menuPageItems = items.slice(
+    (menuPage - 1) * SOLD_OUT_PAGE_SIZE,
+    menuPage * SOLD_OUT_PAGE_SIZE,
+  );
+  const soldHere = soldIds.filter((sid) => items.some((i) => i.id === sid)).length;
   const staff = users.filter(
     (u) => u.role === "branch_staff" && u.branchId === branch.id,
   );
@@ -101,12 +113,19 @@ export default async function ShopBranchDetailPage({
 
       <Card>
         <CardHeader title={t("statusTitle")} />
-        <div className="flex flex-wrap items-center gap-3">
-          <ToggleActiveButton kind="branch" id={branch.id} isActive={branch.isActive} />
-          <BranchAcceptingToggle
-            branchId={branch.id}
-            acceptingOrders={branch.acceptingOrders}
-          />
+        <div className="flex flex-col gap-4">
+          {branch.isActive ? (
+            <BranchAcceptingToggle
+              branchId={branch.id}
+              acceptingOrders={branch.acceptingOrders}
+            />
+          ) : (
+            <p className="text-sm text-muted">{t("inactiveHint")}</p>
+          )}
+          <div className="flex flex-wrap items-center gap-3 border-t border-border pt-3">
+            <ToggleActiveButton kind="branch" id={branch.id} isActive={branch.isActive} />
+            <span className="text-xs text-muted">{t("activeHint")}</span>
+          </div>
         </div>
       </Card>
 
@@ -166,14 +185,25 @@ export default async function ShopBranchDetailPage({
         <CardHeader title={t("soldOutTitle")} />
         <div className="flex flex-col gap-3">
           <p className="text-sm text-muted">{t("soldOutHint")}</p>
+          {soldHere > 0 && (
+            <p className="text-sm font-medium text-warning" data-testid="branch-soldout-count">
+              {t("soldOutCount", { count: soldHere })}
+            </p>
+          )}
           <BranchSoldOutList
             branchId={branch.id}
-            items={items.map((i) => ({
+            items={menuPageItems.map((i) => ({
               id: i.id,
               name: i.name,
               globallyAvailable: i.isAvailable,
             }))}
             soldOutIds={soldIds}
+          />
+          <Pager
+            basePath={`/shop/branches/${branch.id}`}
+            page={menuPage}
+            total={items.length}
+            pageSize={SOLD_OUT_PAGE_SIZE}
           />
         </div>
       </Card>

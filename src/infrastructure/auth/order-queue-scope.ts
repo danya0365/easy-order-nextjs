@@ -3,6 +3,7 @@ import "server-only";
 import { container } from "@/src/infrastructure/di/container";
 import { operatorContext } from "@/src/infrastructure/auth/session";
 import {
+  branchStaffMayCancel,
   mainBranchOf,
   orderInBranch,
 } from "@/src/domain/services/branch-ordering";
@@ -22,6 +23,8 @@ export interface OrderQueueScope {
   staffBranchId: string | null;
   branches: Branch[];
   mainBranchId: string | null;
+  /** May cancel orders in scope (owner: always; staff: admin + shop switches). */
+  canCancel: boolean;
 }
 
 export async function orderQueueScope(): Promise<OrderQueueScope> {
@@ -29,8 +32,16 @@ export async function orderQueueScope(): Promise<OrderQueueScope> {
   const isStaff = ctx.actor.role === "branch_staff";
   const branches = await container.branchRepository.listByShop(ctx.shopId);
   const mainBranchId = mainBranchOf(branches)?.id ?? null;
+  let canCancel = true;
   if (isStaff) {
-    const settings = await container.platformSettingsRepository.get();
+    const [settings, shop] = await Promise.all([
+      container.platformSettingsRepository.get(),
+      container.shopRepository.findById(ctx.shopId),
+    ]);
+    canCancel = branchStaffMayCancel(
+      settings.branchStaffCancelEnabled,
+      shop?.branchStaffCanCancel ?? false,
+    );
     if (!settings.branchStaffQueueEnabled) {
       throw new Error("ระบบยังไม่เปิดให้พนักงานสาขาจัดการคิวออเดอร์");
     }
@@ -45,6 +56,7 @@ export async function orderQueueScope(): Promise<OrderQueueScope> {
     staffBranchId: isStaff ? ctx.branchId : null,
     branches,
     mainBranchId,
+    canCancel,
   };
 }
 

@@ -33,6 +33,7 @@ export default async function AdminSettingsPage() {
           itemDetailEnabled={settings.itemDetailEnabled}
           riderAvailabilityMode={settings.riderAvailabilityMode}
           branchStaffQueueEnabled={settings.branchStaffQueueEnabled}
+          branchStaffCancelEnabled={settings.branchStaffCancelEnabled}
         />
       </Card>
     </div>

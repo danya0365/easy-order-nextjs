@@ -10,8 +10,16 @@ export const dynamic = "force-dynamic";
 export default async function ShopKioskPage() {
   const { shopId } = await requireShopAccess();
   const t = await getTranslations("shopPages");
-  const shop = await container.shopRepository.findById(shopId);
+  const [shop, branches, tb] = await Promise.all([
+    container.shopRepository.findById(shopId),
+    container.branchRepository.listByShop(shopId),
+    getTranslations("branch"),
+  ]);
   if (!shop) return null;
+  // Kiosk can only be bound to an active branch; note closed-for-orders ones.
+  const branchOptions = branches
+    .filter((b) => b.isActive)
+    .map((b) => ({ id: b.id, name: b.name, note: b.acceptingOrders ? null : tb("statusClosed") }));
 
   return (
     <div className="mx-auto max-w-lg px-4 py-6">
@@ -20,6 +28,7 @@ export default async function ShopKioskPage() {
         <KioskControl
           hasKioskPin={shop.hasKioskPin}
           selfService={shop.selfService}
+          branches={branchOptions}
         />
       </Card>
     </div>

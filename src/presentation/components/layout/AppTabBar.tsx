@@ -264,7 +264,12 @@ function MoreSheet({
     <div
       className={cn(
         "fixed inset-0 z-50 print:hidden",
-        open ? "pointer-events-auto" : "pointer-events-none",
+        // Closed: also `invisible` (after the slide-out finishes) so the
+        // translated-off panel never shows in full-page renders/screenshots
+        // and its links are not focusable.
+        open
+          ? "visible pointer-events-auto"
+          : "invisible pointer-events-none [transition:visibility_0s_linear_200ms]",
       )}
       aria-hidden={!open}
     >

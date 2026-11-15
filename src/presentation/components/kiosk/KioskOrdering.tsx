@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useTranslations } from "next-intl";
-import { Check, ChevronDown, Minus, Plus, ShoppingCart } from "lucide-react";
+import { Check, ChevronDown, MapPin, Minus, Plus, ShoppingCart } from "lucide-react";
 
 import type { MenuItem, MenuOptionGroup, OrderPaymentMethod } from "@/src/domain/entities";
 import { formatOrderLineOptions } from "@/src/domain/services/menu-options";
@@ -263,6 +263,18 @@ export function KioskOrdering({
           <p className="text-lg font-semibold text-success">{t("selfDoneTitle")}</p>
           <p className="text-sm text-muted">{t("resultQueueTitle")}</p>
           <p className="text-7xl font-extrabold text-brand-600">{result.orderNo}</p>
+        {result.branchName && (
+          <p className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700" data-testid="result-branch">
+            <MapPin className="size-4" />
+            {t("resultBranch", { name: result.branchName })}
+          </p>
+        )}
+          {result.branchName && (
+            <p className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700" data-testid="result-branch">
+              <MapPin className="size-4" />
+              {t("resultBranch", { name: result.branchName })}
+            </p>
+          )}
           <p className="text-xl font-semibold text-foreground">{t("selfServeNow")}</p>
           {bindQrBlock}
           <Button size="lg" fullWidth onClick={reset} className="mt-4">

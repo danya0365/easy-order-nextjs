@@ -109,6 +109,7 @@ export function OrderQueue({
   mainBranchId = null,
   historyBranch = null,
   staffMode = false,
+  canCancel = true,
 }: {
   activeOrders: QueueOrder[];
   historyInitial: QueueOrder[];
@@ -119,8 +120,10 @@ export function OrderQueue({
   mainBranchId?: string | null;
   /** Branch filter the history "load more" keeps (owner filter; staff is server-pinned). */
   historyBranch?: string | null;
-  /** Branch staff view: no cancel, no rider-management link. */
+  /** Branch staff view: no rider-management link. */
   staffMode?: boolean;
+  /** Show the cancel button (staff: only when the shop allows it). */
+  canCancel?: boolean;
 }) {
   const t = useTranslations("order");
   const router = useRouter();
@@ -165,6 +168,7 @@ export function OrderQueue({
                   riders={riders}
                   branchName={branchLabel(order, branchNames, mainBranchId)}
                   staffMode={staffMode}
+                  canCancel={canCancel}
                 />
               ))}
             </section>
@@ -199,11 +203,13 @@ export function OrderCard({
   riders = [],
   branchName = null,
   staffMode = false,
+  canCancel = true,
 }: {
   order: QueueOrder;
   riders?: RiderOption[];
   branchName?: string | null;
   staffMode?: boolean;
+  canCancel?: boolean;
 }) {
   const t = useTranslations("order");
   const tr = useTranslations("rider");
@@ -448,7 +454,7 @@ export function OrderCard({
             {t("confirmPayment")}
           </Button>
         )}
-        {!staffMode && order.status !== "completed" && order.status !== "cancelled" && (
+        {canCancel && order.status !== "completed" && order.status !== "cancelled" && (
           <Button variant="ghost" onClick={cancel} disabled={pending}>
             {t("cancel")}
           </Button>

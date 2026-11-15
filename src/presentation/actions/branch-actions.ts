@@ -56,3 +56,17 @@ export async function setBranchItemSoldOutAction(
     return { error: (e as Error).message };
   }
 }
+
+/** Owner: allow/deny branch staff cancelling orders of their own branch. */
+export async function setBranchStaffCanCancelAction(
+  enabled: boolean,
+): Promise<{ error?: string }> {
+  try {
+    const { shopId } = await requireShopWrite();
+    await container.shopRepository.setBranchStaffCanCancel(shopId, enabled === true);
+    revalidatePath("/shop/branches");
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}

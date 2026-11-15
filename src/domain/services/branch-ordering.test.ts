@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import type { Branch } from "@/src/domain/entities";
 import {
   branchClosedReason,
+  branchStaffMayCancel,
   mainBranchOf,
   orderInBranch,
   resolveOrderBranch,
@@ -88,4 +89,10 @@ test("branch QR token is domain-separated from the shop token", () => {
   // A branch-2 token never selects branch 1.
   assert.equal(verifyOrderAccessToken(b2Tok, { shopId: "s1", slug: "demo#b:b1", secret, now }), null);
   assert.notEqual(verifyOrderAccessToken(b2Tok, { shopId: "s1", slug: "demo#b:b2", secret, now }), null);
+});
+
+test("branchStaffMayCancel needs both the platform and the shop switch", () => {
+  assert.equal(branchStaffMayCancel(true, true), true);
+  assert.equal(branchStaffMayCancel(true, false), false);
+  assert.equal(branchStaffMayCancel(false, true), false);
 });

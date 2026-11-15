@@ -1,6 +1,7 @@
 import { sqliteTable, text, index } from "drizzle-orm/sqlite-core";
 import { id, createdAt } from "./_shared";
 import { shops } from "./shops";
+import { branches } from "./branches";
 
 /**
  * A device put into kiosk mode for one shop. The opaque row id is stored in the
@@ -16,6 +17,8 @@ export const kioskSessions = sqliteTable(
       .references(() => shops.id, { onDelete: "cascade" }),
     /** Optional device label the owner typed when activating (e.g. "เคาน์เตอร์ 1"). */
     label: text(),
+    /** Branch this kiosk takes orders for (null = legacy → main branch). */
+    branchId: text().references(() => branches.id, { onDelete: "set null" }),
     expiresAt: text().notNull(),
     createdAt: createdAt(),
   },

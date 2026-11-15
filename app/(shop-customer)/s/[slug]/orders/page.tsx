@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Bike, Phone, Smartphone, Store, TriangleAlert, CheckCircle2 } from "lucide-react";
+import { Bike, MapPin, Phone, Smartphone, Store, TriangleAlert, CheckCircle2 } from "lucide-react";
 import { riderFirstName } from "@/src/domain/services/rider";
 import { customerDeliveryView } from "@/src/domain/services/rider-contact";
 import { RiderAvatar } from "@/src/presentation/components/rider/RiderAvatar";
@@ -20,6 +20,7 @@ import { satangToBaht } from "@/src/presentation/lib/money";
 import { formatDateTime } from "@/src/presentation/lib/format-date";
 import type { OrderStatus } from "@/src/domain/entities";
 import { shopBySlug } from "@/src/infrastructure/request/shop-lookups";
+import { mainBranchOf } from "@/src/domain/services/branch-ordering";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,14 @@ export default async function ShopCustomerOrdersPage({
       ).execute(shop, history.customer)
     : null;
 
+  // Multi-branch shops: tag each order with its branch (NULL branch = main).
+  const branches = history ? await container.branchRepository.listByShop(shop.id) : [];
+  const mainBranch = mainBranchOf(branches);
+  const branchNameOf = (branchId: string | null | undefined): string | null =>
+    branches.length > 1
+      ? (branches.find((b) => b.id === branchId) ?? mainBranch)?.name ?? null
+      : null;
+
   // Rider phase 1: show the assigned rider (first name + call) while en route.
   const riderIds = [
     ...new Set(
@@ -131,6 +140,12 @@ export default async function ShopCustomerOrdersPage({
                       <p className="text-xs text-muted">
                         {formatDateTime(o.createdAt)}
                       </p>
+                      {branchNameOf(o.branchId) && (
+                        <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-brand-700" data-testid="history-branch">
+                          <MapPin className="size-3.5" />
+                          {tOrder("resultBranch", { name: branchNameOf(o.branchId) as string })}
+                        </p>
+                      )}
                       <p className="mt-0.5 truncate text-sm text-muted">
                         {t("orderItemsSummary", {
                           count: o.items.length,
