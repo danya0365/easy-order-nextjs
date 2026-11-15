@@ -232,6 +232,13 @@
       "when": 1797700000000,
       "tag": "0032_customer_link_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1797800000000,
+      "tag": "0033_rider_accounts",
+      "breakpoints": true
     }
   ]
 }
