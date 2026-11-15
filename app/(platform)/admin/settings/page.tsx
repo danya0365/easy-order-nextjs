@@ -31,6 +31,7 @@ export default async function AdminSettingsPage() {
         <PlatformFeatureSwitchesForm
           menuOptionsEnabled={settings.menuOptionsEnabled}
           itemDetailEnabled={settings.itemDetailEnabled}
+          riderAvailabilityMode={settings.riderAvailabilityMode}
         />
       </Card>
     </div>
