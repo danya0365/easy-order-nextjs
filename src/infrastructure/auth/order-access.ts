@@ -131,3 +131,109 @@ export async function requireOrderAccess(
     throw new Error("ต้องสแกน QR ที่ร้านนี้ก่อนจึงจะสั่งออนไลน์ได้");
   }
 }
+
+// ── Branch QR ────────────────────────────────────────────────────────────────
+// A branch QR carries a token bound to (shop, slug, branch): the signed "slug"
+// field is domain-separated as `<slug>#b:<branchId>`, so a shop-level token
+// can never pass as a branch token (or vice versa) and a token for branch A
+// never selects branch B. The chosen branch is kept in its own signed cookie.
+
+const BRANCH_PREFIX = "eo_branch_";
+
+export function orderBranchCookieName(slug: string): string {
+  return `${BRANCH_PREFIX}${slug}`;
+}
+
+function branchScope(slug: string, branchId: string): string {
+  return `${slug}#b:${branchId}`;
+}
+
+/** Mint a claim token for one branch's order QR. */
+export function mintBranchClaimToken(
+  slug: string,
+  shopId: string,
+  branchId: string,
+): string | null {
+  const secret = accessSecret();
+  if (!secret) return null;
+  return signOrderAccessToken(
+    {
+      shopId,
+      slug: branchScope(slug, branchId),
+      exp: Math.floor(Date.now() / 1000) + CLAIM_TOKEN_TTL_S,
+    },
+    secret,
+  );
+}
+
+/** Verify a branch QR token against a specific shop + branch (claim route). */
+export function verifyBranchClaimToken(
+  token: string,
+  slug: string,
+  shopId: string,
+  branchId: string,
+): boolean {
+  const secret = accessSecret();
+  if (!secret || !branchId) return false;
+  return (
+    verifyOrderAccessToken(token, {
+      shopId,
+      slug: branchScope(slug, branchId),
+      secret,
+      now: new Date(),
+    }) !== null
+  );
+}
+
+/** Remember the scanned branch on this device (signed, httpOnly, 30 days). */
+export async function setOrderBranchCookie(
+  slug: string,
+  shopId: string,
+  branchId: string,
+): Promise<void> {
+  const secret = accessSecret();
+  if (!secret) return;
+  const token = signOrderAccessToken(
+    {
+      shopId,
+      slug: branchScope(slug, branchId),
+      exp: Math.floor((Date.now() + COOKIE_TTL_MS) / 1000),
+    },
+    secret,
+  );
+  // Cookie value: "<branchId>~<token>" — the id is re-checked by the MAC.
+  (await cookies()).set(orderBranchCookieName(slug), `${branchId}~${token}`, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: "lax",
+    path: "/",
+    expires: new Date(Date.now() + COOKIE_TTL_MS),
+  });
+}
+
+/** Forget the branch (a shop-level QR scan → main branch). */
+export async function clearOrderBranchCookie(slug: string): Promise<void> {
+  (await cookies()).delete(orderBranchCookieName(slug));
+}
+
+/** Verified branch id this device scanned for the shop, or null. */
+export async function getOrderBranchId(
+  slug: string,
+  shopId: string,
+): Promise<string | null> {
+  const raw = (await cookies()).get(orderBranchCookieName(slug))?.value;
+  if (!raw) return null;
+  const i = raw.indexOf("~");
+  if (i <= 0) return null;
+  const branchId = raw.slice(0, i);
+  const token = raw.slice(i + 1);
+  const secret = accessSecret();
+  if (!secret) return null;
+  const ok = verifyOrderAccessToken(token, {
+    shopId,
+    slug: branchScope(slug, branchId),
+    secret,
+    now: new Date(),
+  });
+  return ok ? branchId : null;
+}

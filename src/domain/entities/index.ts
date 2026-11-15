@@ -236,6 +236,8 @@ export interface Branch {
   shopId: string;
   name: string;
   isActive: boolean;
+  /** Open for new orders right now (temporary closed switch). */
+  acceptingOrders: boolean;
   /** Physical location, null until the owner sets it. */
   latitude: number | null;
   longitude: number | null;
@@ -388,6 +390,8 @@ export interface Order {
   customerPhone: string | null;
   /** Operator who placed it from the counter UI; null for kiosk self-serve. */
   performedBy: string | null;
+  /** Branch taking the order (null = legacy / shop without branches → main branch). */
+  branchId: string | null;
   /** Rider phase 1 — shop-owned rider assigned to a delivery order. */
   riderId: string | null;
   deliveryStatus: DeliveryStatus | null;
@@ -475,6 +479,8 @@ export interface PlatformSettings {
   itemDetailEnabled: boolean;
   /** Where the rider available/unavailable switch lives: one global switch or per shop. */
   riderAvailabilityMode: RiderAvailabilityMode;
+  /** Branch staff may work their own branch's order queue. */
+  branchStaffQueueEnabled: boolean;
   updatedAt: string;
 }
 

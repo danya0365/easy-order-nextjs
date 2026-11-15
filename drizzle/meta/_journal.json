@@ -239,6 +239,13 @@
       "when": 1797800000000,
       "tag": "0033_rider_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1797900000000,
+      "tag": "0034_multi_branch",
+      "breakpoints": true
     }
   ]
 }

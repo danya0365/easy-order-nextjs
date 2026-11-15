@@ -4,6 +4,7 @@ import { shops } from "./shops";
 import { customers } from "./customers";
 import { users } from "./users";
 import { riders } from "./riders";
+import { branches } from "./branches";
 
 export const DELIVERY_STATUSES = ["assigned", "picked_up", "delivered"] as const;
 
@@ -67,6 +68,11 @@ export const orders = sqliteTable(
      * survives. For staff accountability — also audit-logged at placement.
      */
     performedBy: text().references(() => users.id, { onDelete: "set null" }),
+    /**
+     * Branch that takes this order (QR scanned / staff's branch / main branch).
+     * Nullable for safety: legacy rows are backfilled to the shop's main branch.
+     */
+    branchId: text().references(() => branches.id, { onDelete: "set null" }),
     /** Shop-owned rider assigned to a delivery order (phase 1). */
     riderId: text().references(() => riders.id, { onDelete: "set null" }),
     deliveryStatus: text({ enum: DELIVERY_STATUSES }),
@@ -87,6 +93,7 @@ export const orders = sqliteTable(
     index("orders_shop_status_idx").on(t.shopId, t.status),
     // Per-customer CRM aggregates / history.
     index("orders_shop_customer_idx").on(t.shopId, t.customerId, t.createdAt),
+    index("orders_shop_branch_created_idx").on(t.shopId, t.branchId, t.createdAt),
     index("orders_shop_rider_idx").on(t.shopId, t.riderId, t.deliveryStatus),
   ],
 );

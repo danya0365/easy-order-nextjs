@@ -4,11 +4,13 @@ import { cn } from "./cn";
 interface CardProps {
   children: ReactNode;
   className?: string;
+  "data-testid"?: string;
 }
 
-export function Card({ children, className }: CardProps) {
+export function Card({ children, className, "data-testid": testId }: CardProps) {
   return (
     <div
+      data-testid={testId}
       className={cn(
         "rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border",
         className,

@@ -5,7 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Bike, Navigation, RefreshCw, StickyNote } from "lucide-react";
+import { Bike, MapPin, Navigation, RefreshCw, StickyNote } from "lucide-react";
 
 import { formatTime } from "@/src/presentation/lib/format-date";
 import { orderNavigationUrl } from "@/src/domain/services/delivery-location";
@@ -89,16 +89,38 @@ function OrderBadges({ order }: { order: QueueOrder }) {
 
 const AUTO_REFRESH_MS = 15_000;
 
+/** Branch label for an order (NULL branch → main branch), or null when single-branch. */
+function branchLabel(
+  order: QueueOrder,
+  branchNames?: Record<string, string>,
+  mainBranchId?: string | null,
+): string | null {
+  if (!branchNames) return null;
+  const id = order.branchId ?? mainBranchId ?? null;
+  return id ? branchNames[id] ?? null : null;
+}
+
 export function OrderQueue({
   activeOrders,
   historyInitial,
   historyCursor,
   riders = [],
+  branchNames,
+  mainBranchId = null,
+  historyBranch = null,
+  staffMode = false,
 }: {
   activeOrders: QueueOrder[];
   historyInitial: QueueOrder[];
   historyCursor: string | null;
   riders?: RiderOption[];
+  /** id → name; pass only for multi-branch shops (shows a branch tag per card). */
+  branchNames?: Record<string, string>;
+  mainBranchId?: string | null;
+  /** Branch filter the history "load more" keeps (owner filter; staff is server-pinned). */
+  historyBranch?: string | null;
+  /** Branch staff view: no cancel, no rider-management link. */
+  staffMode?: boolean;
 }) {
   const t = useTranslations("order");
   const router = useRouter();
@@ -137,7 +159,13 @@ export function OrderQueue({
                 {t(`status${cap(status)}` as StatusKey)} ({orders.length})
               </h2>
               {orders.map((order) => (
-                <OrderCard key={order.id} order={order} riders={riders} />
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  riders={riders}
+                  branchName={branchLabel(order, branchNames, mainBranchId)}
+                  staffMode={staffMode}
+                />
               ))}
             </section>
           );
@@ -147,6 +175,9 @@ export function OrderQueue({
       <HistorySection
         initialItems={historyInitial}
         initialCursor={historyCursor}
+        branch={historyBranch}
+        branchNames={branchNames}
+        mainBranchId={mainBranchId}
       />
     </div>
   );
@@ -166,9 +197,13 @@ function cap(s: string): string {
 export function OrderCard({
   order,
   riders = [],
+  branchName = null,
+  staffMode = false,
 }: {
   order: QueueOrder;
   riders?: RiderOption[];
+  branchName?: string | null;
+  staffMode?: boolean;
 }) {
   const t = useTranslations("order");
   const tr = useTranslations("rider");
@@ -233,6 +268,15 @@ export function OrderCard({
             {t("orderNo", { no: order.orderNo })}
           </p>
           <p className="text-xs text-muted">{formatTime(order.createdAt)}</p>
+          {branchName && (
+            <p
+              className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700"
+              data-testid="order-branch"
+            >
+              <MapPin className="size-3.5" />
+              {branchName}
+            </p>
+          )}
         </div>
         <span className="flex shrink-0 flex-col items-end gap-1">
           <OrderBadges order={order} />
@@ -327,9 +371,13 @@ export function OrderCard({
           </span>
           {(order.deliveryStatus === null || order.deliveryStatus === "assigned") ? (
             riders.length === 0 ? (
-              <Link href="/shop/riders" className="text-xs text-brand-700 underline">
-                {tr("addRiderLink")}
-              </Link>
+              staffMode ? (
+                <span className="text-xs text-muted">{tr("deliveryNone")}</span>
+              ) : (
+                <Link href="/shop/riders" className="text-xs text-brand-700 underline">
+                  {tr("addRiderLink")}
+                </Link>
+              )
             ) : (
               <ul className="flex flex-col divide-y divide-border" data-testid="assign-rider" aria-label={tr("pickRider")}>
                 {riders.map((r) => {
@@ -400,7 +448,7 @@ export function OrderCard({
             {t("confirmPayment")}
           </Button>
         )}
-        {order.status !== "completed" && order.status !== "cancelled" && (
+        {!staffMode && order.status !== "completed" && order.status !== "cancelled" && (
           <Button variant="ghost" onClick={cancel} disabled={pending}>
             {t("cancel")}
           </Button>
@@ -438,9 +486,15 @@ export function OrderCard({
 function HistorySection({
   initialItems,
   initialCursor,
+  branch,
+  branchNames,
+  mainBranchId,
 }: {
   initialItems: QueueOrder[];
   initialCursor: string | null;
+  branch: string | null;
+  branchNames?: Record<string, string>;
+  mainBranchId: string | null;
 }) {
   const t = useTranslations("order");
   const [open, setOpen] = useState(false);
@@ -465,7 +519,7 @@ function HistorySection({
             <LoadMore<QueueOrder>
               initialItems={initialItems}
               initialCursor={initialCursor}
-              loadMore={(cursor) => loadMoreOrderHistoryAction(cursor)}
+              loadMore={(cursor) => loadMoreOrderHistoryAction(cursor, branch)}
               getKey={(o) => o.id}
               renderItem={(o) => (
                 <li className="flex items-center justify-between gap-3 py-2.5 text-sm">
@@ -473,6 +527,12 @@ function HistorySection({
                     <span className="font-medium text-foreground">
                       {t("orderNo", { no: o.orderNo })}
                     </span>
+                    {branchLabel(o, branchNames, mainBranchId) && (
+                      <span className="flex items-center gap-1 truncate text-xs text-brand-700">
+                        <MapPin className="size-3" />
+                        {branchLabel(o, branchNames, mainBranchId)}
+                      </span>
+                    )}
                     <span className="truncate text-xs text-muted">
                       {o.performedByEmail
                         ? `${t("placedByLabel")}: ${o.performedByEmail}`

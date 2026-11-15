@@ -9,7 +9,15 @@ import {
 } from "@/src/infrastructure/auth/session";
 import { requireKioskShop } from "@/src/infrastructure/auth/kiosk";
 import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
-import { requireOrderAccess } from "@/src/infrastructure/auth/order-access";
+import {
+  getOrderBranchId,
+  requireOrderAccess,
+} from "@/src/infrastructure/auth/order-access";
+import {
+  assertOrderInQueueScope,
+  orderQueueScope,
+  queueBranchFilter,
+} from "@/src/infrastructure/auth/order-queue-scope";
 import { getMemberToken, setMemberCookie } from "@/src/infrastructure/auth/member";
 import { LinkOrderCustomerDeviceUseCase } from "@/src/application/use-cases/member/LinkOrderCustomerDeviceUseCase";
 import { PlaceOrderUseCase } from "@/src/application/use-cases/order/PlaceOrderUseCase";
@@ -126,6 +134,7 @@ export async function placeOrderAction(
       container.shopRepository,
       container.menuOptionRepository,
       container.platformSettingsRepository,
+      container.branchRepository,
     ).execute({
       shopId,
       paymentMethod: input.paymentMethod,
@@ -259,6 +268,8 @@ export async function placeOnlineOrderAction(
       return { error: (e as Error).message };
     }
 
+    // Branch QR scanned on this device (signed cookie) → that branch; else main.
+    const branchId = await getOrderBranchId(input.slug, shop.id);
     const order = await new PlaceOrderUseCase(
       container.orderRepository,
       container.menuItemRepository,
@@ -266,7 +277,9 @@ export async function placeOnlineOrderAction(
       container.shopRepository,
       container.menuOptionRepository,
       container.platformSettingsRepository,
+      container.branchRepository,
     ).execute({
+      branchId,
       shopId: shop.id,
       paymentMethod: input.paymentMethod,
       note: input.note ?? null,
@@ -382,7 +395,7 @@ export async function placeOrderForCustomerAction(
   input: PlaceOrderActionInput,
 ): Promise<PlaceOrderResult> {
   try {
-    const { actor, shopId } = await operatorContext();
+    const { actor, shopId, branchId } = await operatorContext();
     await assertShopActive(shopId);
 
     const guard = await container.sensitiveActionGuard.check({
@@ -413,6 +426,7 @@ export async function placeOrderForCustomerAction(
       container.shopRepository,
       container.menuOptionRepository,
       container.platformSettingsRepository,
+      container.branchRepository,
     ).execute({
       shopId,
       paymentMethod: input.paymentMethod,
@@ -421,6 +435,8 @@ export async function placeOrderForCustomerAction(
       customerPhone: input.customerPhone ?? null,
       performedBy: actor.id,
       channel: "counter",
+      // Staff → their branch; owner/admin → main branch.
+      branchId,
       cart: sanitizeCart(input.cart),
     });
 
@@ -464,7 +480,12 @@ export async function advanceOrderStatusAction(
   reason?: string,
 ): Promise<{ error?: string }> {
   try {
-    const { actor, shopId } = await requireShopWrite();
+    const scope = await orderQueueScope();
+    const { actor, shopId } = scope;
+    await assertOrderInQueueScope(scope, orderId);
+    if (scope.isStaff && to === "cancelled") {
+      throw new Error("พนักงานสาขายกเลิกออเดอร์ไม่ได้ กรุณาแจ้งเจ้าของร้าน");
+    }
     const why = typeof reason === "string" ? reason.trim().slice(0, 200) : "";
     await new AdvanceOrderStatusUseCase(container.orderRepository).execute(
       shopId,
@@ -484,6 +505,7 @@ export async function advanceOrderStatusAction(
     revalidatePath("/shop/orders");
     revalidatePath(`/shop/orders/${orderId}`);
     revalidatePath("/staff");
+    revalidatePath("/staff/orders");
     return {};
   } catch (e) {
     return { error: (e as Error).message };
@@ -495,7 +517,9 @@ export async function confirmOrderPaymentAction(
   orderId: string,
 ): Promise<{ error?: string }> {
   try {
-    const { actor, shopId } = await requireShopWrite();
+    const scope = await orderQueueScope();
+    const { actor, shopId } = scope;
+    await assertOrderInQueueScope(scope, orderId);
     await new ConfirmOrderPaymentUseCase(
       container.orderRepository,
       new EarnPointsFromOrderUseCase(
@@ -519,6 +543,7 @@ export async function confirmOrderPaymentAction(
     });
     revalidatePath("/shop/orders");
     revalidatePath("/staff");
+    revalidatePath("/staff/orders");
     return {};
   } catch (e) {
     return { error: (e as Error).message };
@@ -528,8 +553,14 @@ export async function confirmOrderPaymentAction(
 /** Next page of finished orders (history "load more"). */
 export async function loadMoreOrderHistoryAction(
   cursor: string,
+  branch?: string | null,
 ): Promise<Page<QueueOrder>> {
-  const { shopId } = await requireShopWrite();
-  const page = await container.orderRepository.pageHistoryByShop(shopId, { cursor });
+  const scope = await orderQueueScope();
+  const { shopId } = scope;
+  const page = await container.orderRepository.pageHistoryByShop(
+    shopId,
+    { cursor },
+    queueBranchFilter(scope, branch),
+  );
   return { ...page, items: await withCustomerNotes(shopId, page.items) };
 }

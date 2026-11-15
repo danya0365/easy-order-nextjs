@@ -31,5 +31,7 @@ export const platformSettings = sqliteTable("platform_settings", {
   itemDetailEnabled: integer({ mode: "boolean" }).notNull().default(true),
   /** Rider ว่าง/ไม่ว่าง: "global" = one switch for all shops; "per_shop" = one per shop. */
   riderAvailabilityMode: text({ enum: ["global", "per_shop"] }).notNull().default("global"),
+  /** Branch staff may work their branch's order queue (accept → complete, assign rider). */
+  branchStaffQueueEnabled: integer({ mode: "boolean" }).notNull().default(true),
   updatedAt: updatedAt(),
 });

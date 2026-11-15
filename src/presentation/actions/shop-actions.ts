@@ -283,6 +283,7 @@ export async function toggleBranchAction(
   if (!branch || branch.shopId !== shopId) throw new Error("ไม่พบสาขาในร้านนี้");
   await container.branchRepository.setActive(branchId, isActive);
   revalidatePath("/shop/branches");
+  revalidatePath(`/shop/branches/${branchId}`);
 }
 
 export async function updateBranchLocationAction(
@@ -310,6 +311,7 @@ export async function updateBranchLocationAction(
       },
     );
     revalidatePath("/shop/branches");
+    revalidatePath(`/shop/branches/${branchId}`);
     return { success: "บันทึกตำแหน่งแล้ว" };
   } catch (e) {
     return { error: (e as Error).message };

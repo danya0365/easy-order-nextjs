@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, count, eq, isNotNull, isNull } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { Branch } from "@/src/domain/entities";
 import type {
@@ -18,6 +18,7 @@ function toBranch(r: Row): Branch {
     shopId: r.shopId,
     name: r.name,
     isActive: r.isActive,
+    acceptingOrders: r.acceptingOrders ?? true,
     latitude: r.latitude,
     longitude: r.longitude,
     address: r.address,
@@ -45,7 +46,8 @@ export class DrizzleBranchRepository implements IBranchRepository {
   async listByShop(shopId: string): Promise<Branch[]> {
     const rows = await db.query.branches.findMany({
       where: eq(schema.branches.shopId, shopId),
-      orderBy: asc(schema.branches.createdAt),
+      // Oldest first (id tie-break): rows[0] is the shop's main branch.
+      orderBy: [asc(schema.branches.createdAt), asc(schema.branches.id)],
     });
     return rows.map(toBranch);
   }
@@ -57,6 +59,74 @@ export class DrizzleBranchRepository implements IBranchRepository {
       .where(eq(schema.branches.id, id))
       .returning();
     return toBranch(r);
+  }
+
+  async setAcceptingOrders(id: string, acceptingOrders: boolean): Promise<Branch> {
+    const [r] = await db
+      .update(schema.branches)
+      .set({ acceptingOrders })
+      .where(eq(schema.branches.id, id))
+      .returning();
+    return toBranch(r);
+  }
+
+  async pageByShop(
+    shopId: string,
+    page: number,
+    pageSize: number,
+  ): Promise<{ items: Branch[]; total: number }> {
+    const [c] = await db
+      .select({ n: count() })
+      .from(schema.branches)
+      .where(eq(schema.branches.shopId, shopId));
+    const rows = await db.query.branches.findMany({
+      where: eq(schema.branches.shopId, shopId),
+      orderBy: [asc(schema.branches.createdAt), asc(schema.branches.id)],
+      limit: pageSize,
+      offset: Math.max(0, (page - 1) * pageSize),
+    });
+    return { items: rows.map(toBranch), total: Number(c?.n ?? 0) };
+  }
+
+  async listSoldOutItemIds(branchId: string): Promise<string[]> {
+    const rows = await db
+      .select({ id: schema.branchMenuOverrides.menuItemId })
+      .from(schema.branchMenuOverrides)
+      .where(
+        and(
+          eq(schema.branchMenuOverrides.branchId, branchId),
+          eq(schema.branchMenuOverrides.soldOut, true),
+        ),
+      );
+    return rows.map((r) => r.id);
+  }
+
+  async setItemSoldOut(
+    branchId: string,
+    menuItemId: string,
+    soldOut: boolean,
+  ): Promise<void> {
+    if (!soldOut) {
+      await db
+        .delete(schema.branchMenuOverrides)
+        .where(
+          and(
+            eq(schema.branchMenuOverrides.branchId, branchId),
+            eq(schema.branchMenuOverrides.menuItemId, menuItemId),
+          ),
+        );
+      return;
+    }
+    await db
+      .insert(schema.branchMenuOverrides)
+      .values({ branchId, menuItemId, soldOut: true })
+      .onConflictDoUpdate({
+        target: [
+          schema.branchMenuOverrides.branchId,
+          schema.branchMenuOverrides.menuItemId,
+        ],
+        set: { soldOut: true, updatedAt: new Date().toISOString() },
+      });
   }
 
   async updateLocation(

@@ -39,7 +39,19 @@ export interface CreateOrderInput {
   deliveryLandmark?: string | null;
   /** Delivery charge (satang) the repo adds to the total. */
   deliveryFeeSatang?: number;
+  /** Branch taking the order (null = shop has no branch). */
+  branchId?: string | null;
   items: CreateOrderItemInput[];
+}
+
+/**
+ * Queue/history branch scope. Omit (or no branchId) = all branches. Set
+ * includeUnassigned when the branch is the shop's main branch so legacy
+ * NULL-branch orders still show up there.
+ */
+export interface OrderBranchFilter {
+  branchId?: string | null;
+  includeUnassigned?: boolean;
 }
 
 export interface IOrderRepository {
@@ -50,11 +62,15 @@ export interface IOrderRepository {
   create(input: CreateOrderInput): Promise<OrderWithItems>;
   findById(shopId: string, id: string): Promise<OrderWithItems | null>;
   /** Open orders (pending/preparing/ready) for the live queue — bounded, oldest first. */
-  listActiveByShop(shopId: string): Promise<OrderWithItems[]>;
+  listActiveByShop(
+    shopId: string,
+    filter?: OrderBranchFilter,
+  ): Promise<OrderWithItems[]>;
   /** Finished orders (completed/cancelled), newest first, cursor-paginated. */
   pageHistoryByShop(
     shopId: string,
     opts?: PageOpts,
+    filter?: OrderBranchFilter,
   ): Promise<Page<OrderWithItems>>;
   /** A customer's own orders (any status), newest first — for self-service history. */
   pageByCustomer(

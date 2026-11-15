@@ -7,6 +7,7 @@ import { getTranslations } from "next-intl/server";
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { OrderCard } from "@/src/presentation/components/order/OrderQueue";
+import { mainBranchOf } from "@/src/domain/services/branch-ordering";
 import { OrderDetailExtras } from "@/src/presentation/components/order/OrderDetailExtras";
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { withCustomerNotes } from "@/src/presentation/lib/order-notes";
@@ -24,7 +25,14 @@ export default async function ShopOrderDetailPage({ params }: { params: Promise<
   if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) notFound();
   const found = await container.orderRepository.findById(shopId, id);
   if (!found) notFound();
-  const [order] = await withCustomerNotes(shopId, [found]);
+  const [[order], branches] = await Promise.all([
+    withCustomerNotes(shopId, [found]),
+    container.branchRepository.listByShop(shopId),
+  ]);
+  const orderBranch =
+    branches.length > 1
+      ? branches.find((b) => b.id === order.branchId) ?? mainBranchOf(branches)
+      : null;
   const t = await getTranslations("customerDetail");
 
   const summary = [
@@ -53,7 +61,7 @@ export default async function ShopOrderDetailPage({ params }: { params: Promise<
         phone={order.customerPhone}
         customerHref={order.customerId ? `/shop/customers/${order.customerId}` : null}
       />
-      <OrderCard order={order} />
+      <OrderCard order={order} branchName={orderBranch?.name ?? null} />
     </div>
   );
 }

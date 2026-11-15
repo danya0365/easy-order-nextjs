@@ -32,6 +32,7 @@ export default async function AdminSettingsPage() {
           menuOptionsEnabled={settings.menuOptionsEnabled}
           itemDetailEnabled={settings.itemDetailEnabled}
           riderAvailabilityMode={settings.riderAvailabilityMode}
+          branchStaffQueueEnabled={settings.branchStaffQueueEnabled}
         />
       </Card>
     </div>

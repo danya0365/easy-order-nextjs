@@ -22,6 +22,11 @@ import {
 import type { IMenuOptionRepository } from "@/src/application/repositories/IMenuOptionRepository";
 import type { IPlatformSettingsRepository } from "@/src/application/repositories/IPlatformSettingsRepository";
 import type { MenuOptionGroup, OrderLineOption } from "@/src/domain/entities";
+import type { IBranchRepository } from "@/src/application/repositories/IBranchRepository";
+import {
+  branchClosedReason,
+  resolveOrderBranch,
+} from "@/src/domain/services/branch-ordering";
 
 export interface CartLine {
   menuItemId: string;
@@ -50,6 +55,12 @@ export interface PlaceOrderInput {
   deliveryLng?: number | null;
   /** Optional free-text landmark (จุดสังเกต). */
   deliveryLandmark?: string | null;
+  /**
+   * Requested branch (branch QR / staff's branch). Validated against the
+   * shop's branches; unknown/omitted → main branch. Only used when the
+   * branch repository is wired in.
+   */
+  branchId?: string | null;
   cart: CartLine[];
 }
 
@@ -76,6 +87,8 @@ export class PlaceOrderUseCase {
     /** Optional: menu options support (omitted = options ignored, legacy behaviour). */
     private readonly menuOptions?: IMenuOptionRepository,
     private readonly platformSettings?: IPlatformSettingsRepository,
+    /** Optional: multi-branch (omitted = order has no branch, legacy behaviour). */
+    private readonly branches?: IBranchRepository,
   ) {}
 
   async execute(input: PlaceOrderInput): Promise<OrderWithItems> {
@@ -94,6 +107,25 @@ export class PlaceOrderUseCase {
         shop.menuOptionsAllowedByAdmin,
       );
     }
+    // Branch: resolve server-side; online/kiosk orders respect open/closed.
+    const channelForBranch: OrderChannel = input.channel ?? "kiosk";
+    let branchId: string | null = null;
+    let branchSoldOut = new Set<string>();
+    if (this.branches) {
+      const branch = resolveOrderBranch(
+        await this.branches.listByShop(input.shopId),
+        input.branchId,
+      );
+      if (branch) {
+        branchId = branch.id;
+        if (channelForBranch !== "counter") {
+          const closed = branchClosedReason(branch);
+          if (closed) throw new Error(closed);
+        }
+        branchSoldOut = new Set(await this.branches.listSoldOutItemIds(branch.id));
+      }
+    }
+
     const groupsByItem = new Map<string, MenuOptionGroup[]>();
     if (optionsOn && this.menuOptions) {
       const ids = [...new Set(cart.map((l) => l.menuItemId))];
@@ -122,7 +154,7 @@ export class PlaceOrderUseCase {
       if (!item || item.shopId !== input.shopId) {
         throw new Error("ไม่พบเมนูที่เลือกในร้านนี้");
       }
-      if (!item.isAvailable) {
+      if (!item.isAvailable || branchSoldOut.has(item.id)) {
         throw new Error(`"${item.name}" หมดชั่วคราว กรุณาเลือกใหม่`);
       }
       // Options: resolved against DB groups; delta folded into the unit price.
@@ -275,6 +307,7 @@ export class PlaceOrderUseCase {
       deliveryLng: deliveryPin?.lng ?? null,
       deliveryLandmark,
       deliveryFeeSatang,
+      branchId,
       items: lines,
     });
   }

@@ -121,6 +121,7 @@ const NAVS = {
   ],
   staff: [
     { href: "/staff", label: "navNewOrder", icon: ShoppingCart },
+    { href: "/staff/orders", label: "navOrders", icon: ClipboardList },
     { href: "/staff/loyalty", label: "navLoyalty", icon: Gift },
     { href: "/staff/customers", label: "navCustomers", icon: Users },
     { href: "/staff/notifications", label: "navNotifications", icon: Bell },
