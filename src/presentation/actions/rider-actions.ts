@@ -1,5 +1,9 @@
 "use server";
 
+import {
+  assertOrderInQueueScope,
+  orderQueueScope,
+} from "@/src/infrastructure/auth/order-queue-scope";
 import { revalidatePath } from "next/cache";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -102,13 +106,17 @@ export async function assignRiderAction(
   riderId: string,
 ): Promise<{ error?: string }> {
   try {
-    const { shopId } = await requireShopWrite();
+    // Owner, or branch staff for an order of their own branch.
+    const scope = await orderQueueScope();
+    const { shopId } = scope;
+    await assertOrderInQueueScope(scope, orderId);
     await new AssignRiderUseCase(container.orderRepository, container.riderRepository).execute(
       shopId,
       orderId,
       riderId,
     );
     revalidatePath("/shop/orders");
+    revalidatePath("/staff/orders");
     return {};
   } catch (e) {
     return { error: (e as Error).message };

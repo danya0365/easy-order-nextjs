@@ -2,7 +2,7 @@ import "server-only";
 
 import { parseOrderLineOptions } from "@/src/domain/services/menu-options";
 
-import { and, asc, count, desc, eq, gte, inArray, lt, ne, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, isNull, lt, ne, or, type SQL } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type {
   DeliveryStatus,
@@ -13,6 +13,7 @@ import type {
 import type {
   CreateOrderInput,
   IOrderRepository,
+  OrderBranchFilter,
   RiderJobScope,
 } from "@/src/application/repositories/IOrderRepository";
 import type { Page, PageOpts } from "@/src/application/repositories/pagination";
@@ -60,6 +61,7 @@ function toOrder(r: OrderRow, items: OrderItem[]): OrderWithItems {
     customerName: r.customerName,
     customerPhone: r.customerPhone,
     performedBy: r.performedBy,
+    branchId: r.branchId ?? null,
     riderId: r.riderId ?? null,
     deliveryStatus: r.deliveryStatus ?? null,
     assignedAt: r.assignedAt ?? null,
@@ -74,6 +76,14 @@ function toOrder(r: OrderRow, items: OrderItem[]): OrderWithItems {
     updatedAt: r.updatedAt,
     items,
   };
+}
+
+/** Branch scope for queue/history: one branch (+ legacy NULL rows when it is the main branch). */
+function branchWhere(filter?: OrderBranchFilter): SQL | undefined {
+  if (!filter?.branchId) return undefined;
+  return filter.includeUnassigned
+    ? or(eq(schema.orders.branchId, filter.branchId), isNull(schema.orders.branchId))
+    : eq(schema.orders.branchId, filter.branchId);
 }
 
 /** Start-of-today in Bangkok (UTC+7), as a UTC ISO string, for the daily order number. */
@@ -158,6 +168,7 @@ export class DrizzleOrderRepository implements IOrderRepository {
         deliveryLat: input.deliveryLat ?? null,
         deliveryLng: input.deliveryLng ?? null,
         deliveryLandmark: input.deliveryLandmark ?? null,
+        branchId: input.branchId ?? null,
       })
       .returning();
 
@@ -189,11 +200,15 @@ export class DrizzleOrderRepository implements IOrderRepository {
     return toOrder(r, items.get(r.id) ?? []);
   }
 
-  async listActiveByShop(shopId: string): Promise<OrderWithItems[]> {
+  async listActiveByShop(
+    shopId: string,
+    filter?: OrderBranchFilter,
+  ): Promise<OrderWithItems[]> {
     const rows = await db.query.orders.findMany({
       where: and(
         eq(schema.orders.shopId, shopId),
         inArray(schema.orders.status, ACTIVE_STATUSES),
+        branchWhere(filter),
       ),
       orderBy: asc(schema.orders.createdAt),
     });
@@ -210,6 +225,7 @@ export class DrizzleOrderRepository implements IOrderRepository {
   async pageHistoryByShop(
     shopId: string,
     opts: PageOpts = {},
+    filter?: OrderBranchFilter,
   ): Promise<Page<OrderWithItems>> {
     const limit = opts.limit ?? 20;
     const cur = decodeCursor(opts.cursor);
@@ -217,6 +233,7 @@ export class DrizzleOrderRepository implements IOrderRepository {
       where: and(
         eq(schema.orders.shopId, shopId),
         inArray(schema.orders.status, FINISHED_STATUSES),
+        branchWhere(filter),
         cursorWhere(schema.orders.createdAt, schema.orders.id, cur),
       ),
       orderBy: [desc(schema.orders.createdAt), desc(schema.orders.id)],
