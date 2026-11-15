@@ -54,3 +54,20 @@ test("LINE ID normalisation + chat link", async () => {
   assert.throws(() => normalizeLineId("bad id!"));
   assert.equal(lineChatUrl("somchai.99"), "https://line.me/R/ti/p/~somchai.99");
 });
+
+test("rider action rules: shop must accept first; COD collected before delivered", async () => {
+  const { riderActionBlockReason, riderCashDue, needsCodCollection } = await import("./rider");
+  const base = { status: "preparing" as const, paymentMethod: "cash" as const, paymentStatus: "unpaid" as const, codCollected: false };
+  assert.match(riderActionBlockReason({ ...base, status: "pending", deliveryStatus: "assigned" }, "picked_up") ?? "", /ร้านยังไม่ได้รับ/);
+  assert.equal(riderActionBlockReason({ ...base, deliveryStatus: "assigned" }, "picked_up"), null);
+  assert.equal(riderActionBlockReason({ ...base, status: "ready", deliveryStatus: "assigned" }, "picked_up"), null);
+  assert.match(riderActionBlockReason({ ...base, deliveryStatus: "picked_up" }, "delivered") ?? "", /ต้องเก็บเงินสด/);
+  assert.equal(riderActionBlockReason({ ...base, deliveryStatus: "picked_up" }, "cod_delivered"), null);
+  assert.equal(riderActionBlockReason({ ...base, deliveryStatus: "picked_up", codCollected: true }, "delivered"), null);
+  assert.equal(riderActionBlockReason({ ...base, paymentMethod: "promptpay_qr", deliveryStatus: "picked_up" }, "delivered"), null);
+  assert.match(riderActionBlockReason({ ...base, paymentMethod: "promptpay_qr", deliveryStatus: "picked_up" }, "cod_delivered") ?? "", /ไม่ใช่เก็บเงินปลายทาง/);
+  assert.match(riderActionBlockReason({ ...base, status: "cancelled", deliveryStatus: "assigned" }, "picked_up") ?? "", /ยกเลิก/);
+  assert.equal(needsCodCollection({ paymentMethod: "cash", paymentStatus: "paid", codCollected: false }), false);
+  assert.equal(riderCashDue({ paymentMethod: "cash", paymentStatus: "unpaid", codCollected: false }), true);
+  assert.equal(riderCashDue({ paymentMethod: "promptpay_qr", paymentStatus: "paid", codCollected: false }), false);
+});

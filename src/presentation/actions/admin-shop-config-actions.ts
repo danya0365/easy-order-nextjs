@@ -68,7 +68,13 @@ export async function updatePlatformFeatureSwitchesAction(
     const admin = await requireRole("platform_admin");
     const menuOptionsEnabled = formData.get("menuOptionsEnabled") === "on";
     const itemDetailEnabled = formData.get("itemDetailEnabled") === "on";
-    await container.platformSettingsRepository.update({ menuOptionsEnabled, itemDetailEnabled });
+    const riderAvailabilityMode =
+      formData.get("riderAvailabilityMode") === "per_shop" ? "per_shop" : "global";
+    await container.platformSettingsRepository.update({
+      menuOptionsEnabled,
+      itemDetailEnabled,
+      riderAvailabilityMode,
+    });
     await container.auditLogger.record({
       actorUserId: admin.id,
       actorRole: admin.role,
@@ -76,7 +82,7 @@ export async function updatePlatformFeatureSwitchesAction(
       targetType: "platform_settings",
       targetId: "default",
       ip: await getClientIp(),
-      metadata: { settings: "features", menuOptionsEnabled, itemDetailEnabled },
+      metadata: { settings: "features", menuOptionsEnabled, itemDetailEnabled, riderAvailabilityMode },
     });
     revalidatePath("/admin/settings");
     return { success: "saved" };

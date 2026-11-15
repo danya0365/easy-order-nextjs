@@ -29,5 +29,7 @@ export const platformSettings = sqliteTable("platform_settings", {
   menuOptionsEnabled: integer({ mode: "boolean" }).notNull().default(false),
   /** Feature switch: tap a menu item to open the detail sheet (default on). */
   itemDetailEnabled: integer({ mode: "boolean" }).notNull().default(true),
+  /** Rider ว่าง/ไม่ว่าง: "global" = one switch for all shops; "per_shop" = one per shop. */
+  riderAvailabilityMode: text({ enum: ["global", "per_shop"] }).notNull().default("global"),
   updatedAt: updatedAt(),
 });

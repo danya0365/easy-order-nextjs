@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bike } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
-import { getSessionRider } from "@/src/infrastructure/auth/rider-session";
+import { getRiderSession } from "@/src/infrastructure/auth/rider-session";
 import { SiteHeader } from "@/src/presentation/components/layout/SiteHeader";
 import { RiderBottomNav } from "@/src/presentation/components/rider/RiderBottomNav";
 
@@ -20,9 +20,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
-/** Rider app shell: cookie session (bound to the personal link) + bottom tabs. */
+/** Rider app shell: account session (scoped to the shops proven on this device) + bottom tabs. */
 export default async function RiderLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSessionRider();
+  const session = await getRiderSession();
   if (!session) {
     const t = await getTranslations("rider");
     return (

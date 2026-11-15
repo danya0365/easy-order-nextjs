@@ -2,7 +2,7 @@ import "server-only";
 
 import { parseOrderLineOptions } from "@/src/domain/services/menu-options";
 
-import { and, asc, count, desc, eq, gte, inArray, lt, ne } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, lt, ne, or } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type {
   DeliveryStatus,
@@ -13,6 +13,7 @@ import type {
 import type {
   CreateOrderInput,
   IOrderRepository,
+  RiderJobScope,
 } from "@/src/application/repositories/IOrderRepository";
 import type { Page, PageOpts } from "@/src/application/repositories/pagination";
 import { decodeCursor } from "@/src/application/repositories/pagination";
@@ -415,35 +416,42 @@ export class DrizzleOrderRepository implements IOrderRepository {
     return out;
   }
 
-  async listRiderActive(shopId: string, riderId: string): Promise<OrderWithItems[]> {
+  async listRiderActive(memberships: RiderJobScope[]): Promise<OrderWithItems[]> {
+    if (memberships.length === 0) return [];
     const rows = await db.query.orders.findMany({
       where: and(
-        eq(schema.orders.shopId, shopId),
-        eq(schema.orders.riderId, riderId),
+        or(
+          ...memberships.map((m) =>
+            and(eq(schema.orders.shopId, m.shopId), eq(schema.orders.riderId, m.riderId)),
+          ),
+        ),
         inArray(schema.orders.deliveryStatus, ["assigned", "picked_up"]),
         ne(schema.orders.status, "cancelled"),
       ),
       orderBy: asc(schema.orders.assignedAt),
-      limit: 50,
+      limit: 100,
     });
     const items = await loadItems(rows.map((r) => r.id));
     return rows.map((r) => toOrder(r, items.get(r.id) ?? []));
   }
 
   async listRiderDeliveredSince(
-    shopId: string,
-    riderId: string,
+    memberships: RiderJobScope[],
     sinceISO: string,
   ): Promise<OrderWithItems[]> {
+    if (memberships.length === 0) return [];
     const rows = await db.query.orders.findMany({
       where: and(
-        eq(schema.orders.shopId, shopId),
-        eq(schema.orders.riderId, riderId),
+        or(
+          ...memberships.map((m) =>
+            and(eq(schema.orders.shopId, m.shopId), eq(schema.orders.riderId, m.riderId)),
+          ),
+        ),
         eq(schema.orders.deliveryStatus, "delivered"),
         gte(schema.orders.deliveredAt, sinceISO),
       ),
       orderBy: desc(schema.orders.deliveredAt),
-      limit: 200,
+      limit: 300,
     });
     const items = await loadItems(rows.map((r) => r.id));
     return rows.map((r) => toOrder(r, items.get(r.id) ?? []));
