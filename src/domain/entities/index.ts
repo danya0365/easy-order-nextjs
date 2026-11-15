@@ -473,8 +473,12 @@ export interface PlatformSettings {
   menuOptionsEnabled: boolean;
   /** Feature switch: menu item detail sheet. Default on. */
   itemDetailEnabled: boolean;
+  /** Where the rider available/unavailable switch lives: one global switch or per shop. */
+  riderAvailabilityMode: RiderAvailabilityMode;
   updatedAt: string;
 }
+
+export type RiderAvailabilityMode = "global" | "per_shop";
 
 export type DailyFeeChargeStatus = "none" | "due" | "paid";
 
@@ -763,8 +767,34 @@ export interface Rider {
   avatarUrl: string | null;
   /** Whether a personal link is currently issued (the hash itself never leaves the repo). */
   hasLink: boolean;
+  /** Global rider identity this shop membership belongs to. */
+  accountId: string;
+  /** invited = waiting for the rider to confirm via the shop link; approved = active member. */
+  status: RiderMembershipStatus;
   createdAt: string;
   updatedAt: string;
+}
+
+export type RiderMembershipStatus = "invited" | "approved";
+
+/** Global rider identity (one person across shops). */
+export interface RiderAccount {
+  id: string;
+  name: string;
+  phone: string;
+  avatarUrl: string | null;
+  available: boolean;
+  availableUpdatedAt: string | null;
+  sessionEpoch: number;
+  mergedIntoId: string | null;
+}
+
+/** A membership as the rider sees it (own shops only). */
+export interface RiderShopMembership {
+  rider: Rider;
+  shopId: string;
+  shopName: string;
+  shopSlug: string;
 }
 
 /** Per-rider payout report row for a date range. */

@@ -99,12 +99,17 @@ export interface IOrderRepository {
   markCodCollected(shopId: string, id: string): Promise<OrderWithItems>;
   /** Open job count (assigned/picked_up, not cancelled) per rider id. */
   openJobCountsByRider(shopId: string): Promise<Record<string, number>>;
-  /** A rider's open jobs (assigned/picked_up, not cancelled), oldest first. */
-  listRiderActive(shopId: string, riderId: string): Promise<OrderWithItems[]>;
-  /** A rider's delivered orders since an ISO instant. */
+  /** Open jobs (assigned/picked_up, not cancelled) of these shop memberships, oldest first. */
+  listRiderActive(memberships: RiderJobScope[]): Promise<OrderWithItems[]>;
+  /** Delivered orders of these shop memberships since an ISO instant, newest first. */
   listRiderDeliveredSince(
-    shopId: string,
-    riderId: string,
+    memberships: RiderJobScope[],
     sinceISO: string,
   ): Promise<OrderWithItems[]>;
+}
+
+/** One shop membership of a rider: orders are matched on BOTH shop and rider id. */
+export interface RiderJobScope {
+  shopId: string;
+  riderId: string;
 }
