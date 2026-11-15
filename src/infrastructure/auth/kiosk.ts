@@ -20,11 +20,13 @@ const KIOSK_TTL_MS = 12 * 60 * 60 * 1000; // a working day
 export async function startKioskSession(
   shopId: string,
   label?: string | null,
+  branchId?: string | null,
 ): Promise<void> {
   const expiresAt = new Date(Date.now() + KIOSK_TTL_MS);
   const session = await container.kioskSessionRepository.create({
     shopId,
     label: label ?? null,
+    branchId: branchId ?? null,
     expiresAt: expiresAt.toISOString(),
   });
   (await cookies()).set(KIOSK_COOKIE, session.id, {
@@ -36,15 +38,23 @@ export async function startKioskSession(
   });
 }
 
-/** The shop this device is in kiosk mode for, or null (validated against the DB). */
-export async function getKioskShopId(): Promise<string | null> {
+/** The validated kiosk session of this device (shop + bound branch), or null. */
+export async function getKioskSession(): Promise<{
+  shopId: string;
+  branchId: string | null;
+} | null> {
   const token = (await cookies()).get(KIOSK_COOKIE)?.value;
   if (!token) return null;
   // Token-keyed request memo: layout probe + render + page share one lookup.
   const session = await requestMemo(`kiosk:${token}`, () =>
     container.kioskSessionRepository.findValid(token, new Date()),
   );
-  return session?.shopId ?? null;
+  return session ? { shopId: session.shopId, branchId: session.branchId ?? null } : null;
+}
+
+/** The shop this device is in kiosk mode for, or null (validated against the DB). */
+export async function getKioskShopId(): Promise<string | null> {
+  return (await getKioskSession())?.shopId ?? null;
 }
 
 /**
@@ -52,9 +62,17 @@ export async function getKioskShopId(): Promise<string | null> {
  * isn't in kiosk mode — the guard that makes remote/fake orders impossible.
  */
 export async function requireKioskShop(): Promise<string> {
-  const shopId = await getKioskShopId();
-  if (!shopId) throw new Error("อุปกรณ์นี้ยังไม่ได้เปิดโหมดหน้าร้าน");
-  return shopId;
+  return (await requireKioskSession()).shopId;
+}
+
+/** Like requireKioskShop, plus the branch this kiosk device is bound to. */
+export async function requireKioskSession(): Promise<{
+  shopId: string;
+  branchId: string | null;
+}> {
+  const s = await getKioskSession();
+  if (!s) throw new Error("อุปกรณ์นี้ยังไม่ได้เปิดโหมดหน้าร้าน");
+  return s;
 }
 
 /** Exit kiosk mode on this device: revoke the session row + clear the cookie. */

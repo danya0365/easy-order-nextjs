@@ -1,4 +1,5 @@
-import { getKioskShopId } from "@/src/infrastructure/auth/kiosk";
+import { getKioskSession } from "@/src/infrastructure/auth/kiosk";
+import { resolveOrderBranch } from "@/src/domain/services/branch-ordering";
 import { container } from "@/src/infrastructure/di/container";
 import { requestMemo } from "@/src/infrastructure/request/request-memo";
 import { BRAND } from "@/src/config/brand";
@@ -12,10 +13,16 @@ export default async function KioskLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const shopId = await getKioskShopId();
-  const shop = shopId
-    ? await requestMemo(`shopById:${shopId}`, () => container.shopRepository.findById(shopId))
-    : null;
+  const kiosk = await getKioskSession();
+  const shopId = kiosk?.shopId ?? null;
+  const [shop, branches] = shopId
+    ? await Promise.all([
+        requestMemo(`shopById:${shopId}`, () => container.shopRepository.findById(shopId)),
+        container.branchRepository.listByShop(shopId),
+      ])
+    : [null, []];
+  // Multi-branch: show which branch this kiosk device belongs to.
+  const branch = branches.filter((b) => b.isActive).length > 1 ? resolveOrderBranch(branches, kiosk?.branchId) : null;
 
   return (
     <GroupIntlProvider group="kiosk">
@@ -25,7 +32,11 @@ export default async function KioskLayout({
           <p className="truncate text-lg font-bold text-foreground">
             {shop?.name ?? BRAND.name}
           </p>
-          {shop && <p className="text-xs text-muted">{BRAND.name}</p>}
+          {shop && (
+            <p className="text-xs text-muted" data-testid="kiosk-branch">
+              {branch ? branch.name : BRAND.name}
+            </p>
+          )}
         </div>
         {shopId && <KioskExitButton />}
       </header>

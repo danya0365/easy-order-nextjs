@@ -28,6 +28,7 @@ function toSettings(r: Row): PlatformSettings {
     itemDetailEnabled: r.itemDetailEnabled,
     riderAvailabilityMode: r.riderAvailabilityMode === "per_shop" ? "per_shop" : "global",
     branchStaffQueueEnabled: r.branchStaffQueueEnabled ?? true,
+    branchStaffCancelEnabled: r.branchStaffCancelEnabled ?? true,
     updatedAt: r.updatedAt,
   };
 }
@@ -47,6 +48,7 @@ function defaults(): PlatformSettings {
     itemDetailEnabled: true,
     riderAvailabilityMode: "global",
     branchStaffQueueEnabled: true,
+    branchStaffCancelEnabled: true,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -114,6 +116,9 @@ export class DrizzlePlatformSettingsRepository
           : {}),
         ...(input.branchStaffQueueEnabled !== undefined
           ? { branchStaffQueueEnabled: input.branchStaffQueueEnabled }
+          : {}),
+        ...(input.branchStaffCancelEnabled !== undefined
+          ? { branchStaffCancelEnabled: input.branchStaffCancelEnabled }
           : {}),
       })
       .where(eq(schema.platformSettings.id, SETTINGS_ID))

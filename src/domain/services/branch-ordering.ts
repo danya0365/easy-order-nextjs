@@ -7,6 +7,14 @@ import type { Branch } from "@/src/domain/entities";
  */
 
 /** Oldest branch (createdAt, then id) — the shop's main branch. */
+/**
+ * Branch staff may cancel orders of their OWN branch only when both the platform
+ * switch (admin) and the shop's setting (owner) allow it. Owners always may.
+ */
+export function branchStaffMayCancel(platformEnabled: boolean, shopEnabled: boolean): boolean {
+  return platformEnabled && shopEnabled;
+}
+
 export function mainBranchOf(branches: readonly Branch[]): Branch | null {
   if (branches.length === 0) return null;
   return [...branches].sort(

@@ -195,6 +195,8 @@ export interface Shop {
   hasKioskPin: boolean;
   /** Self-service mode: customers self-pay + tap "ชำระเงินแล้ว" → order auto paid+completed. */
   selfService: boolean;
+  /** Branch staff may cancel own-branch orders (shop switch, default on). */
+  branchStaffCanCancel: boolean;
   /** Online ordering channel (customers order from the web outside the kiosk). */
   onlineOrderingEnabled: boolean;
   pickupEnabled: boolean;
@@ -481,6 +483,8 @@ export interface PlatformSettings {
   riderAvailabilityMode: RiderAvailabilityMode;
   /** Branch staff may work their own branch's order queue. */
   branchStaffQueueEnabled: boolean;
+  /** Branch staff may cancel own-branch orders (platform switch; shop switch also applies). */
+  branchStaffCancelEnabled: boolean;
   updatedAt: string;
 }
 

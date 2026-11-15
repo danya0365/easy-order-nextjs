@@ -15,6 +15,7 @@ function toSession(r: Row): KioskSession {
     id: r.id,
     shopId: r.shopId,
     label: r.label,
+    branchId: r.branchId ?? null,
     expiresAt: r.expiresAt,
     createdAt: r.createdAt,
   };
@@ -27,6 +28,7 @@ export class DrizzleKioskSessionRepository implements IKioskSessionRepository {
       .values({
         shopId: input.shopId,
         label: input.label ?? null,
+        branchId: input.branchId ?? null,
         expiresAt: input.expiresAt,
       })
       .returning();

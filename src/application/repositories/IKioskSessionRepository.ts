@@ -2,6 +2,8 @@ export interface KioskSession {
   id: string;
   shopId: string;
   label: string | null;
+  /** Branch this kiosk device orders for (null = main branch). */
+  branchId: string | null;
   expiresAt: string;
   createdAt: string;
 }
@@ -9,6 +11,7 @@ export interface KioskSession {
 export interface CreateKioskSessionInput {
   shopId: string;
   label?: string | null;
+  branchId?: string | null;
   expiresAt: string;
 }
 

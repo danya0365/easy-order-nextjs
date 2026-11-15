@@ -10,6 +10,7 @@ import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { AddBranchForm } from "@/src/presentation/components/shop/AddBranchForm";
+import { BranchStaffCancelSwitch } from "@/src/presentation/components/shop/BranchStaffCancelSwitch";
 
 export const dynamic = "force-dynamic";
 
@@ -26,9 +27,11 @@ export default async function ShopBranchesPage({
   const t = await getTranslations("shopPages");
   const tb = await getTranslations("branch");
 
-  const [{ items, total }, list] = await Promise.all([
+  const [{ items, total }, list, shop, platform] = await Promise.all([
     container.branchRepository.pageByShop(shopId, page, 10),
     container.branchRepository.listByShop(shopId),
+    container.shopRepository.findById(shopId),
+    container.platformSettingsRepository.get(),
   ]);
   const mainId = mainBranchOf(list)?.id ?? null;
 
@@ -79,6 +82,14 @@ export default async function ShopBranchesPage({
             <Pager basePath="/shop/branches" page={page} total={total} pageSize={10} />
           </>
         )}
+      </Card>
+
+      <Card>
+        <CardHeader title={tb("staffSettingsTitle")} />
+        <BranchStaffCancelSwitch
+          enabled={shop?.branchStaffCanCancel ?? true}
+          platformEnabled={platform.branchStaffCancelEnabled}
+        />
       </Card>
     </div>
   );

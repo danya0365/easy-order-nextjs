@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, ShoppingBag } from "lucide-react";
+import { ShoppingBag, Store } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -21,6 +21,10 @@ import { Card } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { OrderQrGate } from "@/src/presentation/components/order/OrderQrGate";
 import { OnlineOrdering } from "@/src/presentation/components/order/OnlineOrdering";
+import {
+  BranchSwitcher,
+  type BranchChoice,
+} from "@/src/presentation/components/order/BranchSwitcher";
 import { shopBySlug } from "@/src/infrastructure/request/shop-lookups";
 
 export const dynamic = "force-dynamic";
@@ -134,6 +138,45 @@ export default async function OnlineOrderPage({
     await getOrderBranchId(slug, shop.id),
   );
   const closed = branchClosedReason(branch);
+  // Multi-branch: customer may switch among the shop's active branches; closed
+  // ones are listed disabled with the reason (see selectOrderBranchAction).
+  const tb = await getTranslations("branch");
+  const choices: BranchChoice[] =
+    branches.length > 1
+      ? branches
+          .filter((b) => b.isActive)
+          .map((b) => ({
+            id: b.id,
+            name: b.name,
+            address: b.address,
+            closedReason: branchClosedReason(b),
+          }))
+      : [];
+  const anyOpen = choices.some((c) => !c.closedReason);
+  if (closed && anyOpen) {
+    // Remembered/main branch is closed but others are open: no dead end.
+    return (
+      <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pb-28 pt-4">
+        <div>
+          <h1 className="text-xl font-bold text-foreground">{shop.name}</h1>
+          <BranchSwitcher
+            slug={slug}
+            currentId={branch?.id ?? null}
+            currentName={branch?.name ?? null}
+            choices={choices}
+            defaultOpen
+          />
+        </div>
+        <div data-testid="order-branch-closed">
+          <EmptyState
+            icon={<Store className="size-10 text-muted" />}
+            title={tb("currentClosedTitle")}
+            description={tb("currentClosedDesc", { reason: closed })}
+          />
+        </div>
+      </main>
+    );
+  }
   if (closed) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 px-4 py-10">
@@ -222,14 +265,13 @@ export default async function OnlineOrderPage({
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-4">
       <h1 className="text-xl font-bold text-foreground">{shop.name}</h1>
-      {branch && branches.length > 1 && (
-        <p
-          className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-0.5 text-sm font-medium text-brand-700"
-          data-testid="order-branch-name"
-        >
-          <MapPin className="size-4" />
-          {t("orderBranchLabel", { name: branch.name })}
-        </p>
+      {branch && choices.length > 1 && (
+        <BranchSwitcher
+          slug={slug}
+          currentId={branch.id}
+          currentName={branch.name}
+          choices={choices}
+        />
       )}
       <OnlineOrdering
         slug={slug}
@@ -247,6 +289,7 @@ export default async function OnlineOrderPage({
         itemDetailEnabled={extras.itemDetailEnabled}
         rememberedContact={rememberedContact}
         customerLinkMode={shop.customerLinkMode}
+        branchName={branch && choices.length > 1 ? branch.name : null}
       />
     </main>
   );

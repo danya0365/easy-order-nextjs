@@ -1,13 +1,12 @@
 "use client";
 
 import { useTransition } from "react";
-import { Power, PowerOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
 import { setBranchAcceptingOrdersAction } from "@/src/presentation/actions/branch-actions";
 import { useToast } from "@/src/presentation/components/ui/Toast";
-import { cn } from "@/src/presentation/components/ui/cn";
+import { ToggleSwitch } from "@/src/presentation/components/ui/ToggleSwitch";
 
 /** Temporary open/closed-for-orders switch for ONE branch. */
 export function BranchAcceptingToggle({
@@ -22,39 +21,25 @@ export function BranchAcceptingToggle({
   const toast = useToast();
   const router = useRouter();
 
-  function onClick() {
+  function onChange(next: boolean) {
     start(async () => {
-      const res = await setBranchAcceptingOrdersAction(
-        branchId,
-        !acceptingOrders,
-      );
+      const res = await setBranchAcceptingOrdersAction(branchId, next);
       if (res.error) toast.error(res.error);
-      else router.refresh();
+      else {
+        toast.success(next ? t("acceptingNowOn") : t("acceptingNowOff"));
+        router.refresh();
+      }
     });
   }
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <ToggleSwitch
+      checked={acceptingOrders}
+      onChange={onChange}
       disabled={pending}
-      data-testid="branch-accepting-toggle"
-      className={cn(
-        "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition disabled:opacity-50",
-        acceptingOrders
-          ? "bg-success-surface text-success hover:opacity-80"
-          : "bg-muted-surface text-muted hover:opacity-80",
-      )}
-    >
-      {acceptingOrders ? (
-        <Power className="size-4" />
-      ) : (
-        <PowerOff className="size-4" />
-      )}
-      {acceptingOrders ? t("acceptingOn") : t("acceptingOff")}
-      <span className="text-muted">
-        {acceptingOrders ? t("acceptingTurnOff") : t("acceptingTurnOn")}
-      </span>
-    </button>
+      testId="branch-accepting-toggle"
+      label={acceptingOrders ? t("acceptingOn") : t("acceptingOff")}
+      hint={acceptingOrders ? t("acceptingOnHint") : t("acceptingOffHint")}
+    />
   );
 }

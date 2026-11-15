@@ -28,6 +28,8 @@ export const shops = sqliteTable(
     // Self-service mode: customers pay themselves and tap "ชำระเงินแล้ว" on the
     // kiosk, which marks the order paid + completed (no staff at the counter).
     selfService: integer({ mode: "boolean" }).notNull().default(false),
+    /** Multi-branch: branch staff may cancel their own branch's orders (shop switch). */
+    branchStaffCanCancel: integer({ mode: "boolean" }).notNull().default(true),
     // Online ordering: customers order by themselves from the web (outside the kiosk).
     onlineOrderingEnabled: integer({ mode: "boolean" }).notNull().default(false),
     // Fulfillment toggles for online orders (kiosk always offers pickup/dine-in).

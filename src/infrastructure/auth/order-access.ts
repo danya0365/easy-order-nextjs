@@ -139,6 +139,12 @@ export async function requireOrderAccess(
 // never selects branch B. The chosen branch is kept in its own signed cookie.
 
 const BRANCH_PREFIX = "eo_branch_";
+/**
+ * The picked branch is remembered for one ordering session only (12 h), so a
+ * customer is never silently sent to yesterday's branch weeks later. Without
+ * it the order goes to the main branch and the customer can switch.
+ */
+export const BRANCH_COOKIE_TTL_MS = 12 * 60 * 60 * 1000;
 
 export function orderBranchCookieName(slug: string): string {
   return `${BRANCH_PREFIX}${slug}`;
@@ -185,7 +191,7 @@ export function verifyBranchClaimToken(
   );
 }
 
-/** Remember the scanned branch on this device (signed, httpOnly, 30 days). */
+/** Remember the scanned/picked branch on this device (signed, httpOnly, 12 h). */
 export async function setOrderBranchCookie(
   slug: string,
   shopId: string,
@@ -197,7 +203,7 @@ export async function setOrderBranchCookie(
     {
       shopId,
       slug: branchScope(slug, branchId),
-      exp: Math.floor((Date.now() + COOKIE_TTL_MS) / 1000),
+      exp: Math.floor((Date.now() + BRANCH_COOKIE_TTL_MS) / 1000),
     },
     secret,
   );
@@ -207,7 +213,7 @@ export async function setOrderBranchCookie(
     secure: isProd,
     sameSite: "lax",
     path: "/",
-    expires: new Date(Date.now() + COOKIE_TTL_MS),
+    expires: new Date(Date.now() + BRANCH_COOKIE_TTL_MS),
   });
 }
 

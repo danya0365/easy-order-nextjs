@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { Minus, Plus, Search, UserPlus, X } from "lucide-react";
+import { MapPin, Minus, Plus, Search, UserPlus, X } from "lucide-react";
 
 import type { MenuItem, OrderPaymentMethod } from "@/src/domain/entities";
 import type { KioskMenuSection } from "@/src/application/use-cases/menu/GetKioskMenuUseCase";
@@ -27,16 +27,50 @@ export interface CustomerOption {
 type Cart = Record<string, number>; // menuItemId -> qty
 const MAX_SUGGESTIONS = 8;
 
+/** Branch choice for walk-in orders (multi-branch shops only). */
+export interface CounterBranchOption {
+  id: string;
+  name: string;
+  /** Not accepting online/kiosk orders right now (walk-in still allowed). */
+  closed?: boolean;
+  /** Menu item ids sold out at this branch (hidden while it is selected). */
+  soldOutIds?: string[];
+}
+
 export function StaffOrderEntry({
-  sections,
+  sections: allSections,
   hasPromptpay,
   customers,
+  branches = [],
+  defaultBranchId = null,
+  branchLocked = false,
 }: {
   sections: KioskMenuSection[];
   hasPromptpay: boolean;
   customers: CustomerOption[];
+  /** >1 entries → show the branch picker (or a fixed label when locked). */
+  branches?: CounterBranchOption[];
+  defaultBranchId?: string | null;
+  /** Branch staff: fixed to their own branch (server enforces it too). */
+  branchLocked?: boolean;
 }) {
   const t = useTranslations("order");
+  const tb = useTranslations("branch");
+  const multi = branches.length > 1 || (branchLocked && branches.length === 1 && !!defaultBranchId);
+  const [branchId, setBranchId] = useState<string | null>(
+    defaultBranchId && branches.some((b) => b.id === defaultBranchId)
+      ? defaultBranchId
+      : branches[0]?.id ?? null,
+  );
+  const branch = branches.find((b) => b.id === branchId) ?? null;
+  // Hide items sold out at the selected branch (menu itself is shop-wide).
+  const sections = useMemo(() => {
+    const sold = new Set(branch?.soldOutIds ?? []);
+    if (sold.size === 0) return allSections;
+    return allSections
+      .map((sec) => ({ ...sec, items: sec.items.filter((i) => !sold.has(i.id)) }))
+      .filter((sec) => sec.items.length > 0);
+  }, [allSections, branch]);
   const toast = useToast();
   const [cart, setCart] = useState<Cart>({});
   const [note, setNote] = useState("");
@@ -124,6 +158,7 @@ export function StaffOrderEntry({
         note: note.trim() || null,
         customerName: name.trim() || null,
         customerPhone: phone.trim() || null,
+        branchId: multi ? branchId : null,
       });
       if (res.ok) setResult(res);
       else toast.error(res.error || t("orderError"));
@@ -144,6 +179,12 @@ export function StaffOrderEntry({
       <div className="mx-auto flex max-w-md flex-col items-center gap-5 py-6 text-center">
         <p className="text-sm text-muted">{t("resultQueueTitle")}</p>
         <p className="text-6xl font-extrabold text-brand-600">{result.orderNo}</p>
+        {result.branchName && (
+          <p className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700" data-testid="result-branch">
+            <MapPin className="size-4" />
+            {tb("orderAtBranch", { name: result.branchName })}
+          </p>
+        )}
         <p className="text-lg font-semibold text-foreground">
           {t("total", { amount: satangToBaht(result.totalSatang ?? 0) })}
         </p>
@@ -184,6 +225,48 @@ export function StaffOrderEntry({
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-bold text-foreground">{t("newOrderTitle")}</h1>
+
+      {multi && branchLocked && branch && (
+        <p className="inline-flex items-center gap-1 self-start rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700" data-testid="counter-branch-fixed">
+          <MapPin className="size-4" />
+          {tb("orderAtBranch", { name: branch.name })}
+        </p>
+      )}
+      {multi && !branchLocked && (
+        <Card>
+          <CardHeader title={tb("counterBranchTitle")} subtitle={tb("counterBranchHint")} />
+          <div className="flex flex-wrap gap-2" role="radiogroup" data-testid="counter-branch-picker">
+            {branches.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                role="radio"
+                aria-checked={b.id === branchId}
+                onClick={() => {
+                  setBranchId(b.id);
+                  // Drop cart lines that are sold out at the newly picked branch.
+                  const sold = new Set(b.soldOutIds ?? []);
+                  if (sold.size)
+                    setCart((prev) =>
+                      Object.fromEntries(Object.entries(prev).filter(([id]) => !sold.has(id))),
+                    );
+                }}
+                data-testid="counter-branch-option"
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ring-1 transition",
+                  b.id === branchId
+                    ? "bg-brand-500 text-on-brand ring-brand-500"
+                    : "bg-card text-foreground ring-border hover:bg-muted-surface",
+                )}
+              >
+                <MapPin className="size-4" />
+                {b.name}
+                {b.closed && <span className="text-xs opacity-80">({tb("statusClosed")})</span>}
+              </button>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Customer picker */}
       <Card>

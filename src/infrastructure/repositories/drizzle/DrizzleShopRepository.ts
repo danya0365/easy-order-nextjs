@@ -25,6 +25,7 @@ function toShop(r: Row): Shop {
     promptpayTarget: r.promptpayTarget,
     hasKioskPin: r.kioskPinHash != null,
     selfService: r.selfService,
+    branchStaffCanCancel: r.branchStaffCanCancel ?? true,
     onlineOrderingEnabled: r.onlineOrderingEnabled,
     pickupEnabled: r.pickupEnabled,
     deliveryEnabled: r.deliveryEnabled,
@@ -174,6 +175,15 @@ export class DrizzleShopRepository implements IShopRepository {
     const [r] = await db
       .update(schema.shops)
       .set({ selfService: on })
+      .where(eq(schema.shops.id, id))
+      .returning();
+    return toShop(r);
+  }
+
+  async setBranchStaffCanCancel(id: string, on: boolean): Promise<Shop> {
+    const [r] = await db
+      .update(schema.shops)
+      .set({ branchStaffCanCancel: on })
       .where(eq(schema.shops.id, id))
       .returning();
     return toShop(r);

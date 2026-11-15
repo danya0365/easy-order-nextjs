@@ -33,5 +33,7 @@ export const platformSettings = sqliteTable("platform_settings", {
   riderAvailabilityMode: text({ enum: ["global", "per_shop"] }).notNull().default("global"),
   /** Branch staff may work their branch's order queue (accept → complete, assign rider). */
   branchStaffQueueEnabled: integer({ mode: "boolean" }).notNull().default(true),
+  /** Platform switch: branch staff may cancel own-branch orders (still needs the shop switch). */
+  branchStaffCancelEnabled: integer({ mode: "boolean" }).notNull().default(true),
   updatedAt: updatedAt(),
 });

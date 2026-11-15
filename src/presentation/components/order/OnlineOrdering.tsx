@@ -59,7 +59,10 @@ export function OnlineOrdering({
   itemDetailEnabled = false,
   rememberedContact = null,
   customerLinkMode = "auto",
+  branchName = null,
 }: {
+  /** Multi-branch shops only: branch taking this order (shown in the sheet). */
+  branchName?: string | null;
   /** Name + phone of the customer this device is remembered for (member cookie). */
   rememberedContact?: { name: string; phone: string } | null;
   /** Shop setting: link the order's customer + remember this device. */
@@ -237,6 +240,12 @@ export function OnlineOrdering({
         </span>
         <p className="text-lg text-muted">{t("resultQueueTitle")}</p>
         <p className="text-6xl font-extrabold text-brand-600">{result.orderNo}</p>
+        {result.branchName && (
+          <p className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700" data-testid="result-branch">
+            <MapPin className="size-4" />
+            {t("resultBranch", { name: result.branchName })}
+          </p>
+        )}
         <p className="text-lg font-semibold text-foreground">
           {t("total", { amount: satangToBaht(result.totalSatang ?? 0) })}
         </p>
@@ -476,7 +485,15 @@ export function OnlineOrdering({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-border px-5 py-3">
-              <h2 className="text-lg font-bold text-foreground">{t("sheetTitle")}</h2>
+              <div className="min-w-0">
+                <h2 className="text-lg font-bold text-foreground">{t("sheetTitle")}</h2>
+                {branchName && (
+                  <p className="inline-flex items-center gap-1 text-xs font-medium text-brand-700" data-testid="sheet-branch">
+                    <MapPin className="size-3.5" />
+                    {t("resultBranch", { name: branchName })}
+                  </p>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => setSheetOpen(false)}

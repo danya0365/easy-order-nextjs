@@ -24,9 +24,12 @@ import {
 export function KioskControl({
   hasKioskPin,
   selfService,
+  branches = [],
 }: {
   hasKioskPin: boolean;
   selfService: boolean;
+  /** Multi-branch shops: pick which branch this kiosk device orders for (first = main). */
+  branches?: { id: string; name: string; note?: string | null }[];
 }) {
   const t = useTranslations("kiosk");
   const [pinState, pinAction, pinPending] = useActionState<FormState, FormData>(
@@ -138,7 +141,24 @@ export function KioskControl({
           {t("kioskActivateTitle")}
         </h3>
         <p className="mb-3 text-sm text-muted">{t("kioskActivateDesc")}</p>
-        <form action={activate} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <form action={activate} className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+          {branches.length > 1 && (
+            <FormField label={t("kioskBranchLabel")} htmlFor="kioskBranch" hint={t("kioskBranchHint")}>
+              <select
+                id="kioskBranch"
+                name="branchId"
+                defaultValue={branches[0]?.id}
+                data-testid="kiosk-branch-select"
+                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200 sm:w-64"
+              >
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.note ? `${b.name} (${b.note})` : b.name}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+          )}
           <FormField label={t("kioskLabelLabel")} htmlFor="kioskLabel">
             <Input
               id="kioskLabel"
