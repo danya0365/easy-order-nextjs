@@ -107,6 +107,12 @@ export class LuckyWheelService {
     };
   }
 
+  /** Cheap on/off check for navigation (no shop lookup — caller already has it). */
+  async isOn(shopId: string): Promise<boolean> {
+    const [settings, campaign] = await Promise.all([this.d.platform.get(), this.d.wheel.getCampaign(shopId)]);
+    return !!settings.luckyWheelEnabled && !!campaign?.isActive;
+  }
+
   // ── Owner settings ────────────────────────────────────────────────────────
   async updateCampaign(shopId: string, input: UpdateSpinCampaignInput): Promise<SpinCampaign> {
     const clean: UpdateSpinCampaignInput = {};
