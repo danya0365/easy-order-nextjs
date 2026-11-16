@@ -49,12 +49,14 @@ export function PlatformFeatureSwitchesForm({
   riderAvailabilityMode,
   branchStaffQueueEnabled,
   branchStaffCancelEnabled,
+  luckyWheelEnabled,
 }: {
   menuOptionsEnabled: boolean;
   itemDetailEnabled: boolean;
   riderAvailabilityMode: "global" | "per_shop";
   branchStaffQueueEnabled: boolean;
   branchStaffCancelEnabled: boolean;
+  luckyWheelEnabled: boolean;
 }) {
   const t = useTranslations("adminConfig");
   const [state, action, pending] = useActionState<AdminConfigState, FormData>(
@@ -67,6 +69,7 @@ export function PlatformFeatureSwitchesForm({
       <Switch name="itemDetailEnabled" checked={itemDetailEnabled} label={t("switchItemDetail")} hint={t("switchItemDetailHint")} />
       <Switch name="branchStaffQueueEnabled" checked={branchStaffQueueEnabled} label={t("switchBranchStaffQueue")} hint={t("switchBranchStaffQueueHint")} />
       <Switch name="branchStaffCancelEnabled" checked={branchStaffCancelEnabled} label={t("switchBranchStaffCancel")} hint={t("switchBranchStaffCancelHint")} />
+      <Switch name="luckyWheelEnabled" checked={luckyWheelEnabled} label={t("switchLuckyWheel")} hint={t("switchLuckyWheelHint")} />
       <div className="flex flex-col gap-3">
         <span className="text-sm font-medium text-foreground">{t("riderAvailTitle")}</span>
         <RiderAvailabilityRadio value="global" label={t("riderAvailGlobal")} checked={riderAvailabilityMode !== "per_shop"} />

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Ban, Check, MapPin, Minus, Plus, ShoppingBag, X } from "lucide-react";
+import { Ban, Check, FerrisWheel, MapPin, Minus, Plus, ShoppingBag, X } from "lucide-react";
 import { SoldOutOverlay } from "@/src/presentation/components/public-menu/MenuItemCard";
 
 import type {
@@ -60,7 +60,10 @@ export function OnlineOrdering({
   rememberedContact = null,
   customerLinkMode = "auto",
   branchName = null,
+  wheelEnabled = false,
 }: {
+  /** Lucky wheel is on for this shop: show the "you'll get a spin" entry. */
+  wheelEnabled?: boolean;
   /** Multi-branch shops only: branch taking this order (shown in the sheet). */
   branchName?: string | null;
   /** Name + phone of the customer this device is remembered for (member cookie). */
@@ -91,6 +94,7 @@ export function OnlineOrdering({
   } | null;
 }) {
   const t = useTranslations("order");
+  const tw = useTranslations("wheel");
   const tOpt = useTranslations("menuOptions");
   const toast = useToast();
   const mc = useMenuCart(sections, optionGroups);
@@ -278,6 +282,19 @@ export function OnlineOrdering({
             />
             <p className="max-w-xs text-xs text-muted">{t("historyQrHint")}</p>
           </div>
+        )}
+        {wheelEnabled && (
+          <Link
+            href={`${baseHref}/wheel`}
+            data-testid="result-wheel"
+            className="flex w-full max-w-xs items-center gap-3 rounded-2xl bg-gradient-to-r from-brand-500 to-amber-400 p-4 text-left text-on-brand shadow-md"
+          >
+            <FerrisWheel className="size-8 shrink-0" />
+            <span>
+              <span className="block font-bold">{tw("entryTitle")}</span>
+              <span className="block text-xs opacity-90">{tw("entryAfterPay")}</span>
+            </span>
+          </Link>
         )}
         <Link
           href={baseHref}

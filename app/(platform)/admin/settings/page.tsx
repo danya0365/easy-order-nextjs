@@ -34,6 +34,7 @@ export default async function AdminSettingsPage() {
           riderAvailabilityMode={settings.riderAvailabilityMode}
           branchStaffQueueEnabled={settings.branchStaffQueueEnabled}
           branchStaffCancelEnabled={settings.branchStaffCancelEnabled}
+          luckyWheelEnabled={settings.luckyWheelEnabled}
         />
       </Card>
     </div>

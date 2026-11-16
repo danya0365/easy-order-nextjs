@@ -38,6 +38,7 @@ import { DrizzleLoyaltyPointsBalanceRepository } from "@/src/infrastructure/repo
 import { DrizzleLoyaltyPointsTransactionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyPointsTransactionRepository";
 import { DrizzleLoyaltyPointsRewardRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLoyaltyPointsRewardRepository";
 import { DrizzleShopPromotionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleShopPromotionRepository";
+import { DrizzleLuckyWheelRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLuckyWheelRepository";
 
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import type { IShopCategoryRepository } from "@/src/application/repositories/IShopCategoryRepository";
@@ -75,6 +76,7 @@ import type { IMemberSignupGuardRepository } from "@/src/application/repositorie
 import { DrizzleRiderRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleRiderRepository";
 import type { IRiderRepository } from "@/src/application/repositories/IRiderRepository";
 import type { IShopPromotionRepository } from "@/src/application/repositories/IShopPromotionRepository";
+import type { ILuckyWheelRepository } from "@/src/application/repositories/ILuckyWheelRepository";
 
 /**
  * Server-side composition root. The 🟢 generic core (account/auth, billing,
@@ -146,6 +148,8 @@ class Container extends GenericContainer {
     new DrizzleLoyaltyPointsRewardRepository();
   readonly shopPromotionRepository: IShopPromotionRepository =
     new DrizzleShopPromotionRepository();
+  readonly luckyWheelRepository: ILuckyWheelRepository =
+    new DrizzleLuckyWheelRepository();
   readonly memberSignupGuardRepository: IMemberSignupGuardRepository =
     new DrizzleMemberSignupGuardRepository();
   readonly adminLoginLinkRepository: IAdminLoginLinkRepository =

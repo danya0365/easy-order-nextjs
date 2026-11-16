@@ -12,6 +12,7 @@ import { requireKioskSession, requireKioskShop } from "@/src/infrastructure/auth
 import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
 import {
   getOrderBranchId,
+  mintWheelClaimToken,
   requireOrderAccess,
 } from "@/src/infrastructure/auth/order-access";
 import {
@@ -35,6 +36,7 @@ import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
 import { withCustomerNotes, type QueueOrder } from "@/src/presentation/lib/order-notes";
 import { mainBranchOf } from "@/src/domain/services/branch-ordering";
 import { COUNTER_BRANCH_COOKIE } from "@/src/presentation/lib/counter-branch";
+import { grantWheelTicketsSafe, revokeWheelTicketsSafe, wheelService } from "@/src/presentation/lib/lucky-wheel";
 import type {
   OrderStatus,
   OrderPaymentMethod,
@@ -70,6 +72,8 @@ export interface PlaceOrderResult {
   bindQrDataUrl?: string;
   /** Branch that took the order — only set for multi-branch shops. */
   branchName?: string;
+  /** Kiosk receipt: QR a member scans to claim this order's lucky-wheel spins. */
+  wheelClaimQrDataUrl?: string;
 }
 
 /** Untrusted client cart → plain shape (ids as strings, bounded option lists). */
@@ -167,7 +171,24 @@ export async function placeOrderAction(
       linkUrl: "/shop/orders",
     });
 
-    return await buildOrderResult(shopId, order, input.customerPhone ?? null);
+    const result = await buildOrderResult(shopId, order, input.customerPhone ?? null);
+    // Lucky wheel: anonymous kiosk orders get a claim QR (members with a phone
+    // on the order receive their tickets automatically once paid).
+    if (!order.customerId) {
+      try {
+        const g = await wheelService().gate(shopId);
+        if (g.enabled && g.shop && g.campaign && order.totalSatang >= g.campaign.minOrderSatang) {
+          const token = mintWheelClaimToken(g.shop.slug, shopId, order.id);
+          if (token) {
+            const url = `${await getBaseUrl()}/s/${g.shop.slug}/wheel/claim?o=${encodeURIComponent(order.id)}&t=${encodeURIComponent(token)}`;
+            result.wheelClaimQrDataUrl = await renderQrDataUrl(url);
+          }
+        }
+      } catch {
+        /* the wheel is optional — never block the order */
+      }
+    }
+    return result;
   } catch (e) {
     return { error: (e as Error).message };
   }
@@ -402,6 +423,7 @@ export async function selfConfirmOrderAction(
         container.loyaltyPointsTransactionRepository,
       ),
     ).execute(shopId, orderId);
+    await grantWheelTicketsSafe(order);
     revalidatePath("/shop/orders");
     return { ok: true, orderNo: order.orderNo };
   } catch (e) {
@@ -533,11 +555,14 @@ export async function advanceOrderStatusAction(
       throw new Error("ร้านนี้ไม่อนุญาตให้พนักงานสาขายกเลิกออเดอร์ กรุณาแจ้งเจ้าของร้าน");
     }
     const why = typeof reason === "string" ? reason.trim().slice(0, 200) : "";
-    await new AdvanceOrderStatusUseCase(container.orderRepository).execute(
+    const advanced = await new AdvanceOrderStatusUseCase(container.orderRepository).execute(
       shopId,
       orderId,
       to,
     );
+    // Lucky wheel: completed → grant tickets; cancelled → revoke unused ones.
+    if (to === "cancelled") await revokeWheelTicketsSafe({ id: orderId, shopId });
+    else if (to === "completed") await grantWheelTicketsSafe(advanced);
     await container.auditLogger.record({
       actorUserId: actor.id,
       actorRole: actor.role,
@@ -566,7 +591,7 @@ export async function confirmOrderPaymentAction(
     const scope = await orderQueueScope();
     const { actor, shopId } = scope;
     await assertOrderInQueueScope(scope, orderId);
-    await new ConfirmOrderPaymentUseCase(
+    const paidOrder = await new ConfirmOrderPaymentUseCase(
       container.orderRepository,
       new EarnPointsFromOrderUseCase(
         container.shopRepository,
@@ -578,6 +603,7 @@ export async function confirmOrderPaymentAction(
       shopId,
       orderId,
     );
+    await grantWheelTicketsSafe(paidOrder);
     await container.auditLogger.record({
       actorUserId: actor.id,
       actorRole: actor.role,

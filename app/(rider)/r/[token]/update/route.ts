@@ -1,4 +1,5 @@
 import { container } from "@/src/infrastructure/di/container";
+import { grantWheelTicketsSafe } from "@/src/presentation/lib/lucky-wheel";
 import { RiderUpdateJobUseCase, type RiderJobAction } from "@/src/application/use-cases/rider/RiderUseCases";
 import { sessionFromCookieValue } from "@/src/infrastructure/auth/rider-session";
 import { riderRedirect } from "../../../rider/redirect";
@@ -16,7 +17,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ token: string 
     const action = String(form.get("do") ?? "") as RiderJobAction;
     if (session && orderId && ACTIONS.includes(action)) {
       const shopId = session.memberships[0].shopId;
-      await new RiderUpdateJobUseCase(container.orderRepository).execute(session, shopId, orderId, action);
+      await grantWheelTicketsSafe(
+      await new RiderUpdateJobUseCase(container.orderRepository).execute(session, shopId, orderId, action),
+    );
       err = "";
     }
   } catch {

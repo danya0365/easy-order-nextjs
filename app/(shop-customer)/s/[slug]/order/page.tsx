@@ -21,6 +21,7 @@ import { Card } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { OrderQrGate } from "@/src/presentation/components/order/OrderQrGate";
 import { OnlineOrdering } from "@/src/presentation/components/order/OnlineOrdering";
+import { wheelService } from "@/src/presentation/lib/lucky-wheel";
 import {
   BranchSwitcher,
   type BranchChoice,
@@ -262,6 +263,8 @@ export default async function OnlineOrderPage({
     sections.flatMap((sec) => sec.items.map((i) => i.id)),
   );
 
+  const wheelOn = !!(await wheelService().gate(shop.id).catch(() => null))?.enabled;
+
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-4">
       <h1 className="text-xl font-bold text-foreground">{shop.name}</h1>
@@ -290,6 +293,7 @@ export default async function OnlineOrderPage({
         rememberedContact={rememberedContact}
         customerLinkMode={shop.customerLinkMode}
         branchName={branch && choices.length > 1 ? branch.name : null}
+        wheelEnabled={wheelOn}
       />
     </main>
   );
