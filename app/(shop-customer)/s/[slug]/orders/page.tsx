@@ -11,6 +11,7 @@ import { container } from "@/src/infrastructure/di/container";
 import { getMemberToken } from "@/src/infrastructure/auth/member";
 import { GetMemberCardUseCase } from "@/src/application/use-cases/member/GetMemberCardUseCase";
 import { MemberCard } from "@/src/presentation/components/member/MemberCard";
+import { WheelEntryBanner } from "@/src/presentation/components/wheel/WheelEntryBanner";
 import { GetCustomerOrderHistoryUseCase } from "@/src/application/use-cases/member/GetCustomerOrderHistoryUseCase";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Badge } from "@/src/presentation/components/ui/Badge";
@@ -124,6 +125,7 @@ export default async function ShopCustomerOrdersPage({
       {history && card ? (
         <>
           <MemberCard slug={slug} card={card} />
+          <WheelEntryBanner slug={slug} shopId={shop.id} customerId={history.customer.id} />
           <Card>
             <CardHeader title={shop.name} />
             {history.orders.items.length === 0 ? (

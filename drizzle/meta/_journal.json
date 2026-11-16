@@ -253,6 +253,13 @@
       "when": 1798000000000,
       "tag": "0035_multi_branch_v2",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1798100000000,
+      "tag": "0036_lucky_wheel",
+      "breakpoints": true
     }
   ]
 }

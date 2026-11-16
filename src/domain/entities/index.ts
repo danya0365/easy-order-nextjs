@@ -485,6 +485,8 @@ export interface PlatformSettings {
   branchStaffQueueEnabled: boolean;
   /** Branch staff may cancel own-branch orders (platform switch; shop switch also applies). */
   branchStaffCancelEnabled: boolean;
+  /** Platform switch: lucky wheel feature (shop campaign must also be on). */
+  luckyWheelEnabled: boolean;
   updatedAt: string;
 }
 
@@ -821,4 +823,84 @@ export const CUSTOMER_LINK_MODES = ["auto", "confirm", "off"] as const;
 export type CustomerLinkMode = (typeof CUSTOMER_LINK_MODES)[number];
 export function toCustomerLinkMode(v: unknown): CustomerLinkMode {
   return (CUSTOMER_LINK_MODES as readonly unknown[]).includes(v) ? (v as CustomerLinkMode) : "auto";
+}
+
+// ── Lucky wheel (หมุนวงล้อ) ──────────────────────────────────────────────────
+export type SpinPrizeType =
+  | "points"
+  | "free_item"
+  | "gift"
+  | "thanks"
+  | "coupon_percent"
+  | "coupon_amount";
+
+export interface SpinCampaign {
+  id: string;
+  shopId: string;
+  name: string;
+  isActive: boolean;
+  minOrderSatang: number;
+  ticketsPerOrder: number;
+  monthlyFreeEnabled: boolean;
+  monthlyWindowDays: number;
+  rewardExpiryDays: number;
+  rulesText: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SpinPrize {
+  id: string;
+  shopId: string;
+  campaignId: string;
+  type: SpinPrizeType;
+  name: string;
+  weight: number;
+  stock: number | null;
+  dailyCap: number | null;
+  pointsAmount: number | null;
+  menuItemId: string | null;
+  costSatang: number;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type SpinTicketSource = "order" | "monthly" | "kiosk_claim";
+export type SpinTicketStatus = "available" | "used" | "revoked";
+
+export interface SpinTicket {
+  id: string;
+  shopId: string;
+  customerId: string;
+  source: SpinTicketSource;
+  sourceKey: string;
+  orderId: string | null;
+  status: SpinTicketStatus;
+  expiresAt: string | null;
+  usedAt: string | null;
+  createdAt: string;
+}
+
+export type SpinRewardStatus = "none" | "pending" | "redeemed";
+
+export interface SpinResult {
+  id: string;
+  shopId: string;
+  customerId: string;
+  ticketId: string;
+  prizeId: string | null;
+  prizeType: SpinPrizeType;
+  prizeName: string;
+  pointsAwarded: number;
+  costSatang: number;
+  dayKey: string;
+  rewardCode: string | null;
+  rewardStatus: SpinRewardStatus;
+  expiresAt: string | null;
+  redeemedAt: string | null;
+  redeemedBy: string | null;
+  redeemedBranchId: string | null;
+  createdAt: string;
 }

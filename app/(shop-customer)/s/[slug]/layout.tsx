@@ -7,6 +7,7 @@ import { ShopShellHeader } from "@/src/presentation/components/layout/ShopShellH
 import { ShopNavPending } from "@/src/presentation/components/layout/ShopNavPending";
 import { ShopTabBar } from "@/src/presentation/components/layout/ShopTabBar";
 import { shopBySlug, shopImages } from "@/src/infrastructure/request/shop-lookups";
+import { wheelService } from "@/src/presentation/lib/lucky-wheel";
 
 /**
  * Per-shop customer PWA shell: shop-scoped header + bottom tabs.
@@ -24,7 +25,10 @@ export default async function ShopCustomerLayout({
   const shop = await shopBySlug(slug);
   if (!shop) notFound();
 
-  const images = await shopImages(shop.id);
+  const [images, wheelGate] = await Promise.all([
+    shopImages(shop.id),
+    wheelService().gate(shop.id).catch(() => null),
+  ]);
   const profileImage = images.find((i) => i.kind === "profile") ?? null;
 
   return (
@@ -43,6 +47,7 @@ export default async function ShopCustomerLayout({
         slug={slug}
         showLoyalty={isLoyaltyEffective(shop)}
         showPromotions={isPromotionsEffective(shop)}
+        showWheel={!!wheelGate?.enabled}
       />
     </div>
   );

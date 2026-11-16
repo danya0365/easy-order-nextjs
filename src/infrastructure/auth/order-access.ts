@@ -243,3 +243,24 @@ export async function getOrderBranchId(
   });
   return ok ? branchId : null;
 }
+
+// ── Lucky-wheel kiosk receipt claim ──────────────────────────────────────────
+// Token bound to (shop, slug, order): the signed "slug" is `<slug>#spin:<orderId>`.
+const WHEEL_CLAIM_TTL_S = 30 * 24 * 60 * 60;
+
+export function mintWheelClaimToken(slug: string, shopId: string, orderId: string): string | null {
+  const secret = accessSecret();
+  if (!secret) return null;
+  return signOrderAccessToken(
+    { shopId, slug: `${slug}#spin:${orderId}`, exp: Math.floor(Date.now() / 1000) + WHEEL_CLAIM_TTL_S },
+    secret,
+  );
+}
+
+export function verifyWheelClaimToken(token: string, slug: string, shopId: string, orderId: string): boolean {
+  const secret = accessSecret();
+  if (!secret || !orderId) return false;
+  return (
+    verifyOrderAccessToken(token, { shopId, slug: `${slug}#spin:${orderId}`, secret, now: new Date() }) !== null
+  );
+}

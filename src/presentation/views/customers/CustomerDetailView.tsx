@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, Phone } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, FerrisWheel, MapPin, Phone } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import type { CrmAccess } from "@/src/infrastructure/auth/crm-access";
@@ -14,6 +14,7 @@ import { Card } from "@/src/presentation/components/ui/Card";
 import { StatCard } from "@/src/presentation/components/ui/StatCard";
 import { CustomerDetailActions } from "@/src/presentation/components/shop/CustomerDetailActions";
 import { PendingMemberActions } from "@/src/presentation/components/shop/PendingMemberActions";
+import { RedeemRewardButton } from "@/src/presentation/components/wheel/RedeemRewardButton";
 import { maskPhone, signupChannel } from "@/src/domain/services/customer-crm";
 import { satangToBaht } from "@/src/presentation/lib/money";
 import { formatDate, formatDateTime } from "@/src/presentation/lib/format-date";
@@ -70,6 +71,10 @@ export async function CustomerDetailView({
     customerQrDataUrl(shopId, customer.publicCode),
     customer.onlineOrderReviewedBy ? container.userRepository.findById(customer.onlineOrderReviewedBy) : null,
   ]);
+  const wheelPending = (
+    await container.luckyWheelRepository.pageResults(shopId, { customerId: customer.id, rewardStatus: "pending" }, 1, 10)
+  ).items;
+  const tw = await getTranslations("wheel");
   const actorIds = [...new Set(timeline.map((e) => e.actorUserId).filter((x): x is string => !!x))].slice(0, 20);
   const actors = new Map(
     (await Promise.all(actorIds.map((a) => container.userRepository.findById(a)))).filter(Boolean).map((u) => [u!.id, u!.email]),
@@ -151,6 +156,29 @@ export async function CustomerDetailView({
         <StatCard label={t("avgTicket")} value={satangToBaht(stats.avgTicketSatang)} />
         <StatCard label={t("points")} value={balance?.currentPoints ?? 0} />
       </div>
+
+      {wheelPending.length > 0 && (
+        <Card className="flex flex-col gap-2" data-testid="customer-wheel-rewards">
+          <p className="inline-flex items-center gap-2 font-semibold text-foreground">
+            <FerrisWheel className="size-4 text-brand-600" />
+            {tw("customerRewardsTitle")}
+          </p>
+          <ul className="divide-y divide-border">
+            {wheelPending.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                <span>
+                  <span className="font-semibold text-foreground">{r.prizeName}</span>
+                  <span className="ml-2 font-mono text-xs text-muted">{r.rewardCode}</span>
+                  {r.expiresAt && (
+                    <span className="block text-xs text-muted">{tw("expiresAt", { date: formatDateTime(r.expiresAt) })}</span>
+                  )}
+                </span>
+                <RedeemRewardButton resultId={r.id} size="sm" />
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
         <div className="flex min-w-0 flex-col gap-4">

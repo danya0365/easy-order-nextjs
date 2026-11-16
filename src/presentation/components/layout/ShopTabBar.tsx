@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  FerrisWheel,
   Gift,
   History,
   Megaphone,
@@ -21,7 +22,8 @@ type NavLabelKey =
   | "navShopOrder"
   | "navShopOrders"
   | "navLoyalty"
-  | "navPromotions";
+  | "navPromotions"
+  | "navWheel";
 
 interface Tab {
   href: string;
@@ -47,10 +49,12 @@ export function ShopTabBar({
   slug,
   showLoyalty = false,
   showPromotions = false,
+  showWheel = false,
 }: {
   slug: string;
   showLoyalty?: boolean;
   showPromotions?: boolean;
+  showWheel?: boolean;
 }) {
   const t = useTranslations("layout");
   const pathname = usePathname();
@@ -79,6 +83,15 @@ export function ShopTabBar({
       active: (p) => p === `${base}/orders` || p.startsWith(`${base}/orders/`),
     },
   ];
+
+  if (showWheel) {
+    tabs.push({
+      href: `${base}/wheel`,
+      label: "navWheel",
+      icon: FerrisWheel,
+      active: (p) => p === `${base}/wheel` || p.startsWith(`${base}/wheel/`),
+    });
+  }
 
   // Priority: loyalty first, then promotions.
   if (showLoyalty) {

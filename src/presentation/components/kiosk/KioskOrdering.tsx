@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useTranslations } from "next-intl";
-import { Check, ChevronDown, MapPin, Minus, Plus, ShoppingCart } from "lucide-react";
+import { Check, ChevronDown, FerrisWheel, MapPin, Minus, Plus, ShoppingCart } from "lucide-react";
 
 import type { MenuItem, MenuOptionGroup, OrderPaymentMethod } from "@/src/domain/entities";
 import { formatOrderLineOptions } from "@/src/domain/services/menu-options";
@@ -201,21 +201,43 @@ export function KioskOrdering({
         </ul>
       </div>
     );
-    const bindQrBlock = result.bindQrDataUrl && (
-      <div className="mt-2 flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4">
-        <p className="text-base font-semibold text-foreground">
-          {t("historyQrTitle")}
-        </p>
-        {/* eslint-disable-next-line @next/next/no-img-element -- data URL QR, not a remote asset */}
-        <img
-          src={result.bindQrDataUrl}
-          alt={t("historyQrTitle")}
-          className="size-48 rounded-xl border border-border bg-card p-2"
-        />
-        <p className="max-w-xs text-center text-sm text-muted">
-          {t("historyQrHint")}
-        </p>
-      </div>
+    const bindQrBlock = (result.bindQrDataUrl || result.wheelClaimQrDataUrl) && (
+      <>
+        {result.bindQrDataUrl && (
+          <div className="mt-2 flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4">
+            <p className="text-base font-semibold text-foreground">
+              {t("historyQrTitle")}
+            </p>
+            {/* eslint-disable-next-line @next/next/no-img-element -- data URL QR, not a remote asset */}
+            <img
+              src={result.bindQrDataUrl}
+              alt={t("historyQrTitle")}
+              className="size-48 rounded-xl border border-border bg-card p-2"
+            />
+            <p className="max-w-xs text-center text-sm text-muted">
+              {t("historyQrHint")}
+            </p>
+          </div>
+        )}
+        {result.wheelClaimQrDataUrl && (
+          <div
+            className="mt-2 flex flex-col items-center gap-2 rounded-2xl border border-brand-200 bg-brand-50 p-4"
+            data-testid="kiosk-wheel-claim"
+          >
+            <p className="inline-flex items-center gap-2 text-base font-semibold text-brand-700">
+              <FerrisWheel className="size-5" />
+              {t("wheelClaimTitle")}
+            </p>
+            {/* eslint-disable-next-line @next/next/no-img-element -- data URL QR, not a remote asset */}
+            <img
+              src={result.wheelClaimQrDataUrl}
+              alt={t("wheelClaimTitle")}
+              className="size-44 rounded-xl border border-border bg-card p-2"
+            />
+            <p className="max-w-xs text-center text-sm text-muted">{t("wheelClaimHint")}</p>
+          </div>
+        )}
+      </>
     );
 
     // --- Self-service: pay-yourself, then pick-up (no staff at the counter) ---

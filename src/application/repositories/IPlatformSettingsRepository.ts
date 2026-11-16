@@ -14,6 +14,7 @@ export interface UpdatePlatformSettingsInput {
   riderAvailabilityMode?: RiderAvailabilityMode;
   branchStaffQueueEnabled?: boolean;
   branchStaffCancelEnabled?: boolean;
+  luckyWheelEnabled?: boolean;
 }
 
 /**

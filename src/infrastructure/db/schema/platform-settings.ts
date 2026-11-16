@@ -35,5 +35,7 @@ export const platformSettings = sqliteTable("platform_settings", {
   branchStaffQueueEnabled: integer({ mode: "boolean" }).notNull().default(true),
   /** Platform switch: branch staff may cancel own-branch orders (still needs the shop switch). */
   branchStaffCancelEnabled: integer({ mode: "boolean" }).notNull().default(true),
+  /** Platform switch: lucky wheel (หมุนวงล้อ) feature (still needs the shop switch). */
+  luckyWheelEnabled: integer({ mode: "boolean" }).notNull().default(true),
   updatedAt: updatedAt(),
 });

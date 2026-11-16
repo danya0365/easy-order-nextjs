@@ -29,6 +29,7 @@ function toSettings(r: Row): PlatformSettings {
     riderAvailabilityMode: r.riderAvailabilityMode === "per_shop" ? "per_shop" : "global",
     branchStaffQueueEnabled: r.branchStaffQueueEnabled ?? true,
     branchStaffCancelEnabled: r.branchStaffCancelEnabled ?? true,
+    luckyWheelEnabled: r.luckyWheelEnabled ?? true,
     updatedAt: r.updatedAt,
   };
 }
@@ -49,6 +50,7 @@ function defaults(): PlatformSettings {
     riderAvailabilityMode: "global",
     branchStaffQueueEnabled: true,
     branchStaffCancelEnabled: true,
+    luckyWheelEnabled: true,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -116,6 +118,9 @@ export class DrizzlePlatformSettingsRepository
           : {}),
         ...(input.branchStaffQueueEnabled !== undefined
           ? { branchStaffQueueEnabled: input.branchStaffQueueEnabled }
+          : {}),
+        ...(input.luckyWheelEnabled !== undefined
+          ? { luckyWheelEnabled: input.luckyWheelEnabled }
           : {}),
         ...(input.branchStaffCancelEnabled !== undefined
           ? { branchStaffCancelEnabled: input.branchStaffCancelEnabled }

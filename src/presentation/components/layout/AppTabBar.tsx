@@ -26,6 +26,7 @@ import {
   Users,
   UtensilsCrossed,
   Gift,
+  FerrisWheel,
   type LucideIcon, KeyRound,
   Bike,
   QrCode,
@@ -64,7 +65,9 @@ type NavLabelKey =
   | "navPayments"
   | "navContacts"
   | "navPlatformSettings"
-  | "navCredit";
+  | "navCredit"
+  | "navShopWheel"
+  | "navStaffWheel";
 
 interface NavItem {
   href: string;
@@ -95,6 +98,7 @@ const NAVS = {
     { href: "/shop/reviews", label: "navReviews", icon: Star },
     { href: "/shop/analytics", label: "navAnalytics", icon: BarChart3 },
     { href: "/shop/promote", label: "navPromote", icon: Megaphone },
+    { href: "/shop/wheel", label: "navShopWheel", icon: FerrisWheel },
     { href: "/shop/credit", label: "navCredit", icon: Wallet },
     { href: "/shop/branches", label: "navBranches", icon: Building2 },
     { href: "/shop/staff", label: "navStaff", icon: UserCog },
@@ -123,6 +127,7 @@ const NAVS = {
     { href: "/staff", label: "navNewOrder", icon: ShoppingCart },
     { href: "/staff/orders", label: "navOrders", icon: ClipboardList },
     { href: "/staff/loyalty", label: "navLoyalty", icon: Gift },
+    { href: "/staff/wheel/redeem", label: "navStaffWheel", icon: FerrisWheel },
     { href: "/staff/customers", label: "navCustomers", icon: Users },
     { href: "/staff/notifications", label: "navNotifications", icon: Bell },
     { href: "/staff/settings", label: "navSettings", icon: Settings },

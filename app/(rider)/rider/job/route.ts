@@ -1,4 +1,5 @@
 import { container } from "@/src/infrastructure/di/container";
+import { grantWheelTicketsSafe } from "@/src/presentation/lib/lucky-wheel";
 import { RiderUpdateJobUseCase, type RiderJobAction } from "@/src/application/use-cases/rider/RiderUseCases";
 import { riderSessionFromRequest } from "@/src/infrastructure/auth/rider-session";
 import { riderRedirect } from "../redirect";
@@ -19,7 +20,9 @@ export async function POST(req: Request) {
     if (filter) back = `/rider?shop=${encodeURIComponent(filter)}`;
     if (!session) throw new Error("ลิงก์ไม่ถูกต้องหรือถูกยกเลิกแล้ว");
     if (!orderId || !shopId || !ACTIONS.includes(action)) throw new Error("ข้อมูลไม่ครบ");
-    await new RiderUpdateJobUseCase(container.orderRepository).execute(session, shopId, orderId, action);
+    await grantWheelTicketsSafe(
+      await new RiderUpdateJobUseCase(container.orderRepository).execute(session, shopId, orderId, action),
+    );
   } catch (e) {
     msg = e instanceof Error ? e.message : "ทำรายการไม่สำเร็จ";
   }

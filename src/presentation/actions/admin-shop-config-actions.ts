@@ -72,12 +72,14 @@ export async function updatePlatformFeatureSwitchesAction(
       formData.get("riderAvailabilityMode") === "per_shop" ? "per_shop" : "global";
     const branchStaffQueueEnabled = formData.get("branchStaffQueueEnabled") === "on";
     const branchStaffCancelEnabled = formData.get("branchStaffCancelEnabled") === "on";
+    const luckyWheelEnabled = formData.get("luckyWheelEnabled") === "on";
     await container.platformSettingsRepository.update({
       menuOptionsEnabled,
       itemDetailEnabled,
       riderAvailabilityMode,
       branchStaffQueueEnabled,
       branchStaffCancelEnabled,
+      luckyWheelEnabled,
     });
     await container.auditLogger.record({
       actorUserId: admin.id,
@@ -86,7 +88,7 @@ export async function updatePlatformFeatureSwitchesAction(
       targetType: "platform_settings",
       targetId: "default",
       ip: await getClientIp(),
-      metadata: { settings: "features", menuOptionsEnabled, itemDetailEnabled, riderAvailabilityMode, branchStaffQueueEnabled, branchStaffCancelEnabled },
+      metadata: { settings: "features", menuOptionsEnabled, itemDetailEnabled, riderAvailabilityMode, branchStaffQueueEnabled, branchStaffCancelEnabled, luckyWheelEnabled },
     });
     revalidatePath("/admin/settings");
     return { success: "saved" };

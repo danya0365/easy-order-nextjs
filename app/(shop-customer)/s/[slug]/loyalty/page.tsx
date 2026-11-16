@@ -12,6 +12,7 @@ import {
   isStampCardOn,
 } from "@/src/domain/services/loyalty-gates";
 import { CustomerLoyaltyPanel } from "@/src/presentation/components/loyalty/CustomerLoyaltyPanel";
+import { WheelEntryBanner } from "@/src/presentation/components/wheel/WheelEntryBanner";
 import { shopBySlug } from "@/src/infrastructure/request/shop-lookups";
 
 export const dynamic = "force-dynamic";
@@ -101,6 +102,7 @@ export default async function ShopCustomerLoyaltyPage({
         showStamp={showStamp}
         showPoints={showPoints}
       />
+      {history && <WheelEntryBanner slug={slug} shopId={shop.id} customerId={history.customer.id} />}
     </main>
   );
 }
