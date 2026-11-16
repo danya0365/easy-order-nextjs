@@ -263,7 +263,7 @@ export default async function OnlineOrderPage({
     sections.flatMap((sec) => sec.items.map((i) => i.id)),
   );
 
-  const wheelOn = !!(await wheelService().gate(shop.id).catch(() => null))?.enabled;
+  const wheelOn = await wheelService().isOn(shop.id).catch(() => false);
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-4">

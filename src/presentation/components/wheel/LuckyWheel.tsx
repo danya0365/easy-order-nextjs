@@ -73,13 +73,27 @@ export function LuckyWheel({
     resultId?: string;
   } | null>(null);
 
+  // The disc keeps the segments it was drawn with until the result is closed —
+  // a refresh after a win can drop an out-of-stock prize, which would otherwise
+  // shift the slices under the pointer while the result is still showing.
+  const [shown, setShown] = useState(segments);
+  const freshKey = segments.map((s) => s.id).join(",");
+
   // Adopt fresh server ticket counts (e.g. monthly ticket after refresh).
   if (tickets !== syncedTickets && !spinning) {
     setSyncedTickets(tickets);
     setLeft(tickets);
   }
 
-  const n = Math.max(segments.length, 1);
+  function closeResult() {
+    setResult(null);
+    if (freshKey !== shown.map((s) => s.id).join(",")) {
+      setShown(segments);
+      setRotation(0);
+    }
+  }
+
+  const n = Math.max(shown.length, 1);
   const seg = 360 / n;
 
   function spin() {
@@ -90,8 +104,8 @@ export function LuckyWheel({
         toast.error(res.error ?? "error");
         return;
       }
-      let idx = segments.findIndex((s) => s.id === res.prizeId);
-      if (idx < 0) idx = segments.findIndex((s) => s.type === "thanks");
+      let idx = shown.findIndex((s) => s.id === res.prizeId);
+      if (idx < 0) idx = shown.findIndex((s) => s.type === "thanks");
       if (idx < 0) idx = 0;
       const jitter = (Math.random() - 0.5) * seg * 0.6;
       const target = 360 - (idx + 0.5) * seg + jitter;
@@ -128,7 +142,7 @@ export function LuckyWheel({
           }}
         >
           <svg viewBox="0 0 300 300" className="size-full">
-            {segments.map((s, i) => {
+            {shown.map((s, i) => {
               const color = COLORS[i % COLORS.length];
               const mid = (i + 0.5) * seg;
               const p = polar(150, 150, 92, mid);
@@ -143,7 +157,7 @@ export function LuckyWheel({
                     fontWeight={700}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    transform={`rotate(${mid - 90} ${p.x} ${p.y})`}
+                    transform={`rotate(${mid > 180 ? mid + 90 : mid - 90} ${p.x} ${p.y})`}
                     style={{ fontFamily: "inherit" }}
                   >
                     {short(s.name)}
@@ -171,7 +185,7 @@ export function LuckyWheel({
         type="button"
         data-testid="wheel-spin"
         onClick={spin}
-        disabled={busy || left <= 0 || segments.length === 0}
+        disabled={busy || left <= 0 || shown.length === 0}
         className="w-full max-w-xs rounded-2xl bg-brand-500 px-6 py-4 text-lg font-bold text-on-brand shadow-lg transition hover:bg-brand-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {busy ? t("spinning") : t("spin")}
@@ -180,7 +194,7 @@ export function LuckyWheel({
 
       <Modal
         open={!!result}
-        onClose={() => setResult(null)}
+        onClose={closeResult}
         title={t("resultTitle")}
         footer={
           <div className="flex w-full flex-col gap-2">
@@ -196,7 +210,7 @@ export function LuckyWheel({
             {left > 0 ? (
               <button
                 type="button"
-                onClick={() => setResult(null)}
+                onClick={closeResult}
                 className="w-full rounded-xl border-2 border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground"
               >
                 {t("spinAgain")}
@@ -204,7 +218,7 @@ export function LuckyWheel({
             ) : (
               <button
                 type="button"
-                onClick={() => setResult(null)}
+                onClick={closeResult}
                 className="w-full rounded-xl border-2 border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground"
               >
                 {t("close")}

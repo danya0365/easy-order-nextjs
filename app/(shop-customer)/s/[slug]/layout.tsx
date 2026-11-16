@@ -27,7 +27,7 @@ export default async function ShopCustomerLayout({
 
   const [images, wheelGate] = await Promise.all([
     shopImages(shop.id),
-    wheelService().gate(shop.id).catch(() => null),
+    wheelService().isOn(shop.id).catch(() => false),
   ]);
   const profileImage = images.find((i) => i.kind === "profile") ?? null;
 
@@ -47,7 +47,7 @@ export default async function ShopCustomerLayout({
         slug={slug}
         showLoyalty={isLoyaltyEffective(shop)}
         showPromotions={isPromotionsEffective(shop)}
-        showWheel={!!wheelGate?.enabled}
+        showWheel={wheelGate}
       />
     </div>
   );
